@@ -1,3 +1,8 @@
+* {
+  padding: 0;
+  margin: 0;
+}
+
 .admin-layout {
   display: flex;
 }
@@ -9,7 +14,6 @@
   background: #f4f6f8;
   min-height: 100vh;
 }
-
 
 .sidebar nav a {
   display: block;
