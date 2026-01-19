@@ -4,7 +4,7 @@ import logo from "../assets/grehasoft-logo.png";
 import { useNavigate } from "react-router-dom";
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
   const navigate = useNavigate();
@@ -12,22 +12,58 @@ const Login: React.FC = () => {
   const handleLogin = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
 
-    if (email === "admin@g.com" && password === "admin123") {
+    if (username === "admin" && password === "admin123") {
       localStorage.setItem("role", "admin");
       navigate("/admin/dashboard");
-    } else if (email === "emp@grehasoft.com" && password === "emp123") {
+    } else if (username === "employee" && password === "emp123") {
       localStorage.setItem("role", "employee");
       navigate("/employee/dashboard");
     } else {
       alert("Invalid credentials");
     }
-  };
+  }; // ✅ FUNCTION CLOSED HERE
 
   return (
     <div className="login-container">
-      {/* your JSX */}
+      <div className="login-card">
+        <div className="login-header">
+          <img src={logo} alt="Grehasoft Logo" className="logo" />
+          <h2 className="logo-text">Grehasoft</h2>
+          
+        </div>
+
+        <form onSubmit={handleLogin}>
+          <div className="form-group">
+            <label>Username</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button type="submit" className="login-btn">
+            Login
+          </button>
+        </form>
+
+        <div className="login-footer">
+          © 2026 Grehasoft. All rights reserved.
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Login;
+export default Login; // ✅ MUST be last & outside component
