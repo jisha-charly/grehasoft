@@ -9,19 +9,38 @@ const Login: React.FC = () => {
 
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>): void => {
-    e.preventDefault();
+  const handleLogin = async (
+  e: React.FormEvent<HTMLFormElement>
+): Promise<void> => {
+  e.preventDefault();
 
-    if (username === "admin" && password === "admin123") {
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/login/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username,
+        password,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // temporary role (next step we’ll send from backend)
       localStorage.setItem("role", "admin");
+
       navigate("/admin/dashboard");
-    } else if (username === "employee" && password === "emp123") {
-      localStorage.setItem("role", "employee");
-      navigate("/employee/dashboard");
     } else {
-      alert("Invalid credentials");
+      alert(data.error || "Login failed");
     }
-  }; // ✅ FUNCTION CLOSED HERE
+  } catch (error) {
+    alert("Server not reachable");
+  }
+};
+
 
   return (
     <div className="login-container">
