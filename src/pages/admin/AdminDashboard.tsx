@@ -8,7 +8,8 @@ const AdminDashboard: React.FC = () => {
     <div className="admin-layout">
       <Sidebar />
       <div className="admin-main">
-        <Topbar />
+        <Topbar title="Grehasoft PMS - Admin" showLogout />
+
         <Outlet />
       </div>
     </div>

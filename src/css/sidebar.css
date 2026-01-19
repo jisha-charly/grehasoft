@@ -48,3 +48,27 @@
   background: rgba(255, 255, 255, 0.2);
   margin: 12px 0;
 }
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.sidebar-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-link.active {
+  background-color: #ffffff;
+  color: #0b2c44;
+}
+
+.sidebar-icon {
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+}
