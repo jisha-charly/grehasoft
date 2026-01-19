@@ -2,8 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
-
-function App() {
+const App: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
@@ -21,6 +20,6 @@ function App() {
       </Route>
     </Routes>
   );
-}
+};
 
 export default App;

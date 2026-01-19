@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import "./sidebar.css";
 
-function Sidebar() {
+const Sidebar: React.FC = () => {
   return (
     <div className="sidebar">
       <h2 className="sidebar-title">Grehasoft</h2>
@@ -26,6 +26,6 @@ function Sidebar() {
       </nav>
     </div>
   );
-}
+};
 
 export default Sidebar;

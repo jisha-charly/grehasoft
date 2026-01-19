@@ -3,7 +3,7 @@ import Sidebar from "../../components/Sidebar";
 import Topbar from "../../components/Topbar";
 import { Outlet } from "react-router-dom";
 
-function AdminDashboard() {
+const AdminDashboard: React.FC = () => {
   return (
     <div className="admin-layout">
       <Sidebar />
@@ -13,7 +13,6 @@ function AdminDashboard() {
       </div>
     </div>
   );
-}
+};
 
 export default AdminDashboard;
-
