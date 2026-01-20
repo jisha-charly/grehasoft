@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-import { authFetch } from "../../api/authFetch";
-
+import api from "../../api/axios";
 import type { User } from "../../types/user";
-
 
 const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -17,9 +15,8 @@ const Users = () => {
 
   // ---------------- LOAD USERS ----------------
   const loadUsers = async () => {
-    const res = await authFetch("http://127.0.0.1:8000/api/users/");
-    const data = await res.json();
-    setUsers(data);
+    const res = await api.get<User[]>("users/");
+    setUsers(res.data);
   };
 
   useEffect(() => {
@@ -28,11 +25,7 @@ const Users = () => {
 
   // ---------------- CREATE USER ----------------
   const createUser = async () => {
-    await authFetch("http://127.0.0.1:8000/api/users/create/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    await api.post("users/create/", form);
 
     setForm({
       username: "",
@@ -48,18 +41,11 @@ const Users = () => {
   const updateUser = async () => {
     if (!editingUser) return;
 
-    await authFetch(
-      `http://127.0.0.1:8000/api/users/${editingUser.id}/update/`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: editingUser.email,
-          role: editingUser.role,
-          is_active: editingUser.is_active,
-        }),
-      }
-    );
+    await api.put(`users/${editingUser.id}/update/`, {
+      email: editingUser.email,
+      role: editingUser.role,
+      is_active: editingUser.is_active,
+    });
 
     setEditingUser(null);
     loadUsers();
@@ -67,10 +53,7 @@ const Users = () => {
 
   // ---------------- DELETE USER ----------------
   const deleteUser = async (id: number) => {
-    await authFetch(
-      `http://127.0.0.1:8000/api/users/${id}/delete/`,
-      { method: "DELETE" }
-    );
+    await api.delete(`users/${id}/delete/`);
     loadUsers();
   };
 
