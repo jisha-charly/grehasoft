@@ -12,6 +12,8 @@ const AdminDashboard: React.FC = () => {
 
         <Outlet />
       </div>
+      
+
     </div>
   );
 };

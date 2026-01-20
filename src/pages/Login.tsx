@@ -2,7 +2,7 @@ import { useState } from "react";
 import "../css/login.css";
 import logo from "../assets/grehasoft-logo.png";
 import { useNavigate } from "react-router-dom";
-import type { LoginFormData, LoginResponse } from "../types";
+import type { LoginFormData } from "../types";
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState<LoginFormData>({
@@ -12,27 +12,31 @@ const Login: React.FC = () => {
 
   const navigate = useNavigate();
 
-  const handleLogin = async (
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
-    e.preventDefault();
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault(); // ✅ prevent page reload
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/login/", {
+      const response = await fetch("http://127.0.0.1:8000/api/token/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
       });
 
-      const data: LoginResponse = await response.json();
+      const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("role", data.role);
+        // ✅ STORE JWT TOKENS
+        localStorage.setItem("access", data.access);
+        localStorage.setItem("refresh", data.refresh);
+
         navigate("/admin/dashboard");
       } else {
-        alert(data.message || "Login failed");
+        alert("Invalid username or password");
       }
     } catch (error) {
       alert("Server not reachable");

@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-
+import Users from "./pages/admin/Users";
 const App: React.FC = () => {
   return (
     <Routes>
@@ -9,7 +9,7 @@ const App: React.FC = () => {
 
       <Route path="/admin" element={<AdminDashboard />}>
         <Route path="dashboard" element={<h2>Dashboard Overview</h2>} />
-        <Route path="users" element={<h2>Users</h2>} />
+        <Route path="users" element={<Users />} />
         <Route path="projects" element={<h2>Projects</h2>} />
         <Route path="tasks" element={<h2>Tasks</h2>} />
         <Route path="teams" element={<h2>Teams</h2>} />
