@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
 import { authFetch } from "../../api/authFetch";
 
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  role: string;
-  is_active: boolean;
-}
+import type { User } from "../../types/user";
+
 
 const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
