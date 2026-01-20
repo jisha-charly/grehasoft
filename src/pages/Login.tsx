@@ -3,6 +3,7 @@ import "../css/login.css";
 import logo from "../assets/grehasoft-logo.png";
 import { useNavigate } from "react-router-dom";
 import type { LoginFormData } from "../types";
+import api from "../api/axios";
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState<LoginFormData>({
@@ -13,33 +14,24 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault(); // ✅ prevent page reload
+    e.preventDefault();
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/token/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password,
-        }),
+      const response = await api.post("token/", {
+        username: formData.username,
+        password: formData.password,
       });
 
-      const data = await response.json();
+      localStorage.setItem("access", response.data.access);
+      localStorage.setItem("refresh", response.data.refresh);
 
-      if (response.ok) {
-        // ✅ STORE JWT TOKENS
-        localStorage.setItem("access", data.access);
-        localStorage.setItem("refresh", data.refresh);
-
-        navigate("/admin/dashboard");
-      } else {
+      navigate("/admin/dashboard");
+    } catch (error: any) {
+      if (error.response?.status === 401) {
         alert("Invalid username or password");
+      } else {
+        alert("Server not reachable");
       }
-    } catch (error) {
-      alert("Server not reachable");
     }
   };
 
