@@ -16,6 +16,7 @@ import {
 
 const sidebarItems: SidebarItem[] = [
   { label: "Dashboard", path: "/admin/dashboard", icon: <MdDashboard /> },
+  { label: "Roles", path: "/admin/roles", icon: <MdPeople /> },
   { label: "Users", path: "/admin/users", icon: <MdPeople /> },
   { label: "Projects", path: "/admin/projects", icon: <MdWork /> },
   { label: "Tasks", path: "/admin/tasks", icon: <MdTask /> },

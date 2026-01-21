@@ -1,17 +1,23 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-class User(AbstractUser):
-    ROLE_CHOICES = [
-        ("ADMIN", "Admin"),
-        ("SOFTWARE_PM", "Software Project Manager"),
-        ("DM_PM", "Digital Marketing Project Manager"),
-        ("SOFTWARE_EMP", "Software Employee"),
-        ("DM_EMP", "Digital Marketing Employee"),
-    ]
 
-    role = models.CharField(
-        max_length=20,
-        choices=ROLE_CHOICES,
-        default="SOFTWARE_EMP"
+class Role(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+class User(AbstractUser):
+    role = models.ForeignKey(
+        Role,
+        on_delete=models.PROTECT,
+        related_name="users",
+        null=True,
+        blank=True
     )
