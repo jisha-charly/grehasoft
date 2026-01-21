@@ -20,13 +20,13 @@ const Users = () => {
     role: "",
   });
 
-  // ---------------- LOAD USERS ----------------
+  // ================= LOAD USERS =================
   const loadUsers = async () => {
     const res = await api.get<User[]>("users/");
     setUsers(res.data);
   };
 
-  // ---------------- LOAD ROLES ----------------
+  // ================= LOAD ROLES =================
   const loadRoles = async () => {
     const res = await api.get<Role[]>("roles/");
     setRoles(res.data);
@@ -37,8 +37,13 @@ const Users = () => {
     loadRoles();
   }, []);
 
-  // ---------------- CREATE USER ----------------
+  // ================= CREATE USER =================
   const createUser = async () => {
+    if (!form.username || !form.password || !form.role) {
+      alert("All fields are required");
+      return;
+    }
+
     await api.post("users/create/", {
       username: form.username,
       email: form.email,
@@ -56,7 +61,7 @@ const Users = () => {
     loadUsers();
   };
 
-  // ---------------- UPDATE USER ----------------
+  // ================= UPDATE USER =================
   const updateUser = async () => {
     if (!editingUser) return;
 
@@ -70,8 +75,10 @@ const Users = () => {
     loadUsers();
   };
 
-  // ---------------- DELETE USER ----------------
+  // ================= DELETE USER =================
   const deleteUser = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this user?")) return;
+
     await api.delete(`users/${id}/delete/`);
     loadUsers();
   };
@@ -80,7 +87,7 @@ const Users = () => {
     <div>
       <h2>Users</h2>
 
-      {/* ---------------- CREATE USER FORM ---------------- */}
+      {/* ================= CREATE USER ================= */}
       <div style={{ marginBottom: 20 }}>
         <input
           placeholder="Username"
@@ -107,7 +114,6 @@ const Users = () => {
           }
         />
 
-        {/* ✅ Role dropdown uses ID */}
         <select
           value={form.role}
           onChange={(e) =>
@@ -125,7 +131,61 @@ const Users = () => {
         <button onClick={createUser}>Create User</button>
       </div>
 
-      {/* ---------------- USERS TABLE ---------------- */}
+      {/* ================= EDIT USER ================= */}
+      {editingUser && (
+        <div style={{ marginBottom: 20 }}>
+          <h3>Edit User: {editingUser.username}</h3>
+
+          <input
+            value={editingUser.email}
+            onChange={(e) =>
+              setEditingUser({
+                ...editingUser,
+                email: e.target.value,
+              })
+            }
+          />
+
+          <select
+            value={editingUser.role_id}
+            onChange={(e) =>
+              setEditingUser({
+                ...editingUser,
+                role_id: Number(e.target.value),
+              })
+            }
+          >
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+
+          <label>
+            Active
+            <input
+              type="checkbox"
+              checked={editingUser.is_active}
+              onChange={(e) =>
+                setEditingUser({
+                  ...editingUser,
+                  is_active: e.target.checked,
+                })
+              }
+            />
+          </label>
+
+          <br />
+
+          <button onClick={updateUser}>Update</button>
+          <button onClick={() => setEditingUser(null)}>
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* ================= USERS TABLE ================= */}
       <table border={1} cellPadding={8}>
         <thead>
           <tr>
