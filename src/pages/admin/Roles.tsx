@@ -29,10 +29,20 @@ const Roles = () => {
 };
 
 
-  const deleteRole = async (id: number) => {
+ const deleteRole = async (id: number) => {
+  try {
     await api.delete(`/roles/${id}/delete/`);
     loadRoles();
-  };
+    alert("Role deleted successfully");
+  } catch (error: any) {
+    if (error.response?.data?.error) {
+      alert(error.response.data.error); // ✅ shows ADMIN cannot be deleted
+    } else {
+      alert("Something went wrong");
+    }
+  }
+};
+
 
   return (
     <div>

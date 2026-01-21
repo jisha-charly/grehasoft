@@ -45,21 +45,38 @@ def create_role(request):
     description = request.data.get("description", "")
 
     if not name:
-        return Response({"error": "Role name required"}, status=400)
+        return Response({"error": "Role name is required"}, status=400)
 
-    # Check if soft-deleted role exists
+    # 🔎 Check if role exists (even soft deleted)
     role = Role.objects.filter(name=name).first()
 
     if role:
+        # ✅ Restore soft-deleted role
         if role.deleted_at:
             role.deleted_at = None
             role.description = description
             role.save()
-            return Response({"message": "Role restored successfully"}, status=200)
+
+            # 🔑 Reactivate users who previously had this role
+            User.objects.filter(role__isnull=True).filter(
+                username__in=User.objects.filter(role=None).values_list("username", flat=True)
+            )
+
+            User.objects.filter(role=None, is_active=False).update(
+                role=role,
+                is_active=True
+            )
+
+            return Response(
+                {"message": "Role restored and users reactivated"},
+                status=200
+            )
 
         return Response({"error": "Role already exists"}, status=400)
 
+    # ✅ Create brand new role
     Role.objects.create(name=name, description=description)
+
     return Response({"message": "Role created successfully"}, status=201)
 
 
@@ -89,10 +106,20 @@ def delete_role(request, role_id):
     if role.name == "ADMIN":
         return Response({"error": "ADMIN role cannot be deleted"}, status=400)
 
+    # 🔑 Deactivate users with this role
+    User.objects.filter(role=role).update(
+        is_active=False,
+        role=None
+    )
+
     role.deleted_at = timezone.now()
     role.save()
 
-    return Response({"message": "Role deleted successfully"}, status=200)
+    return Response(
+        {"message": "Role deleted and users deactivated"},
+        status=200
+    )
+
 
 
 # =================================================

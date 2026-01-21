@@ -20,13 +20,13 @@ const Users = () => {
     role: "",
   });
 
-  // ================= LOAD USERS =================
+  // ---------------- LOAD USERS ----------------
   const loadUsers = async () => {
     const res = await api.get<User[]>("users/");
     setUsers(res.data);
   };
 
-  // ================= LOAD ROLES =================
+  // ---------------- LOAD ROLES ----------------
   const loadRoles = async () => {
     const res = await api.get<Role[]>("roles/");
     setRoles(res.data);
@@ -37,57 +37,68 @@ const Users = () => {
     loadRoles();
   }, []);
 
-  // ================= CREATE USER =================
+  // ---------------- CREATE USER ----------------
   const createUser = async () => {
-    if (!form.username || !form.password || !form.role) {
-      alert("All fields are required");
-      return;
+    try {
+      await api.post("users/create/", {
+        username: form.username,
+        email: form.email,
+        password: form.password,
+        role: form.role, // role ID
+      });
+
+      alert("User created successfully");
+
+      setForm({
+        username: "",
+        email: "",
+        password: "",
+        role: "",
+      });
+
+      loadUsers();
+    } catch (error: any) {
+      alert(error.response?.data?.error || "Failed to create user");
     }
-
-    await api.post("users/create/", {
-      username: form.username,
-      email: form.email,
-      password: form.password,
-      role: form.role, // ✅ role ID
-    });
-
-    setForm({
-      username: "",
-      email: "",
-      password: "",
-      role: "",
-    });
-
-    loadUsers();
   };
 
-  // ================= UPDATE USER =================
+  // ---------------- UPDATE USER ----------------
   const updateUser = async () => {
     if (!editingUser) return;
 
-    await api.put(`users/${editingUser.id}/update/`, {
-      email: editingUser.email,
-      role: editingUser.role_id, // ✅ role ID
-      is_active: editingUser.is_active,
-    });
+    try {
+      await api.put(`users/${editingUser.id}/update/`, {
+        email: editingUser.email,
+        role: editingUser.role_id, // role ID
+        is_active: editingUser.is_active,
+      });
 
-    setEditingUser(null);
-    loadUsers();
+      alert("User updated successfully");
+      setEditingUser(null);
+      loadUsers();
+    } catch (error: any) {
+      alert(error.response?.data?.error || "Failed to update user");
+    }
   };
 
-  // ================= DELETE USER =================
+  // ---------------- DELETE USER ----------------
   const deleteUser = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
 
-    await api.delete(`users/${id}/delete/`);
-    loadUsers();
+    try {
+      await api.delete(`users/${id}/delete/`);
+      alert("User deleted successfully");
+      loadUsers();
+    } catch (error: any) {
+      alert(error.response?.data?.error || "Failed to delete user");
+    }
   };
 
   return (
     <div>
       <h2>Users</h2>
 
-      {/* ================= CREATE USER ================= */}
+      {/* ---------------- CREATE USER ---------------- */}
       <div style={{ marginBottom: 20 }}>
         <input
           placeholder="Username"
@@ -131,7 +142,7 @@ const Users = () => {
         <button onClick={createUser}>Create User</button>
       </div>
 
-      {/* ================= EDIT USER ================= */}
+      {/* ---------------- EDIT USER ---------------- */}
       {editingUser && (
         <div style={{ marginBottom: 20 }}>
           <h3>Edit User: {editingUser.username}</h3>
@@ -179,13 +190,11 @@ const Users = () => {
           <br />
 
           <button onClick={updateUser}>Update</button>
-          <button onClick={() => setEditingUser(null)}>
-            Cancel
-          </button>
+          <button onClick={() => setEditingUser(null)}>Cancel</button>
         </div>
       )}
 
-      {/* ================= USERS TABLE ================= */}
+      {/* ---------------- USERS TABLE ---------------- */}
       <table border={1} cellPadding={8}>
         <thead>
           <tr>
@@ -205,12 +214,8 @@ const Users = () => {
               <td>{u.is_active ? "Active" : "Inactive"}</td>
               <td>{u.role}</td>
               <td>
-                <button onClick={() => setEditingUser(u)}>
-                  Edit
-                </button>
-                <button onClick={() => deleteUser(u.id)}>
-                  Delete
-                </button>
+                <button onClick={() => setEditingUser(u)}>Edit</button>
+                <button onClick={() => deleteUser(u.id)}>Delete</button>
               </td>
             </tr>
           ))}
