@@ -8,7 +8,12 @@ const Users = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    username: string;
+    email: string;
+    password: string;
+    role: number | "";
+  }>({
     username: "",
     email: "",
     password: "",
@@ -34,7 +39,12 @@ const Users = () => {
 
   // ---------------- CREATE USER ----------------
   const createUser = async () => {
-    await api.post("users/create/", form);
+    await api.post("users/create/", {
+      username: form.username,
+      email: form.email,
+      password: form.password,
+      role: form.role, // ✅ role ID
+    });
 
     setForm({
       username: "",
@@ -52,7 +62,7 @@ const Users = () => {
 
     await api.put(`users/${editingUser.id}/update/`, {
       email: editingUser.email,
-      role: editingUser.role,
+      role: editingUser.role_id, // ✅ role ID
       is_active: editingUser.is_active,
     });
 
@@ -97,16 +107,16 @@ const Users = () => {
           }
         />
 
-        {/* 🔑 Dynamic Role Dropdown */}
+        {/* ✅ Role dropdown uses ID */}
         <select
           value={form.role}
           onChange={(e) =>
-            setForm({ ...form, role: e.target.value })
+            setForm({ ...form, role: Number(e.target.value) })
           }
         >
           <option value="">Select Role</option>
           {roles.map((r) => (
-            <option key={r.id} value={r.name}>
+            <option key={r.id} value={r.id}>
               {r.name}
             </option>
           ))}
@@ -114,60 +124,6 @@ const Users = () => {
 
         <button onClick={createUser}>Create User</button>
       </div>
-
-      {/* ---------------- EDIT USER ---------------- */}
-      {editingUser && (
-        <div style={{ marginBottom: 20 }}>
-          <h3>Edit User: {editingUser.username}</h3>
-
-          <input
-            value={editingUser.email}
-            onChange={(e) =>
-              setEditingUser({
-                ...editingUser,
-                email: e.target.value,
-              })
-            }
-          />
-
-          <select
-            value={editingUser.role}
-            onChange={(e) =>
-              setEditingUser({
-                ...editingUser,
-                role: e.target.value,
-              })
-            }
-          >
-            {roles.map((r) => (
-              <option key={r.id} value={r.name}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-
-          <label>
-            Active
-            <input
-              type="checkbox"
-              checked={editingUser.is_active}
-              onChange={(e) =>
-                setEditingUser({
-                  ...editingUser,
-                  is_active: e.target.checked,
-                })
-              }
-            />
-          </label>
-
-          <br />
-
-          <button onClick={updateUser}>Update</button>
-          <button onClick={() => setEditingUser(null)}>
-            Cancel
-          </button>
-        </div>
-      )}
 
       {/* ---------------- USERS TABLE ---------------- */}
       <table border={1} cellPadding={8}>

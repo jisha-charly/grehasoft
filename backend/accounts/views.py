@@ -41,38 +41,27 @@ def create_role(request):
     if not request.user.role or request.user.role.name != "ADMIN":
         return Response({"error": "Forbidden"}, status=403)
 
-    name = request.data.get("name", "").strip()
+    name = request.data.get("name")
     description = request.data.get("description", "")
 
     if not name:
-        return Response({"error": "Role name is required"}, status=400)
+        return Response({"error": "Role name required"}, status=400)
 
-    # check existing role (including deleted)
-    role = Role.objects.filter(name__iexact=name).first()
+    # Check if soft-deleted role exists
+    role = Role.objects.filter(name=name).first()
 
     if role:
         if role.deleted_at:
-            # RESTORE ROLE
             role.deleted_at = None
             role.description = description
             role.save()
-            return Response(
-                {"message": "Role restored successfully"},
-                status=200
-            )
-        else:
-            return Response(
-                {"error": "Role already exists"},
-                status=400
-            )
+            return Response({"message": "Role restored successfully"}, status=200)
 
-    # create new role
-    Role.objects.create(
-        name=name.upper(),
-        description=description
-    )
+        return Response({"error": "Role already exists"}, status=400)
 
+    Role.objects.create(name=name, description=description)
     return Response({"message": "Role created successfully"}, status=201)
+
 
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
@@ -146,19 +135,19 @@ def users_list(request):
     users = User.objects.select_related("role").all()
 
     return Response(
-        [
-            {
-                "id": u.id,
-                "username": u.username,
-                "email": u.email,
-                "role": u.role.name if u.role else None,
-                "is_active": u.is_active,
-            }
-            for u in users
-        ],
-        status=200,
-    )
-
+    [
+        {
+            "id": u.id,
+            "username": u.username,
+            "email": u.email,
+            "role": u.role.name if u.role else None,
+            "role_id": u.role.id if u.role else None,  # ✅ ADD THIS
+            "is_active": u.is_active,
+        }
+        for u in users
+    ],
+    status=200
+)
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
@@ -171,14 +160,20 @@ def create_user(request):
     if User.objects.filter(username=data["username"]).exists():
         return Response({"error": "Username already exists"}, status=400)
 
-    role = get_object_or_404(Role, id=data["role"], deleted_at__isnull=True)
+    role = Role.objects.filter(
+        id=data["role"],
+        deleted_at__isnull=True
+    ).first()
+
+    if not role:
+        return Response({"error": "Invalid role"}, status=400)
 
     user = User.objects.create_user(
         username=data["username"],
         email=data.get("email", ""),
         password=data["password"],
         role=role,
-        is_staff=role.name in ["ADMIN", "SOFTWARE_PM", "DM_PM"],
+        is_staff=role.name == "ADMIN",
     )
 
     return Response({"message": "User created successfully"}, status=201)
