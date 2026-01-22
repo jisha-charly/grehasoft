@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import logo from "../assets/grehasoft-logo.png";
+import "../css/login.css";
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
 
@@ -35,7 +37,8 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light">
+   <div className="container-fluid vh-100 d-flex align-items-center justify-content-center login-bg ">
+
       <div className="card shadow-lg border-0" style={{ width: "420px" }}>
         <div className="card-body p-4">
           {/* Logo */}
@@ -64,15 +67,26 @@ const Login: React.FC = () => {
             </div>
 
             <div className="mb-3">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
-                className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+  <label className="form-label">Password</label>
+
+  <input
+    type={showPassword ? "text" : "password"}
+    className="form-control"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+    required
+  />
+
+  <div className="mt-1 text-end">
+    <button
+      type="button"
+      className="btn btn-link p-0 text-decoration-none"
+      onClick={() => setShowPassword(!showPassword)}
+    >
+      {showPassword ? "Hide password" : "Show password"}
+    </button>
+  </div>
+</div>
 
             <button
               type="submit"

@@ -5,5 +5,6 @@ export interface User {
   role: string;      // role name (ADMIN)
   role_id: number;   // role ID (1)
   is_active: boolean;
+  created_at: string;
 }
 

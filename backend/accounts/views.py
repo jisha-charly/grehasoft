@@ -170,6 +170,7 @@ def users_list(request):
             "role": u.role.name if u.role else None,
             "role_id": u.role.id if u.role else None,  # ✅ ADD THIS
             "is_active": u.is_active,
+            "created_at": u.date_joined,
         }
         for u in users
     ],
