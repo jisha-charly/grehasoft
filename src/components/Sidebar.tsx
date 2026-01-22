@@ -1,7 +1,4 @@
 import { NavLink } from "react-router-dom";
-import "../css/sidebar.css";
-import type { SidebarItem } from "../types";
-
 import {
   MdDashboard,
   MdPeople,
@@ -14,7 +11,7 @@ import {
   MdSettings,
 } from "react-icons/md";
 
-const sidebarItems: SidebarItem[] = [
+const sidebarItems = [
   { label: "Dashboard", path: "/admin/dashboard", icon: <MdDashboard /> },
   { label: "Roles", path: "/admin/roles", icon: <MdPeople /> },
   { label: "Users", path: "/admin/users", icon: <MdPeople /> },
@@ -27,21 +24,33 @@ const sidebarItems: SidebarItem[] = [
   { label: "Settings", path: "/admin/settings", icon: <MdSettings /> },
 ];
 
-const Sidebar: React.FC = () => {
+const Sidebar = () => {
   return (
-    <div className="sidebar">
-      <h2 className="sidebar-title">Grehasoft</h2>
-      <p className="sidebar-subtitle">Admin Panel</p>
+    <aside
+      className="d-flex flex-column flex-shrink-0 p-3 text-bg-dark"
+      style={{ width: 260, minHeight: "100vh" }}
+    >
+      <span className="fs-4 fw-bold mb-1">Grehasoft</span>
+      <small className="text-secondary mb-3">Admin Panel</small>
 
-      <nav className="sidebar-menu">
+      <ul className="nav nav-pills flex-column gap-1">
         {sidebarItems.map((item) => (
-          <NavLink key={item.path} to={item.path} className="sidebar-link">
-            <span className="sidebar-icon">{item.icon}</span>
-            <span className="sidebar-text">{item.label}</span>
-          </NavLink>
+          <li key={item.path} className="nav-item">
+            <NavLink
+              to={item.path}
+              className={({ isActive }) =>
+                `nav-link d-flex align-items-center gap-2 ${
+                  isActive ? "active" : "text-white"
+                }`
+              }
+            >
+              <span style={{ fontSize: 18 }}>{item.icon}</span>
+              {item.label}
+            </NavLink>
+          </li>
         ))}
-      </nav>
-    </div>
+      </ul>
+    </aside>
   );
 };
 

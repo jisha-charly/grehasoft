@@ -1,25 +1,28 @@
 import { useNavigate } from "react-router-dom";
-import type { TopbarProps } from "../types";
 
-const Topbar: React.FC<TopbarProps> = ({
-  title,
-  showLogout = true,
-}) => {
+interface TopbarProps {
+  title: string;
+}
+
+const Topbar: React.FC<TopbarProps> = ({ title }) => {
   const navigate = useNavigate();
 
-  const handleLogout = (): void => {
+  const handleLogout = () => {
     localStorage.clear();
     navigate("/");
   };
 
   return (
-    <div className="topbar">
-      <h3>{title}</h3>
+    <nav className="navbar navbar-light bg-white border-bottom px-4 py-2">
+      <h5 className="mb-0 fw-semibold">{title}</h5>
 
-      {showLogout && (
-        <button onClick={handleLogout}>Logout</button>
-      )}
-    </div>
+      <button
+        className="btn btn-outline-danger btn-sm"
+        onClick={handleLogout}
+      >
+        Logout
+      </button>
+    </nav>
   );
 };
 

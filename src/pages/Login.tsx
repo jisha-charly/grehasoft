@@ -1,80 +1,92 @@
 import { useState } from "react";
-import "../css/login.css";
-import logo from "../assets/grehasoft-logo.png";
 import { useNavigate } from "react-router-dom";
-import type { LoginFormData } from "../types";
 import api from "../api/axios";
+import logo from "../assets/grehasoft-logo.png";
 
 const Login: React.FC = () => {
-  const [formData, setFormData] = useState<LoginFormData>({
-    username: "",
-    password: "",
-  });
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setLoading(true);
 
     try {
-      const response = await api.post("token/", {
-        username: formData.username,
-        password: formData.password,
-      });
+      const res = await api.post("token/", { username, password });
 
-      localStorage.setItem("access", response.data.access);
-      localStorage.setItem("refresh", response.data.refresh);
+      localStorage.setItem("access", res.data.access);
+      localStorage.setItem("refresh", res.data.refresh);
 
       navigate("/admin/dashboard");
-    } catch (error: any) {
-      if (error.response?.status === 401) {
-        alert("Invalid username or password");
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setError("Invalid username or password");
       } else {
-        alert("Server not reachable");
+        setError("Server not reachable. Try again later.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <img src={logo} alt="Grehasoft Logo" className="logo" />
-          <h2 className="logo-text">Grehasoft</h2>
-        </div>
-
-        <form onSubmit={handleLogin}>
-          <div className="form-group">
-            <label>Username</label>
-            <input
-              type="text"
-              value={formData.username}
-              onChange={(e) =>
-                setFormData({ ...formData, username: e.target.value })
-              }
-              required
-            />
+    <div className="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light">
+      <div className="card shadow-lg border-0" style={{ width: "420px" }}>
+        <div className="card-body p-4">
+          {/* Logo */}
+          <div className="text-center mb-4">
+            <img src={logo} alt="Grehasoft" height={60} />
+            <h4 className="mt-3 fw-bold">Grehasoft PMS</h4>
+            
           </div>
 
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-              required
-            />
+          {/* Error */}
+          {error && (
+            <div className="alert alert-danger py-2">{error}</div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleLogin}>
+            <div className="mb-3">
+              <label className="form-label">Username</label>
+              <input
+                type="text"
+                className="form-control"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                className="form-control"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary w-100"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+
+          {/* Footer */}
+          <div className="text-center mt-4 text-muted small">
+            © 2026 Grehasoft. All rights reserved.
           </div>
-
-          <button type="submit" className="login-btn">
-            Login
-          </button>
-        </form>
-
-        <div className="login-footer">
-          © 2026 Grehasoft. All rights reserved.
         </div>
       </div>
     </div>
