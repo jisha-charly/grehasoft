@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-
+from accounts.models import Department
 from accounts.models import Role
 
 User = get_user_model()
@@ -147,7 +147,52 @@ def login_view(request):
         },
         status=200,
     )
+# =================================================
+# department
+# =================================================
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_departments(request):
+    departments = Department.objects.filter(deleted_at__isnull=True)
+    return Response([
+        {
+            "id": d.id,
+            "name": d.name,
+            "parent_id": d.parent_id
+        }
+        for d in departments
+    ])
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_department(request):
+    if not request.user.role or request.user.role.name != "ADMIN":
+        return Response({"error": "Forbidden"}, status=403)
+
+    name = request.data.get("name")
+    parent_id = request.data.get("parent_id")
+
+    if not name:
+        return Response({"error": "Department name required"}, status=400)
+
+    parent = None
+    if parent_id:
+        parent = get_object_or_404(Department, id=parent_id, deleted_at__isnull=True)
+
+    Department.objects.create(name=name, parent=parent)
+    return Response({"message": "Department created"}, status=201)
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_department(request, dept_id):
+    if not request.user.role or request.user.role.name != "ADMIN":
+        return Response({"error": "Forbidden"}, status=403)
+
+    dept = get_object_or_404(Department, id=dept_id)
+    dept.deleted_at = timezone.now()
+    dept.save()
+
+    return Response({"message": "Department deleted"})
 
 # =================================================
 # USER APIs (ADMIN ONLY)
