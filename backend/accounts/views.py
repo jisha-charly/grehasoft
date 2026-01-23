@@ -238,76 +238,57 @@ def delete_department(request, dept_id):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def users_list(request):
-    if not request.user.role or request.user.role.name != "ADMIN":
-        return Response({"error": "Only admin can view users"}, status=403)
+    users = User.objects.filter(deleted_at__isnull=True).select_related("role", "department")
 
-    users = User.objects.select_related("role").all()
-
-    return Response(
-    [
-        {
+    data = []
+    for u in users:
+        data.append({
             "id": u.id,
             "username": u.username,
             "email": u.email,
-            "role": u.role.name if u.role else None,
-            "role_id": u.role.id if u.role else None,  # ✅ ADD THIS
             "is_active": u.is_active,
-            "created_at": u.date_joined,
-        }
-        for u in users
-    ],
-    status=200
-)
+            "role": u.role.name if u.role else None,
+            "role_id": u.role.id if u.role else None,
+            "department": u.department.name if u.department else None,
+            "department_id": u.department.id if u.department else None,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
+        })
+
+    return Response(data)
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_user(request):
-    if not request.user.role or request.user.role.name != "ADMIN":
-        return Response({"error": "Only admin can create users"}, status=403)
+    if request.user.role.name != "ADMIN":
+        return Response({"error": "Forbidden"}, status=403)
 
     data = request.data
 
-    if User.objects.filter(username=data["username"]).exists():
-        return Response({"error": "Username already exists"}, status=400)
-
-    role = Role.objects.filter(
-        id=data["role"],
-        deleted_at__isnull=True
-    ).first()
-
-    if not role:
-        return Response({"error": "Invalid role"}, status=400)
-
     user = User.objects.create_user(
         username=data["username"],
-        email=data.get("email", ""),
+        email=data["email"],
         password=data["password"],
-        role=role,
-        is_staff=role.name == "ADMIN",
+        role_id=data.get("role"),
+        department_id=data.get("department"),
+        is_active=True,
     )
 
-    return Response({"message": "User created successfully"}, status=201)
+    return Response({"message": "User created"})
+
 
 
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def update_user(request, user_id):
-    if not request.user.role or request.user.role.name != "ADMIN":
-        return Response({"error": "Only admin can update users"}, status=403)
+    user = User.objects.get(id=user_id)
 
-    user = get_object_or_404(User, id=user_id)
-    data = request.data
+    user.email = request.data.get("email")
+    user.role_id = request.data.get("role")
+    user.department_id = request.data.get("department")
+    user.is_active = request.data.get("is_active", True)
 
-    if "role" in data:
-        role = get_object_or_404(Role, id=data["role"], deleted_at__isnull=True)
-        user.role = role
-        user.is_staff = role.name in ["ADMIN", "SOFTWARE_PM", "DM_PM"]
-
-    user.email = data.get("email", user.email)
-    user.is_active = data.get("is_active", user.is_active)
     user.save()
-
-    return Response({"message": "User updated successfully"}, status=200)
+    return Response({"message": "User updated"})
 
 
 @api_view(["DELETE"])
