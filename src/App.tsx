@@ -4,6 +4,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import Users from "./pages/admin/Users";
 import Roles from "./pages/admin/Roles";
 import Departments from "./pages/admin/Departments";
+import TaskTypes from "./pages/admin/TaskTypes";
+
 const App: React.FC = () => {
   return (
     <Routes>
@@ -11,12 +13,12 @@ const App: React.FC = () => {
 
       <Route path="/admin" element={<AdminDashboard />}>
         <Route path="dashboard" element={<h2>Dashboard Overview</h2>} />
-        <Route path="/admin/roles" element={<Roles />} /> 
-       <Route path="departments" element={<Departments />} />
- 
+        <Route path="roles" element={<Roles />} />
+        <Route path="departments" element={<Departments />} />
         <Route path="users" element={<Users />} />
+        <Route path="task-types" element={<TaskTypes />} />
+
         <Route path="projects" element={<h2>Projects</h2>} />
-        <Route path="tasks" element={<h2>Tasks</h2>} />
         <Route path="teams" element={<h2>Teams</h2>} />
         <Route path="leads" element={<h2>Leads</h2>} />
         <Route path="clients" element={<h2>Clients</h2>} />

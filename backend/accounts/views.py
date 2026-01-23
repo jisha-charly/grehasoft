@@ -304,3 +304,65 @@ def delete_user(request, user_id):
 
     user.delete()
     return Response({"message": "User deleted successfully"}, status=200)
+
+# =================================================
+# Tasktypes APIs (ADMIN ONLY)
+# =================================================
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_task_types(request):
+    task_types = TaskType.objects.filter(deleted_at__isnull=True)
+
+    return Response([
+        {
+            "id": t.id,
+            "name": t.name,
+            "description": t.description,
+            "created_at": t.created_at,
+        }
+        for t in task_types
+    ])
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_task_type(request):
+    name = request.data.get("name")
+    description = request.data.get("description", "")
+
+    if not name:
+        return Response({"error": "Name required"}, status=400)
+
+    TaskType.objects.create(
+        name=name,
+        description=description
+    )
+
+    return Response({"message": "Task type created"})
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_task_type(request, type_id):
+    try:
+        task_type = TaskType.objects.get(id=type_id)
+        task_type.deleted_at = now()
+        task_type.save()
+        return Response({"message": "Deleted"})
+    except TaskType.DoesNotExist:
+        return Response({"error": "Not found"}, status=404)
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from .models import TaskType
+
+
+@api_view(["PUT"])
+def update_task_type(request, pk):
+    try:
+        task_type = TaskType.objects.get(pk=pk, deleted_at__isnull=True)
+    except TaskType.DoesNotExist:
+        return Response({"error": "Task type not found"}, status=404)
+
+    task_type.name = request.data.get("name", task_type.name)
+    task_type.description = request.data.get("description", task_type.description)
+    task_type.save()
+
+    return Response({"message": "Task type updated successfully"})

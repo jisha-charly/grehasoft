@@ -2,11 +2,8 @@ import { useEffect, useState } from "react";
 import api from "../../api/axios";
 import type { User } from "../../types/user";
 import type { Role } from "../../types/role";
+import type { Department } from "../../types/department";
 
-interface Department {
-  id: number;
-  name: string;
-}
 
 const ITEMS_PER_PAGE = 5;
 
@@ -290,17 +287,62 @@ const Users = () => {
       </table>
 
       {/* ---------- PAGINATION ---------- */}
-      <div className="d-flex gap-2">
-        {Array.from({ length: totalPages }).map((_, i) => (
-          <button
-            key={i}
-            className={`btn btn-sm ${page === i + 1 ? "btn-primary" : "btn-outline-primary"}`}
-            onClick={() => setPage(i + 1)}
-          >
-            {i + 1}
-          </button>
-        ))}
-      </div>
+      {/* ---------- PAGINATION ---------- */}
+{/* ---------- PAGINATION ---------- */}
+{totalPages > 1 && (
+  <div className="d-flex justify-content-center align-items-center gap-2 mt-3 flex-wrap">
+
+    {/* First */}
+    <button
+      className="btn btn-sm btn-outline-primary"
+      disabled={page === 1}
+      onClick={() => setPage(1)}
+    >
+      First
+    </button>
+
+    {/* Previous */}
+    <button
+      className="btn btn-sm btn-outline-primary"
+      disabled={page === 1}
+      onClick={() => setPage(page - 1)}
+    >
+      Previous
+    </button>
+
+    {/* Page Numbers */}
+    {Array.from({ length: totalPages }).map((_, i) => (
+      <button
+        key={i}
+        className={`btn btn-sm ${
+          page === i + 1 ? "btn-primary" : "btn-outline-primary"
+        }`}
+        onClick={() => setPage(i + 1)}
+      >
+        {i + 1}
+      </button>
+    ))}
+
+    {/* Next */}
+    <button
+      className="btn btn-sm btn-outline-primary"
+      disabled={page === totalPages}
+      onClick={() => setPage(page + 1)}
+    >
+      Next
+    </button>
+
+    {/* Last */}
+    <button
+      className="btn btn-sm btn-outline-primary"
+      disabled={page === totalPages}
+      onClick={() => setPage(totalPages)}
+    >
+      Last
+    </button>
+
+  </div>
+)}
 
       {/* ---------- EDIT MODAL ---------- */}
       {editingUser && (

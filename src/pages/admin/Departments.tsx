@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
+import type { Department } from "../../types/department";
 
-interface Department {
-  id: number;
-  name: string;
-  parent_id: number | null;
-  parent_name: string | null;
-  created_at: string;
-}
 
 const Departments = () => {
   const [departments, setDepartments] = useState<Department[]>([]);

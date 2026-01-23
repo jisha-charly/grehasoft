@@ -21,4 +21,9 @@ path("departments/", views.list_departments),
     path("roles/create/", views.create_role),
     path("roles/<int:role_id>/update/", views.update_role),
     path("roles/<int:role_id>/delete/", views.delete_role),
+    # tasktypes
+    path("task-types/", views.list_task_types),
+    path("task-types/create/", views.create_task_type),
+    path("task-types/<int:pk>/update/", views.update_task_type),  # ✅ EDIT
+    path("task-types/<int:pk>/delete/", views.delete_task_type),
 ]
