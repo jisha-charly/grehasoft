@@ -17,7 +17,7 @@ class Department(models.Model):
         "self",
         null=True,
         blank=True,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,  # ✅ IMPORTANT
         related_name="sub_departments"
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -26,6 +26,9 @@ class Department(models.Model):
 
     def __str__(self):
         return self.name
+
+
+  
 
 
 class User(AbstractUser):

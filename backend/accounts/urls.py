@@ -12,8 +12,9 @@ urlpatterns = [
     path("users/<int:user_id>/delete/", views.delete_user),
 # departments
 path("departments/", views.list_departments),
-path("departments/create/", views.create_department),
-path("departments/<int:dept_id>/delete/", views.delete_department),
+    path("departments/create/", views.create_department),
+    path("departments/<int:dept_id>/update/", views.update_department),
+    path("departments/<int:dept_id>/delete/", views.delete_department),
 
     # roles
     path("roles/", views.list_roles),
