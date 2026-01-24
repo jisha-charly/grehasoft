@@ -31,4 +31,30 @@ path("departments/", views.list_departments),
     path("clients/create/", views.create_client),
     path("clients/<int:id>/update/", views.update_client),
     path("clients/<int:id>/delete/", views.delete_client),
+     # projects
+    path("projects/", views.list_projects),
+    path("projects/create/", views.create_project),
+    path("projects/<int:id>/update/", views.update_project),
+    path("projects/<int:id>/delete/", views.delete_project),
+    
+    # Milestones
+    path("projects/<int:project_id>/milestones/", views.list_milestones),
+    path("projects/<int:project_id>/milestones/create/",views.create_milestone),
+    path("milestones/<int:id>/update/",views.update_milestone),
+    path("milestones/<int:id>/delete/",views.delete_milestone ),
+    path("milestones/<int:id>/complete/",views.complete_milestone),
+   
+    # Project Members
+    path( "projects/<int:project_id>/members/",views.list_project_members),
+       
+    path("projects/<int:project_id>/members/add/",views.add_project_member),
+        
+    path( "project-members/<int:id>/update/",views.update_project_member),
+       
+    path("project-members/<int:id>/remove/", views.remove_project_member),
+
+
 ]
+
+
+

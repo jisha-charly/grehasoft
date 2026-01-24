@@ -94,4 +94,112 @@ class Client(models.Model):
 
     def __str__(self):
         return self.name
+# ✅ THIS LINE WAS MISSING
+class Project(models.Model):
 
+    STATUS_CHOICES = [
+        ("not_started", "Not Started"),
+        ("in_progress", "In Progress"),
+        ("on_hold", "On Hold"),
+        ("completed", "Completed"),
+    ]
+
+    name = models.CharField(max_length=200)
+
+    client = models.ForeignKey(
+        "Client",
+        on_delete=models.PROTECT,
+        related_name="projects"
+    )
+
+    department = models.ForeignKey(
+        "Department",
+        on_delete=models.PROTECT
+    )
+
+    project_manager = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="managed_projects"
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="created_projects"
+    )
+
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="not_started"
+    )
+
+    progress_percentage = models.PositiveIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+class ProjectMilestone(models.Model):
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("completed", "Completed"),
+    ]
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="milestones"
+    )
+
+    title = models.CharField(max_length=200)
+    due_date = models.DateField()
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.title
+class ProjectMember(models.Model):
+
+    ROLE_CHOICES = [
+        ("PM", "Project Manager"),
+        ("MEMBER", "Member"),
+        ("QA", "QA"),
+        ("VIEWER", "Viewer"),
+    ]
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="members"
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
+
+    role_in_project = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES
+    )
+
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("project", "user")

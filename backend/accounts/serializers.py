@@ -1,7 +1,7 @@
 import re
 from rest_framework import serializers
 from .models import Client
-
+from .models import Project, ProjectMilestone, ProjectMember
 
 class ClientSerializer(serializers.ModelSerializer):
 
@@ -41,3 +41,77 @@ class ClientSerializer(serializers.ModelSerializer):
             "address",
             "created_at",
         ]
+class ProjectSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Project
+        fields = [
+            "id",
+            "name",
+            "client",
+            "department",
+            "project_manager",
+            "start_date",
+            "end_date",
+            "status",
+            "progress_percentage",
+        ]
+        read_only_fields = ["id"]
+
+    def validate(self, data):
+        start = data.get("start_date")
+        end = data.get("end_date")
+        if start and end and end < start:
+            raise serializers.ValidationError(
+                "End date cannot be before start date"
+            )
+        return data
+
+    
+    
+class ProjectMilestoneSerializer(serializers.ModelSerializer):
+
+     def validate_due_date(self, value):
+        if not value:
+            raise serializers.ValidationError("Due date is required")
+        return value
+
+     class Meta:
+        model = ProjectMilestone
+        fields = [
+            "id",
+            "project",
+            "title",
+            "due_date",
+            "status",
+            "created_at",
+            "updated_at",
+        ]
+   
+    
+class ProjectMemberSerializer(serializers.ModelSerializer):
+
+    def validate(self, data):
+        project = data["project"]
+        user = data["user"]
+
+        if ProjectMember.objects.filter(
+            project=project,
+            user=user
+        ).exists():
+            raise serializers.ValidationError(
+                "User already added to this project"
+            )
+
+        return data
+
+    class Meta:
+        model = ProjectMember
+        fields = [
+            "id",
+            "project",
+            "user",
+            "role_in_project",
+            "added_at",
+        ]
+
