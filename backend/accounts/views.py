@@ -8,7 +8,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from accounts.models import Department
 from accounts.models import Role
-
+from .models import TaskType
+from .models import Client
 User = get_user_model()
 
 # =================================================
@@ -348,10 +349,8 @@ def delete_task_type(request, type_id):
     except TaskType.DoesNotExist:
         return Response({"error": "Not found"}, status=404)
 
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
-from .models import TaskType
+
+
 
 
 @api_view(["PUT"])
@@ -366,3 +365,56 @@ def update_task_type(request, pk):
     task_type.save()
 
     return Response({"message": "Task type updated successfully"})
+# =================================================
+# clients(JWT via /api/token/)
+# =================================================
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_clients(request):
+    clients = Client.objects.filter(deleted_at__isnull=True).order_by("-id")
+    return Response([
+        {
+            "id": c.id,
+            "name": c.name,
+            "email": c.email,
+            "phone": c.phone,
+            "company_name": c.company_name,
+            "gst_no": c.gst_no,
+            "address": c.address,
+            "created_at": c.created_at,
+        }
+        for c in clients
+    ])
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_client(request):
+    Client.objects.create(
+        name=request.data["name"],
+        email=request.data["email"],
+        phone=request.data["phone"],
+        company_name=request.data["company_name"],
+        gst_no=request.data.get("gst_no"),
+        address=request.data["address"],
+    )
+    return Response({"message": "Client created"}, status=201)
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def update_client(request, id):
+    client = Client.objects.get(id=id)
+    for field in ["name", "email", "phone", "company_name", "gst_no", "address"]:
+        setattr(client, field, request.data.get(field))
+    client.save()
+    return Response({"message": "Client updated"})
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_client(request, id):
+    client = Client.objects.get(id=id)
+    client.deleted_at = timezone.now()
+    client.save()
+    return Response({"message": "Client deleted"})

@@ -79,3 +79,19 @@ class TaskType(models.Model):
 
     def __str__(self):
         return self.name
+    
+     # ✅ THIS LINE WAS MISSING
+class Client(models.Model):
+    name = models.CharField(max_length=150)
+    email = models.EmailField(max_length=150)
+    phone = models.CharField(max_length=20)
+    company_name = models.CharField(max_length=200)
+    gst_no = models.CharField(max_length=50, null=True, blank=True)
+    address = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+

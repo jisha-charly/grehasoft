@@ -26,4 +26,9 @@ path("departments/", views.list_departments),
     path("task-types/create/", views.create_task_type),
     path("task-types/<int:pk>/update/", views.update_task_type),  # ✅ EDIT
     path("task-types/<int:pk>/delete/", views.delete_task_type),
+    # clients
+    path("clients/", views.list_clients),
+    path("clients/create/", views.create_client),
+    path("clients/<int:id>/update/", views.update_client),
+    path("clients/<int:id>/delete/", views.delete_client),
 ]
