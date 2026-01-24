@@ -1,20 +1,20 @@
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
+import type { Client } from "../../types/clients";
 
-interface Client {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  company_name: string;
-  gst_no: string | null;
-  address: string;
-  created_at: string;
-}
 
 const ITEMS_PER_PAGE = 5;
 
+/* ---------------- VALIDATORS ---------------- */
+const validators = {
+  name: /^[A-Za-z\s]{3,50}$/,
+  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  phone: /^[6-9]\d{9}$/,
+  gst: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/,
+};
+
 const Clients = () => {
+  /* ---------------- STATE ---------------- */
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -28,10 +28,11 @@ const Clients = () => {
     address: "",
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<Client | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  // ---------- LOAD ----------
+  /* ---------------- LOAD ---------------- */
   const loadClients = async () => {
     const res = await api.get<Client[]>("clients/");
     setClients(res.data);
@@ -41,8 +42,42 @@ const Clients = () => {
     loadClients();
   }, []);
 
-  // ---------- CREATE ----------
+  /* ---------------- VALIDATION ---------------- */
+  const validateClient = (data: any) => {
+    const newErrors: Record<string, string> = {};
+
+    if (!validators.name.test(data.name)) {
+      newErrors.name = "Name must contain only letters (min 3)";
+    }
+
+    if (!validators.email.test(data.email)) {
+      newErrors.email = "Invalid email address";
+    }
+
+    if (!validators.phone.test(data.phone)) {
+      newErrors.phone = "Phone must be 10 digits (India)";
+    }
+
+    if (data.gst_no && !validators.gst.test(data.gst_no)) {
+      newErrors.gst_no = "Invalid GST number";
+    }
+
+    if (!data.company_name.trim()) {
+      newErrors.company_name = "Company name is required";
+    }
+
+    if (!data.address.trim()) {
+      newErrors.address = "Address is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  /* ---------------- CREATE ---------------- */
   const createClient = async () => {
+    if (!validateClient(form)) return;
+
     await api.post("clients/create/", form);
     setForm({
       name: "",
@@ -52,18 +87,22 @@ const Clients = () => {
       gst_no: "",
       address: "",
     });
+    setErrors({});
     loadClients();
   };
 
-  // ---------- UPDATE ----------
+  /* ---------------- UPDATE ---------------- */
   const updateClient = async () => {
     if (!editing) return;
+    if (!validateClient(editing)) return;
+
     await api.put(`clients/${editing.id}/update/`, editing);
     setEditing(null);
+    setErrors({});
     loadClients();
   };
 
-  // ---------- DELETE ----------
+  /* ---------------- DELETE ---------------- */
   const deleteClient = async () => {
     if (!deleteId) return;
     await api.delete(`clients/${deleteId}/delete/`);
@@ -71,37 +110,44 @@ const Clients = () => {
     loadClients();
   };
 
-  // ---------- SEARCH ----------
+  /* ---------------- SEARCH ---------------- */
   const filtered = clients.filter((c) =>
     `${c.name} ${c.email} ${c.company_name} ${c.phone}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
 
-  // ---------- PAGINATION ----------
+  /* ---------------- PAGINATION ---------------- */
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice(
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE
   );
 
+  /* ---------------- UI ---------------- */
   return (
     <div className="container mt-3">
       <h3>Clients</h3>
 
-      {/* CREATE */}
+      {/* CREATE FORM */}
       <div className="card mb-3">
         <div className="card-body row g-2">
           {Object.entries(form).map(([key, value]) => (
             <div className="col-md-4" key={key}>
               <input
-                className="form-control"
+                className={`form-control ${errors[key] ? "is-invalid" : ""}`}
                 placeholder={key.replace("_", " ").toUpperCase()}
                 value={value}
+                type={key === "phone" ? "tel" : "text"}
+                maxLength={key === "phone" ? 10 : undefined}
+                inputMode={key === "phone" ? "numeric" : undefined}
                 onChange={(e) =>
                   setForm({ ...form, [key]: e.target.value })
                 }
               />
+              {errors[key] && (
+                <div className="invalid-feedback">{errors[key]}</div>
+              )}
             </div>
           ))}
           <div className="col-md-12">
@@ -165,15 +211,43 @@ const Clients = () => {
       {/* PAGINATION */}
       {totalPages > 1 && (
         <div className="d-flex gap-1">
-          <button className="btn btn-sm btn-outline-secondary" onClick={() => setPage(1)}>First</button>
-          <button className="btn btn-sm btn-outline-secondary" disabled={page === 1} onClick={() => setPage(page - 1)}>Prev</button>
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            onClick={() => setPage(1)}
+          >
+            First
+          </button>
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
+          >
+            Prev
+          </button>
           {Array.from({ length: totalPages }).map((_, i) => (
-            <button key={i} className={`btn btn-sm ${page === i + 1 ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setPage(i + 1)}>
+            <button
+              key={i}
+              className={`btn btn-sm ${
+                page === i + 1 ? "btn-primary" : "btn-outline-primary"
+              }`}
+              onClick={() => setPage(i + 1)}
+            >
               {i + 1}
             </button>
           ))}
-          <button className="btn btn-sm btn-outline-secondary" disabled={page === totalPages} onClick={() => setPage(page + 1)}>Next</button>
-          <button className="btn btn-sm btn-outline-secondary" onClick={() => setPage(totalPages)}>Last</button>
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            disabled={page === totalPages}
+            onClick={() => setPage(page + 1)}
+          >
+            Next
+          </button>
+          <button
+            className="btn btn-sm btn-outline-secondary"
+            onClick={() => setPage(totalPages)}
+          >
+            Last
+          </button>
         </div>
       )}
 
@@ -192,19 +266,36 @@ const Clients = () => {
                     key !== "created_at" && (
                       <div className="col-md-6" key={key}>
                         <input
-                          className="form-control"
+                          className={`form-control ${
+                            errors[key] ? "is-invalid" : ""
+                          }`}
                           value={value ?? ""}
                           onChange={(e) =>
-                            setEditing({ ...editing, [key]: e.target.value })
+                            setEditing({
+                              ...editing,
+                              [key]: e.target.value,
+                            })
                           }
                         />
+                        {errors[key] && (
+                          <div className="invalid-feedback">
+                            {errors[key]}
+                          </div>
+                        )}
                       </div>
                     )
                 )}
               </div>
               <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setEditing(null)}>Cancel</button>
-                <button className="btn btn-success" onClick={updateClient}>Save</button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setEditing(null)}
+                >
+                  Cancel
+                </button>
+                <button className="btn btn-success" onClick={updateClient}>
+                  Save
+                </button>
               </div>
             </div>
           </div>
@@ -218,8 +309,15 @@ const Clients = () => {
             <div className="modal-content">
               <div className="modal-body">Delete this client?</div>
               <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setDeleteId(null)}>Cancel</button>
-                <button className="btn btn-danger" onClick={deleteClient}>Delete</button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setDeleteId(null)}
+                >
+                  Cancel
+                </button>
+                <button className="btn btn-danger" onClick={deleteClient}>
+                  Delete
+                </button>
               </div>
             </div>
           </div>

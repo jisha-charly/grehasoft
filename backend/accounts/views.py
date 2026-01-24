@@ -10,6 +10,7 @@ from accounts.models import Department
 from accounts.models import Role
 from .models import TaskType
 from .models import Client
+from .serializers import ClientSerializer
 User = get_user_model()
 
 # =================================================
@@ -366,55 +367,73 @@ def update_task_type(request, pk):
 
     return Response({"message": "Task type updated successfully"})
 # =================================================
-# clients(JWT via /api/token/)
+# Clients (JWT via /api/token/)
 # =================================================
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_clients(request):
     clients = Client.objects.filter(deleted_at__isnull=True).order_by("-id")
-    return Response([
-        {
-            "id": c.id,
-            "name": c.name,
-            "email": c.email,
-            "phone": c.phone,
-            "company_name": c.company_name,
-            "gst_no": c.gst_no,
-            "address": c.address,
-            "created_at": c.created_at,
-        }
-        for c in clients
-    ])
+    serializer = ClientSerializer(clients, many=True)
+    return Response(serializer.data)
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_client(request):
-    Client.objects.create(
-        name=request.data["name"],
-        email=request.data["email"],
-        phone=request.data["phone"],
-        company_name=request.data["company_name"],
-        gst_no=request.data.get("gst_no"),
-        address=request.data["address"],
+    serializer = ClientSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED
+        )
+
+    return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
     )
-    return Response({"message": "Client created"}, status=201)
+
 
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def update_client(request, id):
-    client = Client.objects.get(id=id)
-    for field in ["name", "email", "phone", "company_name", "gst_no", "address"]:
-        setattr(client, field, request.data.get(field))
-    client.save()
-    return Response({"message": "Client updated"})
+    try:
+        client = Client.objects.get(id=id, deleted_at__isnull=True)
+    except Client.DoesNotExist:
+        return Response(
+            {"detail": "Client not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    serializer = ClientSerializer(client, data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+
+    return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
+    )
 
 
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def delete_client(request, id):
-    client = Client.objects.get(id=id)
+    try:
+        client = Client.objects.get(id=id, deleted_at__isnull=True)
+    except Client.DoesNotExist:
+        return Response(
+            {"detail": "Client not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
     client.deleted_at = timezone.now()
     client.save()
-    return Response({"message": "Client deleted"})
+
+    return Response(
+        {"message": "Client deleted"},
+        status=status.HTTP_204_NO_CONTENT
+    )
