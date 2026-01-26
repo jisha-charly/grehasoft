@@ -10,6 +10,9 @@ export const updateProject = (id: number, data: any) =>
 
 export const deleteProject = (id: number) =>
   api.delete(`projects/${id}/delete/`);
+export const getProjectById = (id: number) =>
+  api.get(`/projects/${id}/`);
+
 
 
 /* ================= MILESTONES ================= */

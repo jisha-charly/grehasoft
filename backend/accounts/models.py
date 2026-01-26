@@ -199,7 +199,19 @@ class ProjectMember(models.Model):
         choices=ROLE_CHOICES
     )
 
-    added_at = models.DateTimeField(auto_now_add=True)
+    # ✅ AUDIT FIELDS
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ("project", "user")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.project.name} ({self.role_in_project})"
+
+    # ✅ SOFT DELETE
+    def soft_delete(self):
+        self.deleted_at = timezone.now()
+        self.save()

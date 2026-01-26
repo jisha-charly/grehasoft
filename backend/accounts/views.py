@@ -489,6 +489,17 @@ def delete_project(request, id):
     project.deleted_at = timezone.now()
     project.save()
     return Response(status=204)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_project(request, id):
+    try:
+        project = Project.objects.get(id=id, deleted_at__isnull=True)
+    except Project.DoesNotExist:
+        return Response({"detail": "Project not found"}, status=404)
+
+    serializer = ProjectSerializer(project)
+    return Response(serializer.data)
+
 
 # =================================================
 # Project milestones (JWT via /api/token/)
@@ -591,7 +602,8 @@ def complete_milestone(request, id):
 @permission_classes([IsAuthenticated])
 def list_project_members(request, project_id):
     members = ProjectMember.objects.filter(
-        project_id=project_id
+        project_id=project_id,
+        deleted_at__isnull=True
     ).select_related("user")
 
     serializer = ProjectMemberSerializer(members, many=True)
@@ -611,20 +623,22 @@ def add_project_member(request, project_id):
     data["project"] = project_id
 
     serializer = ProjectMemberSerializer(data=data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=201)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
 
-    return Response(serializer.errors, status=400)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def update_project_member(request, id):
     try:
-        member = ProjectMember.objects.get(id=id)
+        member = ProjectMember.objects.get(
+            id=id,
+            deleted_at__isnull=True
+        )
     except ProjectMember.DoesNotExist:
         return Response(
             {"detail": "Project member not found"},
-            status=404
+            status=status.HTTP_404_NOT_FOUND
         )
 
     serializer = ProjectMemberSerializer(
@@ -632,22 +646,25 @@ def update_project_member(request, id):
         data=request.data,
         partial=True
     )
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
 
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
-
-    return Response(serializer.errors, status=400)
+    return Response(serializer.data)
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def remove_project_member(request, id):
     try:
-        member = ProjectMember.objects.get(id=id)
+        member = ProjectMember.objects.get(
+            id=id,
+            deleted_at__isnull=True
+        )
     except ProjectMember.DoesNotExist:
         return Response(
             {"detail": "Project member not found"},
-            status=404
+            status=status.HTTP_404_NOT_FOUND
         )
 
-    member.delete()
-    return Response(status=204)
+    member.deleted_at = timezone.now()
+    member.save()
+
+    return Response(status=status.HTTP_204_NO_CONTENT)

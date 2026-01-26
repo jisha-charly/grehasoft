@@ -36,6 +36,8 @@ path("departments/", views.list_departments),
     path("projects/create/", views.create_project),
     path("projects/<int:id>/update/", views.update_project),
     path("projects/<int:id>/delete/", views.delete_project),
+    path("projects/<int:id>/", views.get_project),
+
     
     # Milestones
     path("projects/<int:project_id>/milestones/", views.list_milestones),

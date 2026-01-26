@@ -99,11 +99,12 @@ class ProjectMemberSerializer(serializers.ModelSerializer):
         project = data.get("project")
         user = data.get("user")
 
-        # 🔒 Prevent duplicate member (only on CREATE)
+        # 🔒 Prevent duplicate member (ONLY on create)
         if self.instance is None:
             if ProjectMember.objects.filter(
                 project=project,
-                user=user
+                user=user,
+                deleted_at__isnull=True
             ).exists():
                 raise serializers.ValidationError(
                     "User already added to this project"
@@ -117,8 +118,8 @@ class ProjectMemberSerializer(serializers.ModelSerializer):
             "id",
             "project",
             "user",
-            "username",        # ✅ ADDED
+            "username",
             "role_in_project",
-            "added_at",
+            "created_at",
+            "updated_at",
         ]
-
