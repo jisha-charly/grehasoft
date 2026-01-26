@@ -4,23 +4,25 @@ import {
   addMilestone,
   updateMilestone,
   deleteMilestone,
-} from "../../api/projects";
+} from "../../api/services/milestone.service";
+
+import type { Milestone } from "../../types/milestone";
 
 const Milestones = ({ projectId }: { projectId: number }) => {
-  const [milestones, setMilestones] = useState<any[]>([]);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
 
-  const [editing, setEditing] = useState<any | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<any | null>(null);
+  const [editing, setEditing] = useState<Milestone | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Milestone | null>(null);
 
-  const load = async () => {
-    const res = await getMilestones(projectId);
-    setMilestones(res.data);
+  const loadMilestones = async () => {
+    const data = await getMilestones(projectId);
+    setMilestones(data);
   };
 
   useEffect(() => {
-    load();
+    loadMilestones();
   }, [projectId]);
 
   /* CREATE */
@@ -34,11 +36,13 @@ const Milestones = ({ projectId }: { projectId: number }) => {
 
     setTitle("");
     setDueDate("");
-    load();
+    loadMilestones();
   };
 
   /* UPDATE */
   const saveEdit = async () => {
+    if (!editing) return;
+
     await updateMilestone(editing.id, {
       title: editing.title,
       due_date: editing.due_date,
@@ -46,15 +50,16 @@ const Milestones = ({ projectId }: { projectId: number }) => {
     });
 
     setEditing(null);
-    load();
+    loadMilestones();
   };
 
   /* DELETE */
   const confirmRemove = async () => {
     if (!confirmDelete) return;
+
     await deleteMilestone(confirmDelete.id);
     setConfirmDelete(null);
-    load();
+    loadMilestones();
   };
 
   return (
@@ -68,7 +73,7 @@ const Milestones = ({ projectId }: { projectId: number }) => {
             className="form-control"
             placeholder="Milestone title"
             value={title}
-            onChange={e => setTitle(e.target.value)}
+            onChange={(e) => setTitle(e.target.value)}
           />
         </div>
 
@@ -77,7 +82,7 @@ const Milestones = ({ projectId }: { projectId: number }) => {
             type="date"
             className="form-control"
             value={dueDate}
-            onChange={e => setDueDate(e.target.value)}
+            onChange={(e) => setDueDate(e.target.value)}
           />
         </div>
 
@@ -100,14 +105,14 @@ const Milestones = ({ projectId }: { projectId: number }) => {
         </thead>
 
         <tbody>
-          {milestones.map(m => (
+          {milestones.map((m) => (
             <tr key={m.id}>
               <td>
                 {editing?.id === m.id ? (
                   <input
                     className="form-control form-control-sm"
                     value={editing.title}
-                    onChange={e =>
+                    onChange={(e) =>
                       setEditing({ ...editing, title: e.target.value })
                     }
                   />
@@ -122,7 +127,7 @@ const Milestones = ({ projectId }: { projectId: number }) => {
                     type="date"
                     className="form-control form-control-sm"
                     value={editing.due_date}
-                    onChange={e =>
+                    onChange={(e) =>
                       setEditing({ ...editing, due_date: e.target.value })
                     }
                   />
@@ -136,8 +141,11 @@ const Milestones = ({ projectId }: { projectId: number }) => {
                   <select
                     className="form-select form-select-sm"
                     value={editing.status}
-                    onChange={e =>
-                      setEditing({ ...editing, status: e.target.value })
+                    onChange={(e) =>
+                      setEditing({
+                        ...editing,
+                        status: e.target.value as Milestone["status"],
+                      })
                     }
                   >
                     <option value="pending">Pending</option>
@@ -146,9 +154,7 @@ const Milestones = ({ projectId }: { projectId: number }) => {
                 ) : (
                   <span
                     className={`badge bg-${
-                      m.status === "completed"
-                        ? "success"
-                        : "secondary"
+                      m.status === "completed" ? "success" : "secondary"
                     }`}
                   >
                     {m.status}
@@ -202,20 +208,17 @@ const Milestones = ({ projectId }: { projectId: number }) => {
         </tbody>
       </table>
 
-      {/* DELETE CONFIRM MODAL */}
+      {/* DELETE MODAL */}
       {confirmDelete && (
         <div className="modal show d-block bg-dark bg-opacity-50">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Confirm Delete</h5>
+                <h5>Confirm Delete</h5>
               </div>
-
               <div className="modal-body">
-                Delete milestone{" "}
-                <strong>{confirmDelete.title}</strong>?
+                Delete milestone <strong>{confirmDelete.title}</strong>?
               </div>
-
               <div className="modal-footer">
                 <button
                   className="btn btn-secondary"
@@ -223,10 +226,7 @@ const Milestones = ({ projectId }: { projectId: number }) => {
                 >
                   Cancel
                 </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={confirmRemove}
-                >
+                <button className="btn btn-danger" onClick={confirmRemove}>
                   Delete
                 </button>
               </div>

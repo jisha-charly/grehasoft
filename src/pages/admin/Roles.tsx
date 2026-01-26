@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
-import api from "../../api/axios";
 import type { Role } from "../../types/role";
+import {
+  getRoles,
+  createRole,
+  deleteRole,
+} from "../../api/services/role.service";
 
 const Roles = () => {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -14,20 +18,20 @@ const Roles = () => {
     type: "success" | "danger";
   } | null>(null);
 
-  // ---------------- LOAD ROLES ----------------
+  /* ---------------- LOAD ---------------- */
   const loadRoles = async () => {
-    const res = await api.get("/roles/");
-    setRoles(res.data);
+    const data = await getRoles();
+    setRoles(data);
   };
 
   useEffect(() => {
     loadRoles();
   }, []);
 
-  // ---------------- CREATE ROLE ----------------
-  const createRole = async () => {
+  /* ---------------- CREATE ---------------- */
+  const handleCreate = async () => {
     try {
-      await api.post("/roles/create/", { name, description });
+      await createRole({ name, description });
       setName("");
       setDescription("");
       loadRoles();
@@ -40,10 +44,10 @@ const Roles = () => {
     }
   };
 
-  // ---------------- DELETE ROLE ----------------
-  const deleteRole = async (id: number) => {
+  /* ---------------- DELETE ---------------- */
+  const handleDelete = async (id: number) => {
     try {
-      await api.delete(`/roles/${id}/delete/`);
+      await deleteRole(id);
       loadRoles();
       showToast("Role deleted successfully", "success");
     } catch (error: any) {
@@ -54,14 +58,14 @@ const Roles = () => {
     }
   };
 
-  // ---------------- SEARCH FILTER ----------------
+  /* ---------------- SEARCH ---------------- */
   const filteredRoles = roles.filter(
     (r) =>
       r.name.toLowerCase().includes(search.toLowerCase()) ||
       r.description.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ---------------- TOAST HANDLER ----------------
+  /* ---------------- TOAST ---------------- */
   const showToast = (message: string, type: "success" | "danger") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
@@ -75,7 +79,7 @@ const Roles = () => {
         </div>
 
         <div className="card-body">
-          {/* 🔍 SEARCH */}
+          {/* SEARCH */}
           <div className="mb-3">
             <input
               className="form-control"
@@ -85,7 +89,7 @@ const Roles = () => {
             />
           </div>
 
-          {/* ➕ CREATE ROLE */}
+          {/* CREATE */}
           <div className="row g-2 mb-4">
             <div className="col-md-4">
               <input
@@ -104,13 +108,13 @@ const Roles = () => {
               />
             </div>
             <div className="col-md-2 d-grid">
-              <button className="btn btn-primary" onClick={createRole}>
+              <button className="btn btn-primary" onClick={handleCreate}>
                 Create
               </button>
             </div>
           </div>
 
-          {/* 📋 ROLES TABLE */}
+          {/* TABLE */}
           <table className="table table-bordered table-hover align-middle">
             <thead className="table-light">
               <tr>
@@ -134,7 +138,7 @@ const Roles = () => {
                     <td>
                       <button
                         className="btn btn-sm btn-danger"
-                        onClick={() => deleteRole(r.id)}
+                        onClick={() => handleDelete(r.id)}
                       >
                         Delete
                       </button>
@@ -147,7 +151,7 @@ const Roles = () => {
         </div>
       </div>
 
-      {/* 🔔 TOAST */}
+      {/* TOAST */}
       {toast && (
         <div
           className={`toast show position-fixed bottom-0 end-0 m-3 text-white bg-${toast.type}`}

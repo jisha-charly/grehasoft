@@ -1,19 +1,25 @@
 import { useEffect, useState } from "react";
-import { getProjects } from "../../api/projects";
+import { getProjects } from "../../api/services/project.service";
 import ProjectsTable from "../../components/projects/ProjectsTable";
 import ProjectForm from "../../components/projects/ProjectForm";
 import { isAdmin } from "../../utils/auth";
 
 const Projects = () => {
   const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const load = async () => {
-    const res = await getProjects();
-    setProjects(res.data);
+  const loadProjects = async () => {
+    setLoading(true);
+    try {
+      const data = await getProjects();
+      setProjects(data);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    load();
+    loadProjects();
   }, []);
 
   return (
@@ -21,9 +27,13 @@ const Projects = () => {
       <h3>Projects</h3>
 
       {/* ✅ ADMIN ONLY */}
-      { <ProjectForm onSuccess={load} />}
+      {<ProjectForm onSuccess={loadProjects} />}
 
-      <ProjectsTable projects={projects} />
+      {loading ? (
+        <div className="text-muted">Loading projects...</div>
+      ) : (
+        <ProjectsTable projects={projects} />
+      )}
     </div>
   );
 };

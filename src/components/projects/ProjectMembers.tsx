@@ -4,31 +4,37 @@ import {
   addMember,
   updateMember,
   removeMember,
-} from "../../api/projects";
-import api from "../../api/axios";
+} from "../../api/services/projectMember.service";
+import { getUsers } from "../../api/services/user.service";
+
+import type { ProjectMember } from "../../types/projectMember";
+import type { User } from "../../types/user";
+
+type ProjectRole = "PM" | "MEMBER" | "QA" | "VIEWER";
 
 interface Props {
   projectId: number;
 }
 
 const ProjectMembers = ({ projectId }: Props) => {
-  const [members, setMembers] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const [members, setMembers] = useState<ProjectMember[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
 
-  const [userId, setUserId] = useState("");
-  const [role, setRole] = useState("MEMBER");
+  const [userId, setUserId] = useState<number | "">("");
+  const [role, setRole] = useState<ProjectRole>("MEMBER");
 
-  const [editing, setEditing] = useState<any | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<any | null>(null);
+  const [editing, setEditing] = useState<ProjectMember | null>(null);
+  const [confirmDelete, setConfirmDelete] =
+    useState<ProjectMember | null>(null);
 
   const loadMembers = async () => {
-    const res = await getMembers(projectId);
-    setMembers(res.data);
+    const data = await getMembers(projectId);
+    setMembers(data);
   };
 
   const loadUsers = async () => {
-    const res = await api.get("/users/");
-    setUsers(res.data);
+    const data = await getUsers();
+    setUsers(data);
   };
 
   useEffect(() => {
@@ -38,10 +44,7 @@ const ProjectMembers = ({ projectId }: Props) => {
 
   /* ADD MEMBER */
   const submit = async () => {
-    if (!userId) {
-      alert("Select a user");
-      return;
-    }
+    if (!userId) return;
 
     await addMember(projectId, {
       user: Number(userId),
@@ -55,16 +58,20 @@ const ProjectMembers = ({ projectId }: Props) => {
 
   /* UPDATE MEMBER */
   const saveEdit = async () => {
+    if (!editing) return;
+
     await updateMember(editing.id, {
       role_in_project: editing.role_in_project,
     });
+
     setEditing(null);
     loadMembers();
   };
 
-  /* CONFIRM DELETE */
+  /* REMOVE MEMBER */
   const confirmRemove = async () => {
     if (!confirmDelete) return;
+
     await removeMember(confirmDelete.id);
     setConfirmDelete(null);
     loadMembers();
@@ -72,18 +79,20 @@ const ProjectMembers = ({ projectId }: Props) => {
 
   return (
     <>
-      <h5>Project Members</h5>
+      <h5 className="mb-3">Project Members</h5>
 
-      {/* ADD MEMBER */}
-      <div className="row g-2 mb-3">
-        <div className="col-md-6">
+      {/* ADD MEMBER FORM */}
+      <div className="row g-2 mb-4">
+        <div className="col-md-5">
           <select
             className="form-select"
             value={userId}
-            onChange={e => setUserId(e.target.value)}
+            onChange={(e) =>
+              setUserId(e.target.value ? Number(e.target.value) : "")
+            }
           >
             <option value="">Select User</option>
-            {users.map(u => (
+            {users.map((u) => (
               <option key={u.id} value={u.id}>
                 {u.username}
               </option>
@@ -95,7 +104,9 @@ const ProjectMembers = ({ projectId }: Props) => {
           <select
             className="form-select"
             value={role}
-            onChange={e => setRole(e.target.value)}
+            onChange={(e) =>
+              setRole(e.target.value as ProjectRole)
+            }
           >
             <option value="PM">PM</option>
             <option value="MEMBER">Member</option>
@@ -104,7 +115,7 @@ const ProjectMembers = ({ projectId }: Props) => {
           </select>
         </div>
 
-        <div className="col-md-2">
+        <div className="col-md-3">
           <button className="btn btn-success w-100" onClick={submit}>
             Add Member
           </button>
@@ -112,16 +123,16 @@ const ProjectMembers = ({ projectId }: Props) => {
       </div>
 
       {/* MEMBERS TABLE */}
-      <table className="table table-bordered">
-        <thead>
+      <table className="table table-bordered align-middle">
+        <thead className="table-light">
           <tr>
             <th>User</th>
             <th>Role</th>
-            <th style={{ width: "160px" }}>Action</th>
+            <th style={{ width: 180 }}>Action</th>
           </tr>
         </thead>
         <tbody>
-          {members.map(m => (
+          {members.map((m) => (
             <tr key={m.id}>
               <td>{m.username}</td>
 
@@ -130,10 +141,10 @@ const ProjectMembers = ({ projectId }: Props) => {
                   <select
                     className="form-select form-select-sm"
                     value={editing.role_in_project}
-                    onChange={e =>
+                    onChange={(e) =>
                       setEditing({
                         ...editing,
-                        role_in_project: e.target.value,
+                        role_in_project: e.target.value as ProjectRole,
                       })
                     }
                   >
@@ -203,8 +214,8 @@ const ProjectMembers = ({ projectId }: Props) => {
               </div>
 
               <div className="modal-body">
-                Remove <strong>{confirmDelete.username}</strong> from this
-                project?
+                Remove{" "}
+                <strong>{confirmDelete.username}</strong> from this project?
               </div>
 
               <div className="modal-footer">

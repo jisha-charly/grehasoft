@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
-import api from "../../api/axios";
 import type { Department } from "../../types/department";
-
+import {
+  getDepartments,
+  createDepartment,
+  updateDepartment,
+  deleteDepartment,
+} from "../../api/services/department.service";
 
 const Departments = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -12,21 +16,21 @@ const Departments = () => {
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const [deleteDeptId, setDeleteDeptId] = useState<number | null>(null);
 
-  // ---------------- LOAD ----------------
+  /* ---------------- LOAD ---------------- */
   const loadDepartments = async () => {
-    const res = await api.get<Department[]>("departments/");
-    setDepartments(res.data);
+    const data = await getDepartments();
+    setDepartments(data);
   };
 
   useEffect(() => {
     loadDepartments();
   }, []);
 
-  // ---------------- CREATE ----------------
-  const createDepartment = async () => {
+  /* ---------------- CREATE ---------------- */
+  const handleCreate = async () => {
     if (!name.trim()) return;
 
-    await api.post("departments/create/", {
+    await createDepartment({
       name,
       parent_id: parentId || null,
     });
@@ -36,11 +40,11 @@ const Departments = () => {
     loadDepartments();
   };
 
-  // ---------------- UPDATE ----------------
-  const updateDepartment = async () => {
+  /* ---------------- UPDATE ---------------- */
+  const handleUpdate = async () => {
     if (!editingDept) return;
 
-    await api.put(`departments/${editingDept.id}/update/`, {
+    await updateDepartment(editingDept.id, {
       name: editingDept.name,
       parent_id: editingDept.parent_id,
     });
@@ -49,27 +53,28 @@ const Departments = () => {
     loadDepartments();
   };
 
-  // ---------------- DELETE (SOFT) ----------------
-  const confirmDelete = async () => {
+  /* ---------------- DELETE ---------------- */
+  const handleDelete = async () => {
     if (!deleteDeptId) return;
 
-    await api.delete(`departments/${deleteDeptId}/delete/`);
+    await deleteDepartment(deleteDeptId);
     setDeleteDeptId(null);
     loadDepartments();
   };
 
-  // ---------------- SEARCH ----------------
+  /* ---------------- SEARCH ---------------- */
   const filteredDepartments = departments.filter((d) =>
     `${d.name} ${d.parent_name ?? ""}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
 
+  /* ---------------- UI ---------------- */
   return (
     <div className="container mt-3">
       <h3>Departments</h3>
 
-      {/* ---------- CREATE ---------- */}
+      {/* CREATE */}
       <div className="card mb-3">
         <div className="card-body d-flex gap-2 flex-wrap">
           <input
@@ -92,13 +97,13 @@ const Departments = () => {
             ))}
           </select>
 
-          <button className="btn btn-primary" onClick={createDepartment}>
+          <button className="btn btn-primary" onClick={handleCreate}>
             Add
           </button>
         </div>
       </div>
 
-      {/* ---------- SEARCH ---------- */}
+      {/* SEARCH */}
       <input
         className="form-control mb-3"
         placeholder="Search departments..."
@@ -106,7 +111,7 @@ const Departments = () => {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {/* ---------- TABLE ---------- */}
+      {/* TABLE */}
       <table className="table table-bordered table-hover">
         <thead className="table-light">
           <tr>
@@ -141,7 +146,7 @@ const Departments = () => {
         </tbody>
       </table>
 
-      {/* ---------- EDIT MODAL ---------- */}
+      {/* EDIT MODAL */}
       {editingDept && (
         <div className="modal show d-block bg-dark bg-opacity-50">
           <div className="modal-dialog modal-dialog-centered">
@@ -185,7 +190,7 @@ const Departments = () => {
                 >
                   Cancel
                 </button>
-                <button className="btn btn-success" onClick={updateDepartment}>
+                <button className="btn btn-success" onClick={handleUpdate}>
                   Save
                 </button>
               </div>
@@ -194,7 +199,7 @@ const Departments = () => {
         </div>
       )}
 
-      {/* ---------- DELETE MODAL ---------- */}
+      {/* DELETE MODAL */}
       {deleteDeptId && (
         <div className="modal show d-block bg-dark bg-opacity-50">
           <div className="modal-dialog modal-dialog-centered">
@@ -209,7 +214,7 @@ const Departments = () => {
                 >
                   Cancel
                 </button>
-                <button className="btn btn-danger" onClick={confirmDelete}>
+                <button className="btn btn-danger" onClick={handleDelete}>
                   Delete
                 </button>
               </div>

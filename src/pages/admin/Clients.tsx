@@ -1,25 +1,22 @@
 import { useEffect, useState } from "react";
-import api from "../../api/axios";
 import type { Client } from "../../types/clients";
-
+import {
+  getClients,
+  createClient,
+  updateClient,
+  deleteClient,
+} from "../../api/services/clients";
+import { clientValidators } from "../../utils/validators";
 
 const ITEMS_PER_PAGE = 5;
 
-/* ---------------- VALIDATORS ---------------- */
-const validators = {
-  name: /^[A-Za-z\s]{3,50}$/,
-  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  phone: /^[6-9]\d{9}$/,
-  gst: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/,
-};
-
 const Clients = () => {
-  /* ---------------- STATE ---------------- */
+  /* ================= STATE ================= */
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<Partial<Client>>({
     name: "",
     email: "",
     phone: "",
@@ -32,53 +29,77 @@ const Clients = () => {
   const [editing, setEditing] = useState<Client | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  /* ---------------- LOAD ---------------- */
+  /* ================= LOAD ================= */
   const loadClients = async () => {
-    const res = await api.get<Client[]>("clients/");
-    setClients(res.data);
+    const data = await getClients();
+    setClients(data);
   };
 
   useEffect(() => {
     loadClients();
   }, []);
 
-  /* ---------------- VALIDATION ---------------- */
-  const validateClient = (data: any) => {
-    const newErrors: Record<string, string> = {};
+  /* ================= VALIDATION ================= */
+  const validate = (data: Partial<Client>) => {
+    const e: Record<string, string> = {};
 
-    if (!validators.name.test(data.name)) {
-      newErrors.name = "Name must contain only letters (min 3)";
+    if (!clientValidators.name.test(data.name || "")) {
+      e.name = "Name must be at least 3 letters";
     }
 
-    if (!validators.email.test(data.email)) {
-      newErrors.email = "Invalid email address";
+    if (!clientValidators.email.test(data.email || "")) {
+      e.email = "Invalid email address";
     }
 
-    if (!validators.phone.test(data.phone)) {
-      newErrors.phone = "Phone must be 10 digits (India)";
+    if (!clientValidators.phone.test(data.phone || "")) {
+      e.phone = "Phone must be 10 digits (India)";
     }
 
-    if (data.gst_no && !validators.gst.test(data.gst_no)) {
-      newErrors.gst_no = "Invalid GST number";
+    if (data.gst_no && !clientValidators.gst.test(data.gst_no)) {
+      e.gst_no = "Invalid GST number";
     }
 
-    if (!data.company_name.trim()) {
-      newErrors.company_name = "Company name is required";
+    if (!data.company_name?.trim()) {
+      e.company_name = "Company name required";
     }
 
-    if (!data.address.trim()) {
-      newErrors.address = "Address is required";
+    if (!data.address?.trim()) {
+      e.address = "Address required";
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
-  /* ---------------- CREATE ---------------- */
-  const createClient = async () => {
-    if (!validateClient(form)) return;
+  /* ================= CREATE ================= */
+  const handleCreate = async () => {
+    if (!validate(form)) return;
 
-    await api.post("clients/create/", form);
+    await createClient(form);
+    resetForm();
+    loadClients();
+  };
+
+  /* ================= UPDATE ================= */
+  const handleUpdate = async () => {
+    if (!editing) return;
+    if (!validate(editing)) return;
+
+    await updateClient(editing.id, editing);
+    setEditing(null);
+    loadClients();
+  };
+
+  /* ================= DELETE ================= */
+  const handleDelete = async () => {
+    if (!deleteId) return;
+
+    await deleteClient(deleteId);
+    setDeleteId(null);
+    loadClients();
+  };
+
+  const resetForm = () => {
     setForm({
       name: "",
       email: "",
@@ -88,43 +109,23 @@ const Clients = () => {
       address: "",
     });
     setErrors({});
-    loadClients();
   };
 
-  /* ---------------- UPDATE ---------------- */
-  const updateClient = async () => {
-    if (!editing) return;
-    if (!validateClient(editing)) return;
-
-    await api.put(`clients/${editing.id}/update/`, editing);
-    setEditing(null);
-    setErrors({});
-    loadClients();
-  };
-
-  /* ---------------- DELETE ---------------- */
-  const deleteClient = async () => {
-    if (!deleteId) return;
-    await api.delete(`clients/${deleteId}/delete/`);
-    setDeleteId(null);
-    loadClients();
-  };
-
-  /* ---------------- SEARCH ---------------- */
+  /* ================= SEARCH ================= */
   const filtered = clients.filter((c) =>
     `${c.name} ${c.email} ${c.company_name} ${c.phone}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
 
-  /* ---------------- PAGINATION ---------------- */
+  /* ================= PAGINATION ================= */
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice(
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE
   );
 
-  /* ---------------- UI ---------------- */
+  /* ================= UI ================= */
   return (
     <div className="container mt-3">
       <h3>Clients</h3>
@@ -135,12 +136,11 @@ const Clients = () => {
           {Object.entries(form).map(([key, value]) => (
             <div className="col-md-4" key={key}>
               <input
-                className={`form-control ${errors[key] ? "is-invalid" : ""}`}
+                className={`form-control ${
+                  errors[key] ? "is-invalid" : ""
+                }`}
                 placeholder={key.replace("_", " ").toUpperCase()}
-                value={value}
-                type={key === "phone" ? "tel" : "text"}
-                maxLength={key === "phone" ? 10 : undefined}
-                inputMode={key === "phone" ? "numeric" : undefined}
+                value={value ?? ""}
                 onChange={(e) =>
                   setForm({ ...form, [key]: e.target.value })
                 }
@@ -150,8 +150,9 @@ const Clients = () => {
               )}
             </div>
           ))}
+
           <div className="col-md-12">
-            <button className="btn btn-primary" onClick={createClient}>
+            <button className="btn btn-primary" onClick={handleCreate}>
               Add Client
             </button>
           </div>
@@ -205,49 +206,33 @@ const Clients = () => {
               </td>
             </tr>
           ))}
+
+          {!paginated.length && (
+            <tr>
+              <td colSpan={6} className="text-center">
+                No clients found
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
 
       {/* PAGINATION */}
       {totalPages > 1 && (
-        <div className="d-flex gap-1">
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            onClick={() => setPage(1)}
-          >
-            First
-          </button>
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-          >
-            Prev
-          </button>
+        <div className="d-flex gap-1 flex-wrap">
           {Array.from({ length: totalPages }).map((_, i) => (
             <button
               key={i}
               className={`btn btn-sm ${
-                page === i + 1 ? "btn-primary" : "btn-outline-primary"
+                page === i + 1
+                  ? "btn-primary"
+                  : "btn-outline-primary"
               }`}
               onClick={() => setPage(i + 1)}
             >
               {i + 1}
             </button>
           ))}
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            disabled={page === totalPages}
-            onClick={() => setPage(page + 1)}
-          >
-            Next
-          </button>
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            onClick={() => setPage(totalPages)}
-          >
-            Last
-          </button>
         </div>
       )}
 
@@ -293,7 +278,10 @@ const Clients = () => {
                 >
                   Cancel
                 </button>
-                <button className="btn btn-success" onClick={updateClient}>
+                <button
+                  className="btn btn-success"
+                  onClick={handleUpdate}
+                >
                   Save
                 </button>
               </div>
@@ -307,7 +295,9 @@ const Clients = () => {
         <div className="modal show d-block bg-dark bg-opacity-50">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-              <div className="modal-body">Delete this client?</div>
+              <div className="modal-body">
+                Delete this client?
+              </div>
               <div className="modal-footer">
                 <button
                   className="btn btn-secondary"
@@ -315,7 +305,10 @@ const Clients = () => {
                 >
                   Cancel
                 </button>
-                <button className="btn btn-danger" onClick={deleteClient}>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleDelete}
+                >
                   Delete
                 </button>
               </div>

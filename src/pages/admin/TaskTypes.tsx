@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import api from "../../api/axios";
+import {
+  getTaskTypes,
+  createTaskType,
+  updateTaskType,
+  deleteTaskType,
+} from "../../api/services/taskType.service";
 
 import type { TaskType } from "../../types/tasktypes";
 
@@ -16,35 +21,31 @@ const TaskTypes = () => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  // ---------- LOAD ----------
+  /* ---------- LOAD ---------- */
   const loadTaskTypes = async () => {
-    const res = await api.get<TaskType[]>("task-types/");
-    setTaskTypes(res.data);
+    const data = await getTaskTypes();
+    setTaskTypes(data);
   };
 
   useEffect(() => {
     loadTaskTypes();
   }, []);
 
-  // ---------- CREATE ----------
-  const createTaskType = async () => {
+  /* ---------- CREATE ---------- */
+  const handleCreate = async () => {
     if (!name.trim()) return;
 
-    await api.post("task-types/create/", {
-      name,
-      description,
-    });
-
+    await createTaskType({ name, description });
     setName("");
     setDescription("");
     loadTaskTypes();
   };
 
-  // ---------- UPDATE ----------
-  const updateTaskType = async () => {
+  /* ---------- UPDATE ---------- */
+  const handleUpdate = async () => {
     if (!editing) return;
 
-    await api.put(`task-types/${editing.id}/update/`, {
+    await updateTaskType(editing.id, {
       name: editing.name,
       description: editing.description,
     });
@@ -53,23 +54,23 @@ const TaskTypes = () => {
     loadTaskTypes();
   };
 
-  // ---------- DELETE ----------
-  const deleteTaskType = async () => {
+  /* ---------- DELETE ---------- */
+  const handleDelete = async () => {
     if (!deleteId) return;
 
-    await api.delete(`task-types/${deleteId}/delete/`);
+    await deleteTaskType(deleteId);
     setDeleteId(null);
     loadTaskTypes();
   };
 
-  // ---------- SEARCH ----------
+  /* ---------- FILTER ---------- */
   const filtered = taskTypes.filter((t) =>
-    `${t.name} ${t.description}`
+    `${t.name} ${t.description ?? ""}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
 
-  // ---------- PAGINATION ----------
+  /* ---------- PAGINATION ---------- */
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice(
     (page - 1) * ITEMS_PER_PAGE,
@@ -80,7 +81,7 @@ const TaskTypes = () => {
     <div className="container mt-3">
       <h3>Task Types</h3>
 
-      {/* ---------- CREATE ---------- */}
+      {/* CREATE */}
       <div className="card mb-3">
         <div className="card-body d-flex gap-2 flex-wrap">
           <input
@@ -95,13 +96,13 @@ const TaskTypes = () => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
-          <button className="btn btn-primary" onClick={createTaskType}>
+          <button className="btn btn-primary" onClick={handleCreate}>
             Add
           </button>
         </div>
       </div>
 
-      {/* ---------- SEARCH ---------- */}
+      {/* SEARCH */}
       <input
         className="form-control mb-3"
         placeholder="Search task types..."
@@ -112,7 +113,7 @@ const TaskTypes = () => {
         }}
       />
 
-      {/* ---------- TABLE ---------- */}
+      {/* TABLE */}
       <table className="table table-bordered table-hover">
         <thead className="table-light">
           <tr>
@@ -145,7 +146,7 @@ const TaskTypes = () => {
             </tr>
           ))}
 
-          {paginated.length === 0 && (
+          {!paginated.length && (
             <tr>
               <td colSpan={4} className="text-center text-muted">
                 No task types found
@@ -155,56 +156,7 @@ const TaskTypes = () => {
         </tbody>
       </table>
 
-      {/* ---------- PAGINATION ---------- */}
-      {totalPages > 1 && (
-        <div className="d-flex gap-1">
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            disabled={page === 1}
-            onClick={() => setPage(1)}
-          >
-            First
-          </button>
-
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-          >
-            Prev
-          </button>
-
-          {Array.from({ length: totalPages }).map((_, i) => (
-            <button
-              key={i}
-              className={`btn btn-sm ${
-                page === i + 1 ? "btn-primary" : "btn-outline-primary"
-              }`}
-              onClick={() => setPage(i + 1)}
-            >
-              {i + 1}
-            </button>
-          ))}
-
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            disabled={page === totalPages}
-            onClick={() => setPage(page + 1)}
-          >
-            Next
-          </button>
-
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            disabled={page === totalPages}
-            onClick={() => setPage(totalPages)}
-          >
-            Last
-          </button>
-        </div>
-      )}
-
-      {/* ---------- EDIT MODAL ---------- */}
+      {/* EDIT MODAL */}
       {editing && (
         <div className="modal show d-block bg-dark bg-opacity-50">
           <div className="modal-dialog modal-dialog-centered">
@@ -238,7 +190,7 @@ const TaskTypes = () => {
                 >
                   Cancel
                 </button>
-                <button className="btn btn-success" onClick={updateTaskType}>
+                <button className="btn btn-success" onClick={handleUpdate}>
                   Save
                 </button>
               </div>
@@ -247,7 +199,7 @@ const TaskTypes = () => {
         </div>
       )}
 
-      {/* ---------- DELETE MODAL ---------- */}
+      {/* DELETE MODAL */}
       {deleteId && (
         <div className="modal show d-block bg-dark bg-opacity-50">
           <div className="modal-dialog modal-dialog-centered">
@@ -262,7 +214,7 @@ const TaskTypes = () => {
                 >
                   Cancel
                 </button>
-                <button className="btn btn-danger" onClick={deleteTaskType}>
+                <button className="btn btn-danger" onClick={handleDelete}>
                   Delete
                 </button>
               </div>

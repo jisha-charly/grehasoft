@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Milestones from "../../components/projects/Milestones";
 import ProjectMembers from "../../components/projects/ProjectMembers";
-import { getProjectById } from "../../api/projects";
+import { getProjectById } from "../../api/services/project.service";
 
 const ProjectDetails = () => {
   const { id } = useParams();
@@ -18,9 +18,12 @@ const ProjectDetails = () => {
   useEffect(() => {
     if (!projectId) return;
 
-    getProjectById(projectId).then(res => {
-      setProjectName(res.data.name);
-    });
+    const loadProject = async () => {
+      const project = await getProjectById(projectId);
+      setProjectName(project.name);
+    };
+
+    loadProject();
   }, [projectId]);
 
   if (!projectId) {
@@ -49,7 +52,6 @@ const ProjectDetails = () => {
       <ul className="nav nav-tabs mb-3">
         <li className="nav-item">
           <button
-            type="button"
             className={`nav-link ${
               activeTab === "milestones" ? "active" : ""
             }`}
@@ -61,7 +63,6 @@ const ProjectDetails = () => {
 
         <li className="nav-item">
           <button
-            type="button"
             className={`nav-link ${
               activeTab === "members" ? "active" : ""
             }`}
@@ -72,7 +73,6 @@ const ProjectDetails = () => {
         </li>
       </ul>
 
-      {/* Content */}
       {activeTab === "milestones" && (
         <Milestones projectId={projectId} />
       )}
