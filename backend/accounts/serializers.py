@@ -90,18 +90,24 @@ class ProjectMilestoneSerializer(serializers.ModelSerializer):
    
     
 class ProjectMemberSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        source="user.username",
+        read_only=True
+    )
 
     def validate(self, data):
-        project = data["project"]
-        user = data["user"]
+        project = data.get("project")
+        user = data.get("user")
 
-        if ProjectMember.objects.filter(
-            project=project,
-            user=user
-        ).exists():
-            raise serializers.ValidationError(
-                "User already added to this project"
-            )
+        # 🔒 Prevent duplicate member (only on CREATE)
+        if self.instance is None:
+            if ProjectMember.objects.filter(
+                project=project,
+                user=user
+            ).exists():
+                raise serializers.ValidationError(
+                    "User already added to this project"
+                )
 
         return data
 
@@ -111,6 +117,7 @@ class ProjectMemberSerializer(serializers.ModelSerializer):
             "id",
             "project",
             "user",
+            "username",        # ✅ ADDED
             "role_in_project",
             "added_at",
         ]

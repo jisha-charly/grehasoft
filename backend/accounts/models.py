@@ -94,7 +94,7 @@ class Client(models.Model):
 
     def __str__(self):
         return self.name
-# ✅ THIS LINE WAS MISSING
+
 class Project(models.Model):
 
     STATUS_CHOICES = [
