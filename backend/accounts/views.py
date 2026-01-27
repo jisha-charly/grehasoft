@@ -278,6 +278,27 @@ def delete_task_type(request, type_id):
     task_type.save()
     return Response({"message": "Task type deleted"})
 
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def update_task_type(request, pk):
+    try:
+        task_type = TaskType.objects.get(pk=pk, deleted_at__isnull=True)
+    except TaskType.DoesNotExist:
+        return Response(
+            {"error": "Task type not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    task_type.name = request.data.get("name", task_type.name)
+    task_type.description = request.data.get("description", task_type.description)
+    task_type.updated_at = timezone.now()
+    task_type.save()
+
+    return Response(
+        {"message": "Task type updated successfully"},
+        status=status.HTTP_200_OK
+    )
+
 
 # =================================================
 # CLIENTS / PROJECTS / MILESTONES / MEMBERS
