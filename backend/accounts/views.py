@@ -23,12 +23,19 @@ User = get_user_model()
 # HELPERS
 # =================================================
 def is_admin(user):
-    return user.role and user.role.name.upper() == "ADMIN"
+    return (
+        user.is_authenticated
+        and user.role is not None
+        and user.role.name.upper() == "ADMIN"
+        and user.is_active
+    )
+
 
 
 # =================================================
 # ROLE APIs (ADMIN ONLY)
 # =================================================
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_roles(request):
@@ -37,7 +44,14 @@ def list_roles(request):
 
     roles = Role.objects.filter(deleted_at__isnull=True)
     return Response(
-        [{"id": r.id, "name": r.name, "description": r.description} for r in roles],
+        [
+            {
+                "id": r.id,
+                "name": r.name,
+                "description": r.description,
+            }
+            for r in roles
+        ],
         status=200,
     )
 
@@ -62,9 +76,14 @@ def create_role(request):
             role.description = description
             role.save()
             return Response({"message": "Role restored"}, status=200)
+
         return Response({"error": "Role already exists"}, status=400)
 
-    Role.objects.create(name=name, description=description)
+    Role.objects.create(
+        name=name,
+        description=description
+    )
+
     return Response({"message": "Role created"}, status=201)
 
 
@@ -74,7 +93,12 @@ def update_role(request, role_id):
     if not is_admin(request.user):
         return Response({"error": "Forbidden"}, status=403)
 
-    role = get_object_or_404(Role, id=role_id, deleted_at__isnull=True)
+    role = get_object_or_404(
+        Role,
+        id=role_id,
+        deleted_at__isnull=True
+    )
+
     role.name = request.data.get("name", role.name)
     role.description = request.data.get("description", role.description)
     role.save()
@@ -88,13 +112,22 @@ def delete_role(request, role_id):
     if not is_admin(request.user):
         return Response({"error": "Forbidden"}, status=403)
 
-    role = get_object_or_404(Role, id=role_id, deleted_at__isnull=True)
+    role = get_object_or_404(
+        Role,
+        id=role_id,
+        deleted_at__isnull=True
+    )
 
     if role.name.upper() == "ADMIN":
-        return Response({"error": "ADMIN role cannot be deleted"}, status=400)
+        return Response(
+            {"error": "ADMIN role cannot be deleted"},
+            status=400
+        )
 
     User.objects.filter(role=role).update(
-        role=None, is_active=False, deleted_at=timezone.now()
+        role=None,
+        is_active=False,
+        deleted_at=timezone.now()
     )
 
     role.deleted_at = timezone.now()
