@@ -7,7 +7,13 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
+from dotenv import load_dotenv
 import dj_database_url
+
+# --------------------------------------------------
+# LOAD ENV VARIABLES (.env)
+# --------------------------------------------------
+load_dotenv()
 
 # --------------------------------------------------
 # BASE DIR
@@ -94,13 +100,12 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 
 # --------------------------------------------------
-# DATABASE (Railway PostgreSQL / local SQLite fallback)
+# DATABASE (PostgreSQL on Railway / SQLite locally)
 # --------------------------------------------------
 DATABASES = {
     "default": dj_database_url.config(
-        default="sqlite:///db.sqlite3",
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
-        ssl_require=True,
     )
 }
 
@@ -120,9 +125,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # INTERNATIONALIZATION
 # --------------------------------------------------
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
 USE_TZ = True
 
