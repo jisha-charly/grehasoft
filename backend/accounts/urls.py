@@ -18,10 +18,12 @@ urlpatterns = [
     path("departments/<int:dept_id>/delete/", views.delete_department),
 
     # ---------------- ROLES ----------------
-    path("roles/", views.list_roles),
-    path("roles/create/", views.create_role),
-    path("roles/<int:role_id>/update/", views.update_role),
-    path("roles/<int:role_id>/delete/", views.delete_role),
+    # ROLES
+    # ========================
+    path("roles/", views.list_roles, name="list_roles"),
+    path("roles/create/", views.create_role, name="create_role"),
+    path("roles/<int:role_id>/delete/", views.delete_role, name="delete_role"),
+    path("roles/<int:role_id>/update/", views.update_role, name="update_role"),
 
     # ---------------- TASK TYPES ----------------
     path("task-types/", views.list_task_types),
