@@ -304,3 +304,216 @@ def update_task_type(request, pk):
 # CLIENTS / PROJECTS / MILESTONES / MEMBERS
 # (Your existing logic here is already correct and safe)
 # =================================================
+# =================================================
+# CLIENTS
+# =================================================
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_clients(request):
+    clients = Client.objects.filter(deleted_at__isnull=True).order_by("-id")
+    serializer = ClientSerializer(clients, many=True)
+    return Response(serializer.data, status=200)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_client(request):
+    serializer = ClientSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=201)
+    return Response(serializer.errors, status=400)
+
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def update_client(request, id):
+    client = get_object_or_404(Client, id=id, deleted_at__isnull=True)
+    serializer = ClientSerializer(client, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=200)
+    return Response(serializer.errors, status=400)
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_client(request, id):
+    client = get_object_or_404(Client, id=id, deleted_at__isnull=True)
+    client.deleted_at = timezone.now()
+    client.save()
+    return Response({"message": "Client deleted"}, status=204)
+
+
+# =================================================
+# PROJECTS
+# =================================================
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_projects(request):
+    projects = Project.objects.filter(deleted_at__isnull=True).order_by("-id")
+    serializer = ProjectSerializer(projects, many=True)
+    return Response(serializer.data, status=200)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_project(request, id):
+    project = get_object_or_404(Project, id=id, deleted_at__isnull=True)
+    serializer = ProjectSerializer(project)
+    return Response(serializer.data, status=200)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_project(request):
+    serializer = ProjectSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(
+            created_by=request.user,
+            status="not_started",
+            progress_percentage=0,
+        )
+        return Response(serializer.data, status=201)
+    return Response(serializer.errors, status=400)
+
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def update_project(request, id):
+    project = get_object_or_404(Project, id=id, deleted_at__isnull=True)
+    serializer = ProjectSerializer(project, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=200)
+    return Response(serializer.errors, status=400)
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_project(request, id):
+    project = get_object_or_404(Project, id=id, deleted_at__isnull=True)
+    project.deleted_at = timezone.now()
+    project.save()
+    return Response(status=204)
+
+
+# =================================================
+# PROJECT MILESTONES
+# =================================================
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_milestones(request, project_id):
+    milestones = ProjectMilestone.objects.filter(
+        project_id=project_id,
+        deleted_at__isnull=True
+    ).order_by("due_date")
+    serializer = ProjectMilestoneSerializer(milestones, many=True)
+    return Response(serializer.data, status=200)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def create_milestone(request, project_id):
+    get_object_or_404(Project, id=project_id, deleted_at__isnull=True)
+
+    data = request.data.copy()
+    data["project"] = project_id
+
+    serializer = ProjectMilestoneSerializer(data=data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=201)
+    return Response(serializer.errors, status=400)
+
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def update_milestone(request, id):
+    milestone = get_object_or_404(
+        ProjectMilestone, id=id, deleted_at__isnull=True
+    )
+    serializer = ProjectMilestoneSerializer(
+        milestone, data=request.data, partial=True
+    )
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=200)
+    return Response(serializer.errors, status=400)
+
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def complete_milestone(request, id):
+    milestone = get_object_or_404(
+        ProjectMilestone, id=id, deleted_at__isnull=True
+    )
+    milestone.status = "completed"
+    milestone.save(update_fields=["status", "updated_at"])
+    return Response({"message": "Milestone completed"}, status=200)
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_milestone(request, id):
+    milestone = get_object_or_404(ProjectMilestone, id=id)
+    milestone.deleted_at = timezone.now()
+    milestone.save()
+    return Response(status=204)
+
+
+# =================================================
+# PROJECT MEMBERS
+# =================================================
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_project_members(request, project_id):
+    members = ProjectMember.objects.filter(
+        project_id=project_id,
+        deleted_at__isnull=True
+    ).select_related("user")
+    serializer = ProjectMemberSerializer(members, many=True)
+    return Response(serializer.data, status=200)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def add_project_member(request, project_id):
+    get_object_or_404(Project, id=project_id, deleted_at__isnull=True)
+
+    data = request.data.copy()
+    data["project"] = project_id
+
+    serializer = ProjectMemberSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data, status=201)
+
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def update_project_member(request, id):
+    member = get_object_or_404(
+        ProjectMember, id=id, deleted_at__isnull=True
+    )
+    serializer = ProjectMemberSerializer(
+        member, data=request.data, partial=True
+    )
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data, status=200)
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def remove_project_member(request, id):
+    member = get_object_or_404(
+        ProjectMember, id=id, deleted_at__isnull=True
+    )
+    member.deleted_at = timezone.now()
+    member.save()
+    return Response(status=204)
