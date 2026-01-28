@@ -12,10 +12,12 @@ const Roles = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
-  // Edit popup state
+  // Edit popup
   const [editingRole, setEditingRole] = useState<Role | null>(null);
 
-  // Load roles
+  // Delete popup
+  const [deleteRoleData, setDeleteRoleData] = useState<Role | null>(null);
+
   const fetchRoles = async () => {
     const data = await getRoles();
     setRoles(data);
@@ -25,7 +27,7 @@ const Roles = () => {
     fetchRoles();
   }, []);
 
-  // Create role
+  // CREATE
   const handleCreate = async () => {
     if (!name.trim()) return;
     await createRole({ name, description });
@@ -34,7 +36,7 @@ const Roles = () => {
     fetchRoles();
   };
 
-  // Update role
+  // UPDATE
   const handleUpdate = async () => {
     if (!editingRole) return;
 
@@ -49,10 +51,12 @@ const Roles = () => {
     fetchRoles();
   };
 
-  // Delete role
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete this role?")) return;
-    await deleteRole(id);
+  // DELETE
+  const handleDelete = async () => {
+    if (!deleteRoleData) return;
+
+    await deleteRole(deleteRoleData.id);
+    setDeleteRoleData(null);
     fetchRoles();
   };
 
@@ -60,7 +64,7 @@ const Roles = () => {
     <div className="p-4">
       <h3>User Roles</h3>
 
-      {/* Create role */}
+      {/* CREATE */}
       <div className="d-flex gap-2 mb-3">
         <input
           className="form-control"
@@ -79,13 +83,13 @@ const Roles = () => {
         </button>
       </div>
 
-      {/* Roles table */}
+      {/* TABLE */}
       <table className="table table-bordered">
         <thead>
           <tr>
             <th>Role</th>
             <th>Description</th>
-            <th style={{ width: 160 }}>Action</th>
+            <th style={{ width: 180 }}>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -104,39 +108,30 @@ const Roles = () => {
                 >
                   Edit
                 </button>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => handleDelete(role.id)}
-                >
-                  Delete
-                </button>
+
+                {/* ❌ Disable delete for ADMIN */}
+                {role.name === "ADMIN" ? (
+                  <button className="btn btn-danger btn-sm" disabled>
+                    Delete
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => setDeleteRoleData(role)}
+                  >
+                    Delete
+                  </button>
+                )}
               </td>
             </tr>
           ))}
-          {roles.length === 0 && (
-            <tr>
-              <td colSpan={3} className="text-center">
-                No roles found
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
 
-      {/* EDIT POPUP */}
+      {/* ================= EDIT POPUP ================= */}
       {editingRole && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div className="bg-white p-4 rounded" style={{ width: 400 }}>
+        <div className="modal-backdrop-custom">
+          <div className="modal-box">
             <h5>Edit Role</h5>
 
             <input
@@ -168,6 +163,50 @@ const Roles = () => {
           </div>
         </div>
       )}
+
+      {/* ================= DELETE POPUP ================= */}
+      {deleteRoleData && (
+        <div className="modal-backdrop-custom">
+          <div className="modal-box">
+            <h5>Delete Role</h5>
+            <p>
+              Are you sure you want to delete{" "}
+              <strong>{deleteRoleData.name}</strong>?
+            </p>
+
+            <div className="text-end">
+              <button
+                className="btn btn-secondary me-2"
+                onClick={() => setDeleteRoleData(null)}
+              >
+                Cancel
+              </button>
+              <button className="btn btn-danger" onClick={handleDelete}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SIMPLE MODAL STYLES */}
+      <style>{`
+        .modal-backdrop-custom {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        .modal-box {
+          background: white;
+          padding: 20px;
+          border-radius: 8px;
+          width: 400px;
+        }
+      `}</style>
     </div>
   );
 };
