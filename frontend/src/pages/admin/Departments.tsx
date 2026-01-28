@@ -126,7 +126,13 @@ const Departments = () => {
             <tr key={d.id}>
               <td>{d.name}</td>
               <td>{d.parent_name || "-"}</td>
-              <td>{new Date(d.created_at).toLocaleDateString()}</td>
+              <td>{d.created_at
+    ? new Date(d.created_at).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "-"}</td>
               <td>
                 <button
                   className="btn btn-sm btn-warning me-2"
