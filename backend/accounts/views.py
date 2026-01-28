@@ -14,6 +14,7 @@ from .serializers import (
     ProjectSerializer,
     ProjectMilestoneSerializer,
     ProjectMemberSerializer,
+    DepartmentSerializer
 )
 
 User = get_user_model()
@@ -146,18 +147,9 @@ def delete_role(request, role_id):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_departments(request):
-    departments = Department.objects.filter(deleted_at__isnull=True).select_related("parent")
-
-    return Response([
-        {
-            "id": d.id,
-            "name": d.name,
-            "parent_id": d.parent.id if d.parent else None,
-            "parent_name": d.parent.name if d.parent else None,
-        }
-        for d in departments
-    ])
-
+    departments = Department.objects.filter(deleted_at__isnull=True)
+    serializer = DepartmentSerializer(departments, many=True)
+    return Response(serializer.data)
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
