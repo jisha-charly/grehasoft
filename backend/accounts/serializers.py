@@ -2,6 +2,25 @@ import re
 from rest_framework import serializers
 from .models import Client
 from .models import Project, ProjectMilestone, ProjectMember
+from .models import Department
+
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    parent_name = serializers.CharField(
+        source="parent.name",
+        read_only=True
+    )
+
+    class Meta:
+        model = Department
+        fields = [
+            "id",
+            "name",
+            "parent",
+            "parent_name",
+            "created_at",
+            "updated_at",
+        ]
 
 class ClientSerializer(serializers.ModelSerializer):
 
