@@ -12,7 +12,10 @@ export const createRole = async (data: {
   name: string;
   description: string;
 }) => {
-  const res = await api.post("/roles/create/", data);
+ const res = await api.post(
+    "https://grehasoft-production.up.railway.app/api/roles/create/",
+    data
+  );
   return res.data;
 };
 
