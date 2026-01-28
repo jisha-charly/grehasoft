@@ -97,32 +97,40 @@ const Roles = () => {
             <tr key={role.id}>
               <td>{role.name}</td>
               <td>{role.description}</td>
-              <td>
-                <button
-                  className="btn btn-warning btn-sm me-2"
-                  onClick={() => {
-                    setEditingRole(role);
-                    setName(role.name);
-                    setDescription(role.description);
-                  }}
-                >
-                  Edit
-                </button>
+     <td>
+  {role.name === "ADMIN" ? (
+    <>
+      <button className="btn btn-warning btn-sm me-2" disabled>
+        Edit
+      </button>
 
-                {/* ❌ Disable delete for ADMIN */}
-                {role.name === "ADMIN" ? (
-                  <button className="btn btn-danger btn-sm" disabled>
-                    Delete
-                  </button>
-                ) : (
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => setDeleteRoleData(role)}
-                  >
-                    Delete
-                  </button>
-                )}
-              </td>
+      <button className="btn btn-danger btn-sm" disabled>
+        Delete
+      </button>
+    </>
+  ) : (
+    <>
+      <button
+        className="btn btn-warning btn-sm me-2"
+        onClick={() => {
+          setEditingRole(role);
+          setName(role.name);
+          setDescription(role.description);
+        }}
+      >
+        Edit
+      </button>
+
+      <button
+        className="btn btn-danger btn-sm"
+        onClick={() => setDeleteRoleData(role)}
+      >
+        Delete
+      </button>
+    </>
+  )}
+</td>
+
             </tr>
           ))}
         </tbody>
