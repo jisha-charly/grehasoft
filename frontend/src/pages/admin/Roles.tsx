@@ -2,69 +2,97 @@ import { useEffect, useState } from "react";
 import {
   getRoles,
   createRole,
-  updateRole,
   deleteRole,
+  updateRole,
 } from "../../api/services/role.service";
 import type { Role } from "../../types/role";
 
 const Roles = () => {
   const [roles, setRoles] = useState<Role[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // create
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
-  // Edit popup
-  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  // search
+  const [search, setSearch] = useState("");
 
-  // Delete popup
+  // edit modal
+  const [editRole, setEditRole] = useState<Role | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+
+  // delete modal
   const [deleteRoleData, setDeleteRoleData] = useState<Role | null>(null);
 
-  const fetchRoles = async () => {
+  // ================= FETCH =================
+  const loadRoles = async () => {
+    setLoading(true);
     const data = await getRoles();
     setRoles(data);
+    setLoading(false);
   };
 
   useEffect(() => {
-    fetchRoles();
+    loadRoles();
   }, []);
 
-  // CREATE
+  // ================= CREATE =================
   const handleCreate = async () => {
     if (!name.trim()) return;
     await createRole({ name, description });
     setName("");
     setDescription("");
-    fetchRoles();
+    loadRoles();
   };
 
-  // UPDATE
+  // ================= EDIT =================
+  const openEdit = (role: Role) => {
+    setEditRole(role);
+    setEditName(role.name);
+    setEditDescription(role.description || "");
+  };
+
   const handleUpdate = async () => {
-    if (!editingRole) return;
-
-    await updateRole(editingRole.id, {
-      name,
-      description,
+    if (!editRole) return;
+    await updateRole(editRole.id, {
+      name: editName,
+      description: editDescription,
     });
-
-    setEditingRole(null);
-    setName("");
-    setDescription("");
-    fetchRoles();
+    setEditRole(null);
+    loadRoles();
   };
 
-  // DELETE
+  // ================= DELETE =================
   const handleDelete = async () => {
     if (!deleteRoleData) return;
-
     await deleteRole(deleteRoleData.id);
     setDeleteRoleData(null);
-    fetchRoles();
+    loadRoles();
   };
 
+  // ================= FILTER =================
+  const filteredRoles = roles.filter((role) =>
+    `${role.name} ${role.description || ""}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
   return (
-    <div className="p-4">
+    <div className="container mt-4">
       <h3>User Roles</h3>
 
-      {/* CREATE */}
+      {/* 🔍 SEARCH */}
+      <input
+        type="text"
+        className="form-control mb-3"
+        placeholder="Search roles..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      {/* ➕ CREATE */}
       <div className="d-flex gap-2 mb-3">
         <input
           className="form-control"
@@ -83,138 +111,131 @@ const Roles = () => {
         </button>
       </div>
 
-      {/* TABLE */}
-      <table className="table table-bordered">
-        <thead>
-          <tr>
-            <th>Role</th>
-            <th>Description</th>
-            <th style={{ width: 180 }}>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {roles.map((role) => (
-            <tr key={role.id}>
-              <td>{role.name}</td>
-              <td>{role.description}</td>
-     <td>
-  {role.name === "ADMIN" ? (
-    <>
-      <button className="btn btn-warning btn-sm me-2" disabled>
-        Edit
-      </button>
-
-      <button className="btn btn-danger btn-sm" disabled>
-        Delete
-      </button>
-    </>
-  ) : (
-    <>
-      <button
-        className="btn btn-warning btn-sm me-2"
-        onClick={() => {
-          setEditingRole(role);
-          setName(role.name);
-          setDescription(role.description);
-        }}
-      >
-        Edit
-      </button>
-
-      <button
-        className="btn btn-danger btn-sm"
-        onClick={() => setDeleteRoleData(role)}
-      >
-        Delete
-      </button>
-    </>
-  )}
-</td>
-
+      {/* 📋 TABLE */}
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <table className="table table-bordered">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Description</th>
+              <th style={{ width: 180 }}>Action</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredRoles.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="text-center">
+                  No roles found
+                </td>
+              </tr>
+            ) : (
+              filteredRoles.map((role) => (
+                <tr key={role.id}>
+                  <td>{role.name}</td>
+                  <td>{role.description}</td>
+                  <td>
+                    {role.name === "ADMIN" ? (
+                      <>
+                        <button className="btn btn-warning btn-sm me-2" disabled>
+                          Edit
+                        </button>
+                        <button className="btn btn-danger btn-sm" disabled>
+                          Delete
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="btn btn-warning btn-sm me-2"
+                          onClick={() => openEdit(role)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => setDeleteRoleData(role)}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      )}
 
-      {/* ================= EDIT POPUP ================= */}
-      {editingRole && (
-        <div className="modal-backdrop-custom">
-          <div className="modal-box">
-            <h5>Edit Role</h5>
-
-            <input
-              className="form-control mb-2"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <input
-              className="form-control mb-3"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-
-            <div className="text-end">
-              <button
-                className="btn btn-secondary me-2"
-                onClick={() => {
-                  setEditingRole(null);
-                  setName("");
-                  setDescription("");
-                }}
-              >
-                Cancel
-              </button>
-              <button className="btn btn-primary" onClick={handleUpdate}>
-                Update
-              </button>
+      {/* ✏️ EDIT MODAL */}
+      {editRole && (
+        <div className="modal-backdrop show">
+          <div className="modal d-block">
+            <div className="modal-dialog">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5>Edit Role</h5>
+                </div>
+                <div className="modal-body">
+                  <input
+                    className="form-control mb-2"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                  />
+                  <input
+                    className="form-control"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                  />
+                </div>
+                <div className="modal-footer">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setEditRole(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button className="btn btn-primary" onClick={handleUpdate}>
+                    Update
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ================= DELETE POPUP ================= */}
+      {/* 🗑 DELETE MODAL */}
       {deleteRoleData && (
-        <div className="modal-backdrop-custom">
-          <div className="modal-box">
-            <h5>Delete Role</h5>
-            <p>
-              Are you sure you want to delete{" "}
-              <strong>{deleteRoleData.name}</strong>?
-            </p>
-
-            <div className="text-end">
-              <button
-                className="btn btn-secondary me-2"
-                onClick={() => setDeleteRoleData(null)}
-              >
-                Cancel
-              </button>
-              <button className="btn btn-danger" onClick={handleDelete}>
-                Delete
-              </button>
+        <div className="modal-backdrop show">
+          <div className="modal d-block">
+            <div className="modal-dialog modal-sm">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5>Delete Role</h5>
+                </div>
+                <div className="modal-body">
+                  Are you sure you want to delete{" "}
+                  <b>{deleteRoleData.name}</b>?
+                </div>
+                <div className="modal-footer">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => setDeleteRoleData(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button className="btn btn-danger" onClick={handleDelete}>
+                    Delete
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* SIMPLE MODAL STYLES */}
-      <style>{`
-        .modal-backdrop-custom {
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.45);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-        .modal-box {
-          background: white;
-          padding: 20px;
-          border-radius: 8px;
-          width: 400px;
-        }
-      `}</style>
     </div>
   );
 };
