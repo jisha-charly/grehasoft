@@ -1,1 +1,2 @@
-export const API_BASE_URL = "https://grehasoft-production.up.railway.app"
+// src/config/env.ts
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
