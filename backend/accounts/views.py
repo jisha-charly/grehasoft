@@ -20,7 +20,7 @@ User = get_user_model()
 
 
 # =================================================
-# HELPERS
+# login HELPERS
 # =================================================
 def is_admin(user):
     return (
@@ -136,26 +136,6 @@ def delete_role(request, role_id):
     return Response({"message": "Role deleted"}, status=200)
 
 
-# =================================================
-# AUTH
-# =================================================
-@api_view(["POST"])
-def login_view(request):
-    user = authenticate(
-        username=request.data.get("username"),
-        password=request.data.get("password"),
-    )
-
-    if not user:
-        return Response({"error": "Invalid credentials"}, status=401)
-
-    return Response(
-        {
-            "message": "Login successful",
-            "username": user.username,
-            "role": user.role.name if user.role else None,
-        }
-    )
 
 
 # =================================================
