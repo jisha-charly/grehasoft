@@ -14,7 +14,14 @@ export const createRole = async (
   const res = await api.post<Role>("/roles/create/", data);
   return res.data;
 };
-
+// UPDATE role ✅
+export const updateRole = async (
+  id: number,
+  data: Pick<Role, "name" | "description">
+): Promise<Role> => {
+  const res = await api.put<Role>(`/roles/${id}/update/`, data);
+  return res.data;
+};
 // DELETE role
 export const deleteRole = async (id: number): Promise<void> => {
   await api.delete(`/roles/${id}/delete/`);
