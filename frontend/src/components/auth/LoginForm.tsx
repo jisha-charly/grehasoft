@@ -17,7 +17,11 @@ const LoginForm = () => {
     setLoading(true);
 
     try {
-      const res = await api.post("token/", { username, password });
+     const res = await api.post("/token/", {
+  username,
+  password,
+});
+
 
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
