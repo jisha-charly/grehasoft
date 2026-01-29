@@ -26,6 +26,7 @@ type UserForm = {
 };
 
 const Users = () => {
+  /* ================= STATE ================= */
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -34,6 +35,11 @@ const Users = () => {
   const [page, setPage] = useState(1);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [toast, setToast] = useState<string | null>(null);
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
@@ -62,17 +68,35 @@ const Users = () => {
     loadAll();
   }, []);
 
+  /* ================= TOAST ================= */
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+
   /* ================= VALIDATION ================= */
   const validateCreate = () => {
     const e: Record<string, string> = {};
 
-    if (form.username.trim().length < 3) e.username = "Min 3 characters";
-    if (!userValidators.email.test(form.email)) e.email = "Invalid email";
-    if (!userValidators.password.test(form.password))
-      e.password = "Min 6 characters";
-    if (form.password !== form.confirmPassword)
+    if (form.username.trim().length < 3) {
+      e.username = "Username must be at least 3 characters";
+    }
+
+    if (!userValidators.email.test(form.email)) {
+      e.email = "Invalid email address";
+    }
+
+    if (!userValidators.password.test(form.password)) {
+      e.password = "Password must be at least 6 characters";
+    }
+
+    if (form.password !== form.confirmPassword) {
       e.confirmPassword = "Passwords do not match";
-    if (!form.role) e.role = "Role required";
+    }
+
+    if (!form.role) {
+      e.role = "Role is required";
+    }
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -89,50 +113,39 @@ const Users = () => {
       role: Number(form.role),
     };
 
-    if (form.department !== "") {
+    if (form.department) {
       payload.department = Number(form.department);
     }
 
-    try {
-      await createUser(payload);
-      resetForm();
-      loadAll();
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Create failed");
-    }
+    await createUser(payload);
+    resetForm();
+    showToast("User created successfully");
+    loadAll();
   };
 
   /* ================= UPDATE ================= */
   const handleUpdate = async () => {
     if (!editingUser) return;
 
-    try {
-      await updateUser(editingUser.id, {
-        email: editingUser.email,
-        role: editingUser.role_id,
-        department: editingUser.department_id ?? null,
-        is_active: editingUser.is_active,
-      });
+    await updateUser(editingUser.id, {
+      email: editingUser.email,
+      role: editingUser.role_id,
+      department: editingUser.department_id ?? null,
+      is_active: editingUser.is_active,
+    });
 
-      setEditingUser(null);
-      loadAll();
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Update failed");
-    }
+    setEditingUser(null);
+    showToast("User updated successfully");
+    loadAll();
   };
 
   /* ================= DELETE ================= */
   const handleDelete = async () => {
     if (!deleteId) return;
-
-    try {
-      await deleteUser(deleteId);
-      loadAll();
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Delete failed");
-    } finally {
-      setDeleteId(null);
-    }
+    await deleteUser(deleteId);
+    setDeleteId(null);
+    showToast("User deleted successfully");
+    loadAll();
   };
 
   const resetForm = () => {
@@ -154,6 +167,7 @@ const Users = () => {
       .includes(search.toLowerCase())
   );
 
+  /* ================= PAGINATION ================= */
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice(
     (page - 1) * ITEMS_PER_PAGE,
@@ -165,6 +179,14 @@ const Users = () => {
     <div className="container mt-3">
       <h3>Users</h3>
 
+      {/* TOAST */}
+      {toast && (
+        <div className="alert alert-success position-fixed top-0 end-0 m-3">
+          {toast}
+        </div>
+      )}
+
+      {/* SEARCH */}
       <input
         className="form-control mb-3"
         placeholder="Search users..."
@@ -176,83 +198,130 @@ const Users = () => {
       />
 
       {/* CREATE FORM */}
-      <form autoComplete="off">
-        <input type="text" style={{ display: "none" }} />
-        <input type="password" style={{ display: "none" }} />
+      <div className="card mb-3">
+        <div className="card-body row g-2">
 
-        <div className="card mb-3">
-          <div className="card-body row g-2">
-            {["username", "email", "password", "confirmPassword"].map((k) => (
-              <div className="col-md-3" key={k}>
-                <input
-                  type={k.includes("password") ? "password" : "text"}
-                  autoComplete="new-password"
-                  className={`form-control ${errors[k] ? "is-invalid" : ""}`}
-                  placeholder={k}
-                  value={(form as any)[k]}
-                  onChange={(e) =>
-                    setForm({ ...form, [k]: e.target.value })
-                  }
-                />
-                {errors[k] && (
-                  <div className="invalid-feedback">{errors[k]}</div>
-                )}
-              </div>
-            ))}
+          <input type="text" name="fakeuser" style={{ display: "none" }} />
+          <input type="password" name="fakepass" style={{ display: "none" }} />
 
-            <div className="col-md-3">
-              <select
-                className={`form-select ${errors.role ? "is-invalid" : ""}`}
-                value={form.role}
-                onChange={(e) =>
-                  setForm({ ...form, role: Number(e.target.value) })
-                }
-              >
-                <option value="">Select Role</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-              {errors.role && (
-                <div className="invalid-feedback">{errors.role}</div>
-              )}
-            </div>
+          <div className="col-md-3">
+            <input
+              className={`form-control ${errors.username ? "is-invalid" : ""}`}
+              placeholder="Username"
+              autoComplete="off"
+              value={form.username}
+              onChange={(e) =>
+                setForm({ ...form, username: e.target.value })
+              }
+            />
+            <div className="invalid-feedback">{errors.username}</div>
+          </div>
 
-            <div className="col-md-3">
-              <select
-                className="form-select"
-                value={form.department}
-                onChange={(e) =>
-                  setForm({ ...form, department: Number(e.target.value) })
-                }
-              >
-                <option value="">Select Department</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="col-md-3">
+            <input
+              className={`form-control ${errors.email ? "is-invalid" : ""}`}
+              placeholder="Email"
+              autoComplete="off"
+              value={form.email}
+              onChange={(e) =>
+                setForm({ ...form, email: e.target.value })
+              }
+            />
+            <div className="invalid-feedback">{errors.email}</div>
+          </div>
 
-            <div className="col-md-12">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleCreate}
-              >
-                Create User
-              </button>
+          <div className="col-md-3">
+            <input
+              type={showPassword ? "text" : "password"}
+              className={`form-control ${errors.password ? "is-invalid" : ""}`}
+              placeholder="Password"
+              autoComplete="new-password"
+              value={form.password}
+              onChange={(e) =>
+                setForm({ ...form, password: e.target.value })
+              }
+            />
+            <small
+              className="text-primary cursor-pointer"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </small>
+            <div className="invalid-feedback">{errors.password}</div>
+          </div>
+
+          <div className="col-md-3">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              className={`form-control ${
+                errors.confirmPassword ? "is-invalid" : ""
+              }`}
+              placeholder="Confirm Password"
+              autoComplete="new-password"
+              value={form.confirmPassword}
+              onChange={(e) =>
+                setForm({ ...form, confirmPassword: e.target.value })
+              }
+            />
+            <small
+              className="text-primary cursor-pointer"
+              onClick={() =>
+                setShowConfirmPassword(!showConfirmPassword)
+              }
+            >
+              {showConfirmPassword ? "Hide" : "Show"}
+            </small>
+            <div className="invalid-feedback">
+              {errors.confirmPassword}
             </div>
           </div>
+
+          <div className="col-md-3">
+            <select
+              className={`form-select ${errors.role ? "is-invalid" : ""}`}
+              value={form.role}
+              onChange={(e) =>
+                setForm({ ...form, role: Number(e.target.value) })
+              }
+            >
+              <option value="">Select Role</option>
+              {roles.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+            <div className="invalid-feedback">{errors.role}</div>
+          </div>
+
+          <div className="col-md-3">
+            <select
+              className="form-select"
+              value={form.department}
+              onChange={(e) =>
+                setForm({ ...form, department: Number(e.target.value) })
+              }
+            >
+              <option value="">Select Department</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="col-md-12">
+            <button className="btn btn-primary" onClick={handleCreate}>
+              Create User
+            </button>
+          </div>
         </div>
-      </form>
+      </div>
 
       {/* TABLE */}
-      <table className="table table-bordered">
-        <thead>
+      <table className="table table-bordered table-hover">
+        <thead className="table-light">
           <tr>
             <th>Username</th>
             <th>Email</th>
@@ -287,60 +356,22 @@ const Users = () => {
         </tbody>
       </table>
 
-      {/* EDIT MODAL */}
-      {editingUser && (
-        <div className="modal show d-block bg-dark bg-opacity-50">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-body">
-                <input
-                  className="form-control mb-2"
-                  value={editingUser.email}
-                  onChange={(e) =>
-                    setEditingUser({
-                      ...editingUser,
-                      email: e.target.value,
-                    })
-                  }
-                />
-
-                <button
-                  className="btn btn-success me-2"
-                  onClick={handleUpdate}
-                >
-                  Save
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setEditingUser(null)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* DELETE CONFIRM */}
-      {deleteId && (
-        <div className="modal show d-block bg-dark bg-opacity-50">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-body">Delete this user?</div>
-              <div className="modal-footer">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setDeleteId(null)}
-                >
-                  Cancel
-                </button>
-                <button className="btn btn-danger" onClick={handleDelete}>
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <div className="d-flex gap-1">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              className={`btn btn-sm ${
+                page === i + 1
+                  ? "btn-primary"
+                  : "btn-outline-primary"
+              }`}
+              onClick={() => setPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
         </div>
       )}
     </div>
