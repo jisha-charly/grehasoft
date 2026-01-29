@@ -14,14 +14,25 @@ const LoginForm = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    /* ================= CUSTOM VALIDATION ================= */
+    if (!username.trim()) {
+      setError("Please enter your username");
+      return;
+    }
+
+    if (!password.trim()) {
+      setError("Please enter your password");
+      return;
+    }
+
     setLoading(true);
 
     try {
-     const res = await api.post("/token/", {
-  username,
-  password,
-});
-
+      const res = await api.post("/token/", {
+        username,
+        password,
+      });
 
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
@@ -40,17 +51,18 @@ const LoginForm = () => {
 
   return (
     <>
+      {/* 🔴 CUSTOM ERROR MESSAGE */}
       {error && <div className="alert alert-danger py-2">{error}</div>}
 
-      <form onSubmit={handleLogin}>
+      <form onSubmit={handleLogin} noValidate>
         <div className="mb-3">
           <label className="form-label">Username</label>
           <input
             type="text"
             className="form-control"
             value={username}
+            autoComplete="off"
             onChange={(e) => setUsername(e.target.value)}
-            required
           />
         </div>
 
@@ -60,9 +72,10 @@ const LoginForm = () => {
             type={showPassword ? "text" : "password"}
             className="form-control"
             value={password}
+            autoComplete="new-password"
             onChange={(e) => setPassword(e.target.value)}
-            required
           />
+
           <div className="mt-1 text-end">
             <button
               type="button"
