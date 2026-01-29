@@ -7,26 +7,34 @@ import {
 } from "../../api/services/role.service";
 import type { Role } from "../../types/role";
 
+/* ================= VALIDATORS ================= */
+const roleValidators = {
+  name: /^[A-Za-z ]{3,}$/,
+};
+
 const Roles = () => {
+  /* ================= STATE ================= */
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
 
   // create
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // search
   const [search, setSearch] = useState("");
 
   // edit modal
-  const [editRole, setEditRole] = useState<Role | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editDescription, setEditDescription] = useState("");
+  const [editing, setEditing] = useState<Role | null>(null);
 
   // delete modal
   const [deleteRoleData, setDeleteRoleData] = useState<Role | null>(null);
 
-  // ================= FETCH =================
+  /* ================= FETCH ================= */
   const loadRoles = async () => {
     setLoading(true);
     const data = await getRoles();
@@ -38,33 +46,52 @@ const Roles = () => {
     loadRoles();
   }, []);
 
-  // ================= CREATE =================
+  /* ================= VALIDATION ================= */
+  const validate = (data: { name: string; description?: string }) => {
+    const e: Record<string, string> = {};
+
+    if (!roleValidators.name.test(data.name.trim())) {
+      e.name = "Role name must be at least 3 letters";
+    }
+
+    if (data.description && data.description.length < 3) {
+      e.description = "Description must be at least 3 characters";
+    }
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  /* ================= CREATE ================= */
   const handleCreate = async () => {
-    if (!name.trim()) return;
-    await createRole({ name, description });
-    setName("");
-    setDescription("");
+    if (!validate(form)) return;
+
+    await createRole(form);
+    setForm({ name: "", description: "" });
+    setErrors({});
     loadRoles();
   };
 
-  // ================= EDIT =================
+  /* ================= EDIT ================= */
   const openEdit = (role: Role) => {
-    setEditRole(role);
-    setEditName(role.name);
-    setEditDescription(role.description || "");
+    setEditing(role);
+    setErrors({});
   };
 
   const handleUpdate = async () => {
-    if (!editRole) return;
-    await updateRole(editRole.id, {
-      name: editName,
-      description: editDescription,
+    if (!editing) return;
+    if (!validate(editing)) return;
+
+    await updateRole(editing.id, {
+      name: editing.name,
+      description: editing.description,
     });
-    setEditRole(null);
+
+    setEditing(null);
     loadRoles();
   };
 
-  // ================= DELETE =================
+  /* ================= DELETE ================= */
   const handleDelete = async () => {
     if (!deleteRoleData) return;
     await deleteRole(deleteRoleData.id);
@@ -72,51 +99,77 @@ const Roles = () => {
     loadRoles();
   };
 
-  // ================= FILTER =================
-  const filteredRoles = roles.filter((role) =>
-    `${role.name} ${role.description || ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  /* ================= UNIVERSAL SEARCH ================= */
+  const filteredRoles = roles.filter((role) => {
+    const q = search.toLowerCase();
+    return (
+      role.name.toLowerCase().includes(q) ||
+      (role.description?.toLowerCase().includes(q) ?? false)
+    );
+  });
 
+  /* ================= UI ================= */
   return (
     <div className="container mt-4">
-      <h3>User Roles</h3>
+      <h3 className="mb-3">User Roles</h3>
 
-      {/* 🔍 SEARCH */}
+      {/* 🔍 UNIVERSAL SEARCH */}
       <input
-        type="text"
         className="form-control mb-3"
-        placeholder="Search roles..."
+        placeholder="Search by role name or description..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {/* ➕ CREATE */}
-      <div className="d-flex gap-2 mb-3">
-        <input
-          className="form-control"
-          placeholder="Role name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          className="form-control"
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <button className="btn btn-primary" onClick={handleCreate}>
-          Create
-        </button>
+      {/* ➕ CREATE FORM */}
+      <div className="card mb-3">
+        <div className="card-body row g-2">
+          <div className="col-md-4">
+            <input
+              className={`form-control ${errors.name ? "is-invalid" : ""}`}
+              placeholder="Role name"
+              value={form.name}
+              onChange={(e) => {
+                setForm({ ...form, name: e.target.value });
+                setErrors({ ...errors, name: "" });
+              }}
+            />
+            {errors.name && (
+              <div className="invalid-feedback">{errors.name}</div>
+            )}
+          </div>
+
+          <div className="col-md-6">
+            <input
+              className={`form-control ${
+                errors.description ? "is-invalid" : ""
+              }`}
+              placeholder="Description"
+              value={form.description}
+              onChange={(e) => {
+                setForm({ ...form, description: e.target.value });
+                setErrors({ ...errors, description: "" });
+              }}
+            />
+            {errors.description && (
+              <div className="invalid-feedback">{errors.description}</div>
+            )}
+          </div>
+
+          <div className="col-md-2">
+            <button className="btn btn-primary w-100" onClick={handleCreate}>
+              Create
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 📋 TABLE */}
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <table className="table table-bordered">
-          <thead>
+        <table className="table table-bordered table-hover">
+          <thead className="table-light">
             <tr>
               <th>Role</th>
               <th>Description</th>
@@ -170,37 +223,51 @@ const Roles = () => {
       )}
 
       {/* ✏️ EDIT MODAL */}
-      {editRole && (
-        <div className="modal-backdrop show">
-          <div className="modal d-block">
-            <div className="modal-dialog">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5>Edit Role</h5>
-                </div>
-                <div className="modal-body">
-                  <input
-                    className="form-control mb-2"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                  />
-                  <input
-                    className="form-control"
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                  />
-                </div>
-                <div className="modal-footer">
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => setEditRole(null)}
-                  >
-                    Cancel
-                  </button>
-                  <button className="btn btn-primary" onClick={handleUpdate}>
-                    Update
-                  </button>
-                </div>
+      {editing && (
+        <div className="modal show d-block bg-dark bg-opacity-50">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5>Edit Role</h5>
+              </div>
+              <div className="modal-body">
+                <input
+                  className={`form-control mb-2 ${
+                    errors.name ? "is-invalid" : ""
+                  }`}
+                  value={editing.name}
+                  onChange={(e) => {
+                    setEditing({ ...editing, name: e.target.value });
+                    setErrors({ ...errors, name: "" });
+                  }}
+                />
+                {errors.name && (
+                  <div className="invalid-feedback d-block">
+                    {errors.name}
+                  </div>
+                )}
+
+                <input
+                  className="form-control mt-2"
+                  value={editing.description || ""}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      description: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setEditing(null)}
+                >
+                  Cancel
+                </button>
+                <button className="btn btn-success" onClick={handleUpdate}>
+                  Save
+                </button>
               </div>
             </div>
           </div>
@@ -209,28 +276,22 @@ const Roles = () => {
 
       {/* 🗑 DELETE MODAL */}
       {deleteRoleData && (
-        <div className="modal-backdrop show">
-          <div className="modal d-block">
-            <div className="modal-dialog modal-sm">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5>Delete Role</h5>
-                </div>
-                <div className="modal-body">
-                  Are you sure you want to delete{" "}
-                  <b>{deleteRoleData.name}</b>?
-                </div>
-                <div className="modal-footer">
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => setDeleteRoleData(null)}
-                  >
-                    Cancel
-                  </button>
-                  <button className="btn btn-danger" onClick={handleDelete}>
-                    Delete
-                  </button>
-                </div>
+        <div className="modal show d-block bg-dark bg-opacity-50">
+          <div className="modal-dialog modal-dialog-centered modal-sm">
+            <div className="modal-content">
+              <div className="modal-body">
+                Delete role <b>{deleteRoleData.name}</b>?
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setDeleteRoleData(null)}
+                >
+                  Cancel
+                </button>
+                <button className="btn btn-danger" onClick={handleDelete}>
+                  Delete
+                </button>
               </div>
             </div>
           </div>

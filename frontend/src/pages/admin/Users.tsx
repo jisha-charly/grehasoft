@@ -12,31 +12,40 @@ import {
 
 import { getRoles } from "../../api/services/role.service";
 import { getDepartments } from "../../api/services/department.service";
+import { userValidators } from "../../utils/validators";
 
 const ITEMS_PER_PAGE = 5;
 
+type UserForm = {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: number | "";
+  department: number | "";
+};
+
 const Users = () => {
+  /* ================= STATE ================= */
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
 
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
-
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  const [toast, setToast] = useState<{
-    msg: string;
-    type: "success" | "danger";
-  } | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  /* ================= CREATE FORM ================= */
-  const [form, setForm] = useState({
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const [form, setForm] = useState<UserForm>({
     username: "",
     email: "",
     password: "",
-    role: "" as number | "",
-    department: "" as number | "",
+    confirmPassword: "",
+    role: "",
+    department: "",
   });
 
   /* ================= LOAD ================= */
@@ -46,7 +55,6 @@ const Users = () => {
       getRoles(),
       getDepartments(),
     ]);
-
     setUsers(u);
     setRoles(r);
     setDepartments(d);
@@ -56,128 +64,155 @@ const Users = () => {
     loadAll();
   }, []);
 
-  /* ================= TOAST ================= */
-  const showToast = (msg: string, type: "success" | "danger") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
+  /* ================= VALIDATION ================= */
+  const validate = (data: UserForm | User, isEdit = false) => {
+    const e: Record<string, string> = {};
+
+    if (!data.username || data.username.trim().length < 3) {
+      e.username = "Username must be at least 3 characters";
+    }
+
+    if (!userValidators.email.test(data.email || "")) {
+      e.email = "Invalid email address";
+    }
+
+    if (!isEdit) {
+      if (!userValidators.password.test((data as UserForm).password)) {
+        e.password = "Password must be at least 6 characters";
+      }
+
+      if (
+        (data as UserForm).password !==
+        (data as UserForm).confirmPassword
+      ) {
+        e.confirmPassword = "Passwords do not match";
+      }
+    }
+
+    if (!("role" in data) || !data.role) {
+      e.role = "Role is required";
+    }
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   /* ================= CREATE ================= */
   const handleCreate = async () => {
-    try {
-      await createUser({
-        username: form.username.trim(),
-        email: form.email.trim(),
-        password: form.password,
-        role: Number(form.role),
-        department: Number(form.department),
-      });
+    if (!validate(form)) return;
 
-      setForm({
-        username: "",
-        email: "",
-        password: "",
-        role: "",
-        department: "",
-      });
+    const payload: any = {
+      username: form.username.trim(),
+      email: form.email.trim(),
+      password: form.password,
+      role: Number(form.role),
+    };
 
-      showToast("User created successfully", "success");
-      loadAll();
-    } catch (err: any) {
-      showToast(err.response?.data?.error || "Failed to create user", "danger");
+    if (form.department) {
+      payload.department = Number(form.department);
     }
+
+    await createUser(payload);
+    resetForm();
+    loadAll();
   };
 
   /* ================= UPDATE ================= */
   const handleUpdate = async () => {
     if (!editingUser) return;
+    if (!validate(editingUser, true)) return;
 
-    try {
-      await updateUser(editingUser.id, {
-        email: editingUser.email,
-        role: editingUser.role_id,
-        department: editingUser.department_id ?? null,
-        is_active: editingUser.is_active,
-      });
+    await updateUser(editingUser.id, {
+      email: editingUser.email,
+      role: editingUser.role_id,
+      department: editingUser.department_id ?? null,
+      is_active: editingUser.is_active,
+    });
 
-      showToast("User updated successfully", "success");
-      setEditingUser(null);
-      loadAll();
-    } catch (err: any) {
-      showToast(err.response?.data?.error || "Update failed", "danger");
-    }
+    setEditingUser(null);
+    setErrors({});
+    loadAll();
   };
 
   /* ================= DELETE ================= */
   const handleDelete = async () => {
-    if (!deleteUserId) return;
-
-    try {
-      await deleteUser(deleteUserId);
-      showToast("User deleted successfully", "success");
-      loadAll();
-    } catch (err: any) {
-      showToast(err.response?.data?.error || "Delete failed", "danger");
-    } finally {
-      setDeleteUserId(null);
-    }
+    if (!deleteId) return;
+    await deleteUser(deleteId);
+    setDeleteId(null);
+    loadAll();
   };
 
+  const resetForm = () => {
+    setForm({
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "",
+      department: "",
+    });
+    setErrors({});
+  };
+
+  /* ================= SEARCH (UNIVERSAL) ================= */
+  const filtered = users.filter((u) =>
+    `${u.username} ${u.email} ${u.role} ${u.department || ""} ${
+      u.is_active ? "active" : "inactive"
+    }`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
   /* ================= PAGINATION ================= */
-  const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
-  const paginatedUsers = users.slice(
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginated = filtered.slice(
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE
   );
 
+  /* ================= UI ================= */
   return (
     <div className="container mt-3">
       <h3>Users</h3>
 
-      {/* ================= TOAST ================= */}
-      {toast && (
-        <div className={`toast show position-fixed top-0 end-0 m-3 text-bg-${toast.type}`}>
-          <div className="toast-body">{toast.msg}</div>
-        </div>
-      )}
+      {/* SEARCH */}
+      <input
+        className="form-control mb-3"
+        placeholder="Search users..."
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPage(1);
+        }}
+      />
 
-      {/* ================= CREATE USER FORM ================= */}
+      {/* CREATE FORM */}
       <div className="card mb-3">
-        <div className="card-body">
-          <form autoComplete="off" className="d-flex gap-2 flex-wrap">
-            <input
-              className="form-control"
-              placeholder="Username"
-              autoComplete="off"
-              value={form.username}
-              onChange={(e) =>
-                setForm({ ...form, username: e.target.value })
-              }
-            />
+        <div className="card-body row g-2">
+          {["username", "email", "password", "confirmPassword"].map(
+            (key) => (
+              <div className="col-md-3" key={key}>
+                <input
+                  type={key.includes("password") ? "password" : "text"}
+                  className={`form-control ${
+                    errors[key] ? "is-invalid" : ""
+                  }`}
+                  placeholder={key.replace(/([A-Z])/g, " $1")}
+                  value={(form as any)[key]}
+                  onChange={(e) =>
+                    setForm({ ...form, [key]: e.target.value })
+                  }
+                />
+                {errors[key] && (
+                  <div className="invalid-feedback">{errors[key]}</div>
+                )}
+              </div>
+            )
+          )}
 
-            <input
-              className="form-control"
-              placeholder="Email"
-              autoComplete="off"
-              value={form.email}
-              onChange={(e) =>
-                setForm({ ...form, email: e.target.value })
-              }
-            />
-
-            <input
-              className="form-control"
-              type="password"
-              placeholder="Password"
-              autoComplete="new-password"
-              value={form.password}
-              onChange={(e) =>
-                setForm({ ...form, password: e.target.value })
-              }
-            />
-
+          <div className="col-md-3">
             <select
-              className="form-select"
+              className={`form-select ${errors.role ? "is-invalid" : ""}`}
               value={form.role}
               onChange={(e) =>
                 setForm({ ...form, role: Number(e.target.value) })
@@ -190,7 +225,12 @@ const Users = () => {
                 </option>
               ))}
             </select>
+            {errors.role && (
+              <div className="invalid-feedback">{errors.role}</div>
+            )}
+          </div>
 
+          <div className="col-md-3">
             <select
               className="form-select"
               value={form.department}
@@ -205,19 +245,17 @@ const Users = () => {
                 </option>
               ))}
             </select>
+          </div>
 
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleCreate}
-            >
+          <div className="col-md-12">
+            <button className="btn btn-primary" onClick={handleCreate}>
               Create User
             </button>
-          </form>
+          </div>
         </div>
       </div>
 
-      {/* ================= USERS TABLE ================= */}
+      {/* TABLE */}
       <table className="table table-bordered table-hover">
         <thead className="table-light">
           <tr>
@@ -231,12 +269,16 @@ const Users = () => {
           </tr>
         </thead>
         <tbody>
-          {paginatedUsers.map((u) => (
+          {paginated.map((u) => (
             <tr key={u.id}>
               <td>{u.username}</td>
               <td>{u.email}</td>
               <td>
-                <span className={`badge ${u.is_active ? "bg-success" : "bg-secondary"}`}>
+                <span
+                  className={`badge ${
+                    u.is_active ? "bg-success" : "bg-secondary"
+                  }`}
+                >
                   {u.is_active ? "Active" : "Inactive"}
                 </span>
               </td>
@@ -256,17 +298,42 @@ const Users = () => {
                 </button>
                 <button
                   className="btn btn-sm btn-danger"
-                  onClick={() => setDeleteUserId(u.id)}
+                  onClick={() => setDeleteId(u.id)}
                 >
                   Delete
                 </button>
               </td>
             </tr>
           ))}
+
+          {!paginated.length && (
+            <tr>
+              <td colSpan={7} className="text-center">
+                No users found
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
 
-      {/* EDIT & DELETE MODALS → keep your existing modals */}
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <div className="d-flex gap-1">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              className={`btn btn-sm ${
+                page === i + 1
+                  ? "btn-primary"
+                  : "btn-outline-primary"
+              }`}
+              onClick={() => setPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
