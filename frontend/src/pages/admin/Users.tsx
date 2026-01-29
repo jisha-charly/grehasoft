@@ -23,8 +23,6 @@ const Users = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
 
-  const [search, setSearch] = useState("");
-  const [createdDate, setCreatedDate] = useState("");
   const [page, setPage] = useState(1);
 
   const [toast, setToast] = useState<{
@@ -32,6 +30,7 @@ const Users = () => {
     type: "success" | "danger";
   } | null>(null);
 
+  /* ================= CREATE FORM ================= */
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -40,7 +39,7 @@ const Users = () => {
     department: "" as number | "",
   });
 
-  /* ---------------- LOAD ---------------- */
+  /* ================= LOAD ================= */
   const loadAll = async () => {
     const [u, r, d] = await Promise.all([
       getUsers(),
@@ -57,18 +56,18 @@ const Users = () => {
     loadAll();
   }, []);
 
-  /* ---------------- TOAST ---------------- */
+  /* ================= TOAST ================= */
   const showToast = (msg: string, type: "success" | "danger") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  /* ---------------- CREATE ---------------- */
+  /* ================= CREATE ================= */
   const handleCreate = async () => {
     try {
       await createUser({
-        username: form.username,
-        email: form.email,
+        username: form.username.trim(),
+        email: form.email.trim(),
         password: form.password,
         role: Number(form.role),
         department: Number(form.department),
@@ -89,7 +88,7 @@ const Users = () => {
     }
   };
 
-  /* ---------------- UPDATE ---------------- */
+  /* ================= UPDATE ================= */
   const handleUpdate = async () => {
     if (!editingUser) return;
 
@@ -109,7 +108,7 @@ const Users = () => {
     }
   };
 
-  /* ---------------- DELETE ---------------- */
+  /* ================= DELETE ================= */
   const handleDelete = async () => {
     if (!deleteUserId) return;
 
@@ -124,22 +123,9 @@ const Users = () => {
     }
   };
 
-  /* ---------------- FILTERS ---------------- */
-  const filteredUsers = users.filter((u) => {
-    const textMatch =
-      `${u.username} ${u.email} ${u.role} ${u.department ?? ""}`
-        .toLowerCase()
-        .includes(search.toLowerCase());
-
-    const dateMatch =
-      createdDate === "" || u.created_at?.startsWith(createdDate);
-
-    return textMatch && dateMatch;
-  });
-
-  /* ---------------- PAGINATION ---------------- */
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const paginatedUsers = filteredUsers.slice(
+  /* ================= PAGINATION ================= */
+  const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
+  const paginatedUsers = users.slice(
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE
   );
@@ -148,69 +134,90 @@ const Users = () => {
     <div className="container mt-3">
       <h3>Users</h3>
 
-      {/* TOAST */}
+      {/* ================= TOAST ================= */}
       {toast && (
         <div className={`toast show position-fixed top-0 end-0 m-3 text-bg-${toast.type}`}>
           <div className="toast-body">{toast.msg}</div>
         </div>
       )}
 
-      {/* CREATE */}
+      {/* ================= CREATE USER FORM ================= */}
       <div className="card mb-3">
-        <div className="card-body d-flex gap-2 flex-wrap">
-          <input
-            className="form-control"
-            placeholder="Username"
-            value={form.username}
-            onChange={(e) => setForm({ ...form, username: e.target.value })}
-          />
+        <div className="card-body">
+          <form autoComplete="off" className="d-flex gap-2 flex-wrap">
+            <input
+              className="form-control"
+              placeholder="Username"
+              autoComplete="off"
+              value={form.username}
+              onChange={(e) =>
+                setForm({ ...form, username: e.target.value })
+              }
+            />
 
-          <input
-            className="form-control"
-            placeholder="Email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
+            <input
+              className="form-control"
+              placeholder="Email"
+              autoComplete="off"
+              value={form.email}
+              onChange={(e) =>
+                setForm({ ...form, email: e.target.value })
+              }
+            />
 
-          <input
-            className="form-control"
-            type="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-          />
+            <input
+              className="form-control"
+              type="password"
+              placeholder="Password"
+              autoComplete="new-password"
+              value={form.password}
+              onChange={(e) =>
+                setForm({ ...form, password: e.target.value })
+              }
+            />
 
-          <select
-            className="form-select"
-            value={form.role}
-            onChange={(e) => setForm({ ...form, role: Number(e.target.value) })}
-          >
-            <option value="">Select Role</option>
-            {roles.map((r) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
-          </select>
+            <select
+              className="form-select"
+              value={form.role}
+              onChange={(e) =>
+                setForm({ ...form, role: Number(e.target.value) })
+              }
+            >
+              <option value="">Select Role</option>
+              {roles.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
 
-          <select
-            className="form-select"
-            value={form.department}
-            onChange={(e) =>
-              setForm({ ...form, department: Number(e.target.value) })
-            }
-          >
-            <option value="">Select Department</option>
-            {departments.map((d) => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </select>
+            <select
+              className="form-select"
+              value={form.department}
+              onChange={(e) =>
+                setForm({ ...form, department: Number(e.target.value) })
+              }
+            >
+              <option value="">Select Department</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
 
-          <button className="btn btn-primary" onClick={handleCreate}>
-            Create User
-          </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleCreate}
+            >
+              Create User
+            </button>
+          </form>
         </div>
       </div>
 
-      {/* TABLE */}
+      {/* ================= USERS TABLE ================= */}
       <table className="table table-bordered table-hover">
         <thead className="table-light">
           <tr>
@@ -235,7 +242,11 @@ const Users = () => {
               </td>
               <td>{u.role}</td>
               <td>{u.department || "-"}</td>
-              <td>{u.created_at ? new Date(u.created_at).toLocaleDateString() : "-"}</td>
+              <td>
+                {u.created_at
+                  ? new Date(u.created_at).toLocaleDateString()
+                  : "-"}
+              </td>
               <td>
                 <button
                   className="btn btn-sm btn-warning me-2"
@@ -255,7 +266,7 @@ const Users = () => {
         </tbody>
       </table>
 
-      {/* EDIT + DELETE MODALS stay exactly as you already wrote */}
+      {/* EDIT & DELETE MODALS → keep your existing modals */}
     </div>
   );
 };
