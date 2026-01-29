@@ -33,8 +33,8 @@ const Users = () => {
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
@@ -67,7 +67,7 @@ const Users = () => {
   const validate = (data: UserForm, isEdit = false) => {
     const e: Record<string, string> = {};
 
-    if (data.username.trim().length < 3) {
+    if (!data.username || data.username.trim().length < 3) {
       e.username = "Username must be at least 3 characters";
     }
 
@@ -104,7 +104,7 @@ const Users = () => {
       role: Number(form.role),
     };
 
-    if (form.department !== "") {
+    if (form.department) {
       payload.department = Number(form.department);
     }
 
@@ -113,25 +113,9 @@ const Users = () => {
     loadAll();
   };
 
-  /* ================= UPDATE ================= */
-  const handleUpdate = async () => {
-    if (!editingUser) return;
-
-    await updateUser(editingUser.id, {
-      email: editingUser.email,
-      role: editingUser.role_id,
-      department: editingUser.department_id ?? null,
-      is_active: editingUser.is_active,
-    });
-
-    setEditingUser(null);
-    loadAll();
-  };
-
   /* ================= DELETE ================= */
   const handleDelete = async () => {
     if (!deleteId) return;
-
     await deleteUser(deleteId);
     setDeleteId(null);
     loadAll();
@@ -149,13 +133,14 @@ const Users = () => {
     setErrors({});
   };
 
-  /* ================= SEARCH ================= */
+  /* ================= SEARCH (UNIVERSAL) ================= */
   const filtered = users.filter((u) =>
     `${u.username} ${u.email} ${u.role} ${u.department || ""}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
 
+  /* ================= PAGINATION ================= */
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice(
     (page - 1) * ITEMS_PER_PAGE,
@@ -179,20 +164,26 @@ const Users = () => {
       />
 
       {/* CREATE FORM */}
-      <form autoComplete="off">
-        <input type="text" name="fakeuser" style={{ display: "none" }} />
-        <input type="password" name="fakepass" style={{ display: "none" }} />
+      <div className="card mb-3">
+        <div className="card-body">
+          <form autoComplete="off" className="row g-2">
 
-        <div className="card mb-3">
-          <div className="card-body row g-2">
-            {["username", "email", "password", "confirmPassword"].map((key) => (
+            {/* 🔒 Autofill blockers */}
+            <input type="text" name="fakeusernameremembered" style={{ display: "none" }} />
+            <input type="password" name="fakepasswordremembered" style={{ display: "none" }} />
+
+            {[
+              { key: "username", label: "Username", type: "text", ac: "new-username" },
+              { key: "email", label: "Email", type: "text", ac: "new-email" },
+              { key: "password", label: "Password", type: "password", ac: "new-password" },
+              { key: "confirmPassword", label: "Confirm Password", type: "password", ac: "new-password" },
+            ].map(({ key, label, type, ac }) => (
               <div className="col-md-3" key={key}>
                 <input
-                  type={key.includes("password") ? "password" : "text"}
-                  autoComplete="off"
-                  name={`new-${key}`}
+                  type={type}
+                  autoComplete={ac}
                   className={`form-control ${errors[key] ? "is-invalid" : ""}`}
-                  placeholder={key.replace(/([A-Z])/g, " $1")}
+                  placeholder={label}
                   value={(form as any)[key]}
                   onChange={(e) =>
                     setForm({ ...form, [key]: e.target.value })
@@ -219,6 +210,9 @@ const Users = () => {
                   </option>
                 ))}
               </select>
+              {errors.role && (
+                <div className="invalid-feedback">{errors.role}</div>
+              )}
             </div>
 
             <div className="col-md-3">
@@ -239,13 +233,13 @@ const Users = () => {
             </div>
 
             <div className="col-md-12">
-              <button type="button" className="btn btn-primary" onClick={handleCreate}>
+              <button className="btn btn-primary" type="button" onClick={handleCreate}>
                 Create User
               </button>
             </div>
-          </div>
+          </form>
         </div>
-      </form>
+      </div>
 
       {/* TABLE */}
       <table className="table table-bordered table-hover">
@@ -256,7 +250,8 @@ const Users = () => {
             <th>Status</th>
             <th>Role</th>
             <th>Department</th>
-            <th>Action</th>
+            <th>Created</th>
+            <th style={{ width: 140 }}>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -271,45 +266,24 @@ const Users = () => {
               </td>
               <td>{u.role}</td>
               <td>{u.department || "-"}</td>
+              <td>{u.created_at ? new Date(u.created_at).toLocaleDateString() : "-"}</td>
               <td>
-                <button
-                  className="btn btn-sm btn-warning me-2"
-                  onClick={() => setEditingUser(u)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn btn-sm btn-danger"
-                  onClick={() => setDeleteId(u.id)}
-                >
+                <button className="btn btn-sm btn-danger" onClick={() => setDeleteId(u.id)}>
                   Delete
                 </button>
               </td>
             </tr>
           ))}
+
+          {!paginated.length && (
+            <tr>
+              <td colSpan={7} className="text-center">
+                No users found
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
-
-      {/* DELETE CONFIRM MODAL */}
-      {deleteId && (
-        <div className="modal show d-block bg-dark bg-opacity-50">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-body">
-                Are you sure you want to delete this user?
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setDeleteId(null)}>
-                  Cancel
-                </button>
-                <button className="btn btn-danger" onClick={handleDelete}>
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
