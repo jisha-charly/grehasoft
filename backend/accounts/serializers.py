@@ -1,10 +1,20 @@
 import re
+from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import Client
 from .models import Project, ProjectMilestone, ProjectMember
 from .models import Department
 
 
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["username", "email"]
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, min_length=8)
 class DepartmentSerializer(serializers.ModelSerializer):
     parent_name = serializers.CharField(
         source="parent.name",
