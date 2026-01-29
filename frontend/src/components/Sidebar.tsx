@@ -12,7 +12,7 @@ import {
   MdSettings,
   MdLogout,
 } from "react-icons/md";
-
+import "../css/sidebar.css";
 const menuItems = [
   { label: "Dashboard", path: "/admin/dashboard", icon: <MdDashboard /> },
   { label: "Roles", path: "/admin/roles", icon: <MdPeople /> },
