@@ -13,7 +13,7 @@ import {
   MdLogout,
 } from "react-icons/md";
 
-const sidebarItems = [
+const menuItems = [
   { label: "Dashboard", path: "/admin/dashboard", icon: <MdDashboard /> },
   { label: "Roles", path: "/admin/roles", icon: <MdPeople /> },
   { label: "Departments", path: "/admin/departments", icon: <MdApartment /> },
@@ -37,17 +37,26 @@ const Sidebar = () => {
 
   return (
     <aside
-      className="d-flex flex-column bg-light border-end p-3"
+      className="d-flex flex-column bg-dark text-white"
       style={{ width: 260, minHeight: "100vh" }}
     >
-      <div className="flex-grow-1">
-        {sidebarItems.map((item) => (
+      {/* LOGO / TITLE */}
+      <div className="p-3 border-bottom border-secondary">
+        <h5 className="mb-0 fw-bold">Grehasoft</h5>
+        <small className="text-secondary">Admin Panel</small>
+      </div>
+
+      {/* MENU */}
+      <div className="flex-grow-1 p-2">
+        {menuItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `d-flex align-items-center gap-2 p-2 rounded text-decoration-none mb-1 ${
-                isActive ? "bg-primary text-white" : "text-dark"
+              `d-flex align-items-center gap-2 px-3 py-2 rounded mb-1 text-decoration-none ${
+                isActive
+                  ? "bg-primary text-white"
+                  : "text-light sidebar-link"
               }`
             }
           >
@@ -57,14 +66,16 @@ const Sidebar = () => {
         ))}
       </div>
 
-      {/* LOGOUT */}
-      <button
-        className="btn btn-outline-danger d-flex align-items-center gap-2 mt-3"
-        onClick={handleLogout}
-      >
-        <MdLogout />
-        Logout
-      </button>
+      {/* LOGOUT (BOTTOM, SAME STYLE) */}
+      <div className="p-3 border-top border-secondary">
+        <button
+          onClick={handleLogout}
+          className="btn btn-outline-danger w-100 d-flex align-items-center gap-2 justify-content-center"
+        >
+          <MdLogout />
+          Logout
+        </button>
+      </div>
     </aside>
   );
 };
