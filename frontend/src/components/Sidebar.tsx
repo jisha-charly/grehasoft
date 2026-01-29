@@ -1,15 +1,16 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   MdDashboard,
   MdApartment,
   MdPeople,
-  MdWork,
   MdTask,
+  MdBusiness,
+  MdWork,
   MdGroups,
   MdCall,
-  MdBusiness,
   MdAssessment,
   MdSettings,
+  MdLogout,
 } from "react-icons/md";
 
 const sidebarItems = [
@@ -18,41 +19,52 @@ const sidebarItems = [
   { label: "Departments", path: "/admin/departments", icon: <MdApartment /> },
   { label: "Users", path: "/admin/users", icon: <MdPeople /> },
   { label: "Task Types", path: "/admin/task-types", icon: <MdTask /> },
-   { label: "Clients", path: "/admin/clients", icon: <MdBusiness /> },
+  { label: "Clients", path: "/admin/clients", icon: <MdBusiness /> },
   { label: "Projects", path: "/admin/projects", icon: <MdWork /> },
   { label: "Teams", path: "/admin/teams", icon: <MdGroups /> },
   { label: "Leads", path: "/admin/leads", icon: <MdCall /> },
- 
   { label: "Reports", path: "/admin/reports", icon: <MdAssessment /> },
   { label: "Settings", path: "/admin/settings", icon: <MdSettings /> },
 ];
 
 const Sidebar = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/");
+  };
+
   return (
     <aside
-      className="d-flex flex-column flex-shrink-0 p-3 text-bg-dark"
+      className="d-flex flex-column bg-light border-end p-3"
       style={{ width: 260, minHeight: "100vh" }}
     >
-      <span className="fs-4 fw-bold mb-1">Grehasoft</span>
-      <small className="text-secondary mb-3">Admin Panel</small>
-
-      <ul className="nav nav-pills flex-column gap-1">
+      <div className="flex-grow-1">
         {sidebarItems.map((item) => (
-          <li key={item.path} className="nav-item">
-            <NavLink
-              to={item.path}
-              className={({ isActive }) =>
-                `nav-link d-flex align-items-center gap-2 ${
-                  isActive ? "active" : "text-white"
-                }`
-              }
-            >
-              <span style={{ fontSize: 18 }}>{item.icon}</span>
-              {item.label}
-            </NavLink>
-          </li>
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) =>
+              `d-flex align-items-center gap-2 p-2 rounded text-decoration-none mb-1 ${
+                isActive ? "bg-primary text-white" : "text-dark"
+              }`
+            }
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </NavLink>
         ))}
-      </ul>
+      </div>
+
+      {/* LOGOUT */}
+      <button
+        className="btn btn-outline-danger d-flex align-items-center gap-2 mt-3"
+        onClick={handleLogout}
+      >
+        <MdLogout />
+        Logout
+      </button>
     </aside>
   );
 };
