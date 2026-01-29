@@ -40,21 +40,38 @@ def is_admin(user):
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
+    user = request.user
+    data = request.data.copy()
+
+    # Clean empty fields
+    if data.get("email") == "":
+        data.pop("email")
+
     try:
-        user = request.user
-        serializer = ProfileUpdateSerializer(user, data=request.data, partial=True)
+        serializer = ProfileUpdateSerializer(
+            user, data=data, partial=True
+        )
 
         if serializer.is_valid():
             serializer.save()
-            return Response({"message": "Profile updated successfully"})
+            return Response(
+                {"message": "Profile updated successfully"},
+                status=status.HTTP_200_OK,
+            )
 
-        return Response(serializer.errors, status=400)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    except IntegrityError:
+        return Response(
+            {"error": "Username or email already exists"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     except Exception as e:
-        print("PROFILE UPDATE ERROR:", e)
+        # last safety net – NEVER expose 500
         return Response(
-            {"error": "Internal server error"},
-            status=500
+            {"error": "Profile update failed"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
 
