@@ -12,7 +12,6 @@ import {
 import { getRoles } from "../../api/services/role.service";
 import { getDepartments } from "../../api/services/department.service";
 import { userValidators } from "../../utils/validators";
-
 import { toast } from "react-toastify";
 
 const ITEMS_PER_PAGE = 5;
@@ -173,148 +172,6 @@ const Users = () => {
         }}
       />
 
-      {/* CREATE FORM */}
-      <form autoComplete="off">
-        <input type="text" style={{ display: "none" }} />
-        <input type="password" style={{ display: "none" }} />
-
-        <div className="card mb-3">
-          <div className="card-body row g-2">
-
-            {/* USERNAME */}
-            <div className="col-md-3">
-              <input
-                className={`form-control ${errors.username ? "is-invalid" : ""}`}
-                placeholder="Username"
-                value={form.username}
-                onChange={(e) =>
-                  setForm({ ...form, username: e.target.value })
-                }
-              />
-              <div className="invalid-feedback">{errors.username}</div>
-            </div>
-
-            {/* EMAIL */}
-            <div className="col-md-3">
-              <input
-                className={`form-control ${errors.email ? "is-invalid" : ""}`}
-                placeholder="Email"
-                value={form.email}
-                onChange={(e) =>
-                  setForm({ ...form, email: e.target.value })
-                }
-              />
-              <div className="invalid-feedback">{errors.email}</div>
-            </div>
-
-            {/* PASSWORD */}
-            <div className="col-md-3 position-relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                className={`form-control ${errors.password ? "is-invalid" : ""}`}
-                placeholder="Password"
-                value={form.password}
-                onChange={(e) =>
-                  setForm({ ...form, password: e.target.value })
-                }
-              />
-              <i
-                className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
-                style={{
-                  position: "absolute",
-                  right: 12,
-                  top: "50%",
-                  cursor: "pointer",
-                  transform: "translateY(-50%)",
-                }}
-                onClick={() => setShowPassword(!showPassword)}
-              />
-              <div className="invalid-feedback">{errors.password}</div>
-            </div>
-
-            {/* CONFIRM PASSWORD */}
-            <div className="col-md-3 position-relative">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                className={`form-control ${
-                  errors.confirmPassword ? "is-invalid" : ""
-                }`}
-                placeholder="Confirm Password"
-                value={form.confirmPassword}
-                onChange={(e) =>
-                  setForm({ ...form, confirmPassword: e.target.value })
-                }
-              />
-              <i
-                className={`bi ${
-                  showConfirmPassword ? "bi-eye-slash" : "bi-eye"
-                }`}
-                style={{
-                  position: "absolute",
-                  right: 12,
-                  top: "50%",
-                  cursor: "pointer",
-                  transform: "translateY(-50%)",
-                }}
-                onClick={() =>
-                  setShowConfirmPassword(!showConfirmPassword)
-                }
-              />
-              <div className="invalid-feedback">
-                {errors.confirmPassword}
-              </div>
-            </div>
-
-            {/* ROLE */}
-            <div className="col-md-3">
-              <select
-                className={`form-select ${errors.role ? "is-invalid" : ""}`}
-                value={form.role}
-                onChange={(e) =>
-                  setForm({ ...form, role: Number(e.target.value) })
-                }
-              >
-                <option value="">Select Role</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-              <div className="invalid-feedback">{errors.role}</div>
-            </div>
-
-            {/* DEPARTMENT */}
-            <div className="col-md-3">
-              <select
-                className="form-select"
-                value={form.department}
-                onChange={(e) =>
-                  setForm({ ...form, department: Number(e.target.value) })
-                }
-              >
-                <option value="">Select Department</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="col-md-12">
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleCreate}
-              >
-                Create User
-              </button>
-            </div>
-          </div>
-        </div>
-      </form>
-
       {/* TABLE */}
       <table className="table table-bordered">
         <thead>
@@ -340,7 +197,7 @@ const Users = () => {
                   <>
                     <button
                       className="btn btn-sm btn-warning me-2"
-                      onClick={() => setEditingUser(u)}
+                      onClick={() => setEditingUser({ ...u })}
                     >
                       Edit
                     </button>
@@ -358,25 +215,6 @@ const Users = () => {
         </tbody>
       </table>
 
-      {/* PAGINATION */}
-      {totalPages > 1 && (
-        <div className="d-flex gap-1">
-          {Array.from({ length: totalPages }).map((_, i) => (
-            <button
-              key={i}
-              className={`btn btn-sm ${
-                page === i + 1
-                  ? "btn-primary"
-                  : "btn-outline-primary"
-              }`}
-              onClick={() => setPage(i + 1)}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* EDIT MODAL */}
       {editingUser && (
         <div className="modal show d-block bg-dark bg-opacity-50">
@@ -393,12 +231,10 @@ const Users = () => {
               <div className="modal-body">
                 <input
                   className="form-control mb-3"
+                  placeholder="Email"
                   value={editingUser.email}
                   onChange={(e) =>
-                    setEditingUser({
-                      ...editingUser,
-                      email: e.target.value,
-                    })
+                    setEditingUser({ ...editingUser, email: e.target.value })
                   }
                 />
 
@@ -431,7 +267,7 @@ const Users = () => {
                     })
                   }
                 >
-                  <option value="">None</option>
+                  <option value="">No Department</option>
                   {departments.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.name}
@@ -452,7 +288,7 @@ const Users = () => {
                     }
                   />
                   <label className="form-check-label">
-                    Active
+                    {editingUser.is_active ? "Active" : "Inactive"}
                   </label>
                 </div>
               </div>
