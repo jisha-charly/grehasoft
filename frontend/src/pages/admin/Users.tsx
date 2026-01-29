@@ -9,10 +9,11 @@ import {
   updateUser,
   deleteUser,
 } from "../../api/services/user.service";
-
 import { getRoles } from "../../api/services/role.service";
 import { getDepartments } from "../../api/services/department.service";
 import { userValidators } from "../../utils/validators";
+
+import { toast } from "react-toastify";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -98,11 +99,10 @@ const Users = () => {
       role: Number(form.role),
     };
 
-    if (form.department !== "") {
-      payload.department = Number(form.department);
-    }
+    if (form.department) payload.department = Number(form.department);
 
     await createUser(payload);
+    toast.success("User created successfully");
     resetForm();
     loadAll();
   };
@@ -118,6 +118,7 @@ const Users = () => {
       is_active: editingUser.is_active,
     });
 
+    toast.success("User updated successfully");
     setEditingUser(null);
     loadAll();
   };
@@ -125,7 +126,9 @@ const Users = () => {
   /* ================= DELETE ================= */
   const handleDelete = async () => {
     if (!deleteId) return;
+
     await deleteUser(deleteId);
+    toast.success("User deleted successfully");
     setDeleteId(null);
     loadAll();
   };
@@ -160,7 +163,6 @@ const Users = () => {
     <div className="container mt-3">
       <h3>Users</h3>
 
-      {/* SEARCH */}
       <input
         className="form-control mb-3"
         placeholder="Search users..."
@@ -211,7 +213,6 @@ const Users = () => {
                 type={showPassword ? "text" : "password"}
                 className={`form-control ${errors.password ? "is-invalid" : ""}`}
                 placeholder="Password"
-                autoComplete="new-password"
                 value={form.password}
                 onChange={(e) =>
                   setForm({ ...form, password: e.target.value })
@@ -221,8 +222,8 @@ const Users = () => {
                 className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
                 style={{
                   position: "absolute",
-                  top: "50%",
                   right: 12,
+                  top: "50%",
                   cursor: "pointer",
                   transform: "translateY(-50%)",
                 }}
@@ -239,7 +240,6 @@ const Users = () => {
                   errors.confirmPassword ? "is-invalid" : ""
                 }`}
                 placeholder="Confirm Password"
-                autoComplete="new-password"
                 value={form.confirmPassword}
                 onChange={(e) =>
                   setForm({ ...form, confirmPassword: e.target.value })
@@ -251,8 +251,8 @@ const Users = () => {
                 }`}
                 style={{
                   position: "absolute",
-                  top: "50%",
                   right: 12,
+                  top: "50%",
                   cursor: "pointer",
                   transform: "translateY(-50%)",
                 }}
@@ -334,18 +334,24 @@ const Users = () => {
               <td>{u.role}</td>
               <td>{u.department || "-"}</td>
               <td>
-                <button
-                  className="btn btn-sm btn-warning me-2"
-                  onClick={() => setEditingUser(u)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn btn-sm btn-danger"
-                  onClick={() => setDeleteId(u.id)}
-                >
-                  Delete
-                </button>
+                {u.role === "ADMIN" ? (
+                  <span className="text-muted">Protected</span>
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-sm btn-warning me-2"
+                      onClick={() => setEditingUser(u)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => setDeleteId(u.id)}
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
               </td>
             </tr>
           ))}
@@ -376,9 +382,17 @@ const Users = () => {
         <div className="modal show d-block bg-dark bg-opacity-50">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
+              <div className="modal-header">
+                <h5>Edit User</h5>
+                <button
+                  className="btn-close"
+                  onClick={() => setEditingUser(null)}
+                />
+              </div>
+
               <div className="modal-body">
                 <input
-                  className="form-control mb-2"
+                  className="form-control mb-3"
                   value={editingUser.email}
                   onChange={(e) =>
                     setEditingUser({
@@ -388,17 +402,73 @@ const Users = () => {
                   }
                 />
 
-                <button
-                  className="btn btn-success me-2"
-                  onClick={handleUpdate}
+                <select
+                  className="form-select mb-3"
+                  value={editingUser.role_id}
+                  onChange={(e) =>
+                    setEditingUser({
+                      ...editingUser,
+                      role_id: Number(e.target.value),
+                    })
+                  }
                 >
-                  Save
-                </button>
+                  {roles.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  className="form-select mb-3"
+                  value={editingUser.department_id ?? ""}
+                  onChange={(e) =>
+                    setEditingUser({
+                      ...editingUser,
+                      department_id: e.target.value
+                        ? Number(e.target.value)
+                        : null,
+                    })
+                  }
+                >
+                  <option value="">None</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="form-check form-switch">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={editingUser.is_active}
+                    onChange={(e) =>
+                      setEditingUser({
+                        ...editingUser,
+                        is_active: e.target.checked,
+                      })
+                    }
+                  />
+                  <label className="form-check-label">
+                    Active
+                  </label>
+                </div>
+              </div>
+
+              <div className="modal-footer">
                 <button
                   className="btn btn-secondary"
                   onClick={() => setEditingUser(null)}
                 >
                   Cancel
+                </button>
+                <button
+                  className="btn btn-success"
+                  onClick={handleUpdate}
+                >
+                  Save
                 </button>
               </div>
             </div>
@@ -419,7 +489,10 @@ const Users = () => {
                 >
                   Cancel
                 </button>
-                <button className="btn btn-danger" onClick={handleDelete}>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleDelete}
+                >
                   Delete
                 </button>
               </div>
