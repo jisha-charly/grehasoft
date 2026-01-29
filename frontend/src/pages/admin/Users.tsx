@@ -26,7 +26,6 @@ type UserForm = {
 };
 
 const Users = () => {
-  /* ================= STATE ================= */
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -64,30 +63,16 @@ const Users = () => {
   }, []);
 
   /* ================= VALIDATION ================= */
-  const validate = (data: UserForm, isEdit = false) => {
+  const validateCreate = () => {
     const e: Record<string, string> = {};
 
-    if (!data.username || data.username.trim().length < 3) {
-      e.username = "Username must be at least 3 characters";
-    }
-
-    if (!userValidators.email.test(data.email)) {
-      e.email = "Invalid email address";
-    }
-
-    if (!isEdit) {
-      if (!userValidators.password.test(data.password)) {
-        e.password = "Password must be at least 6 characters";
-      }
-
-      if (data.password !== data.confirmPassword) {
-        e.confirmPassword = "Passwords do not match";
-      }
-    }
-
-    if (!data.role) {
-      e.role = "Role is required";
-    }
+    if (form.username.trim().length < 3) e.username = "Min 3 characters";
+    if (!userValidators.email.test(form.email)) e.email = "Invalid email";
+    if (!userValidators.password.test(form.password))
+      e.password = "Min 6 characters";
+    if (form.password !== form.confirmPassword)
+      e.confirmPassword = "Passwords do not match";
+    if (!form.role) e.role = "Role required";
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -95,7 +80,7 @@ const Users = () => {
 
   /* ================= CREATE ================= */
   const handleCreate = async () => {
-    if (!validate(form)) return;
+    if (!validateCreate()) return;
 
     const payload: any = {
       username: form.username.trim(),
@@ -104,21 +89,50 @@ const Users = () => {
       role: Number(form.role),
     };
 
-    if (form.department) {
+    if (form.department !== "") {
       payload.department = Number(form.department);
     }
 
-    await createUser(payload);
-    resetForm();
-    loadAll();
+    try {
+      await createUser(payload);
+      resetForm();
+      loadAll();
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Create failed");
+    }
+  };
+
+  /* ================= UPDATE ================= */
+  const handleUpdate = async () => {
+    if (!editingUser) return;
+
+    try {
+      await updateUser(editingUser.id, {
+        email: editingUser.email,
+        role: editingUser.role_id,
+        department: editingUser.department_id ?? null,
+        is_active: editingUser.is_active,
+      });
+
+      setEditingUser(null);
+      loadAll();
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Update failed");
+    }
   };
 
   /* ================= DELETE ================= */
   const handleDelete = async () => {
     if (!deleteId) return;
-    await deleteUser(deleteId);
-    setDeleteId(null);
-    loadAll();
+
+    try {
+      await deleteUser(deleteId);
+      loadAll();
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Delete failed");
+    } finally {
+      setDeleteId(null);
+    }
   };
 
   const resetForm = () => {
@@ -133,14 +147,13 @@ const Users = () => {
     setErrors({});
   };
 
-  /* ================= SEARCH (UNIVERSAL) ================= */
+  /* ================= SEARCH ================= */
   const filtered = users.filter((u) =>
     `${u.username} ${u.email} ${u.role} ${u.department || ""}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
 
-  /* ================= PAGINATION ================= */
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice(
     (page - 1) * ITEMS_PER_PAGE,
@@ -152,7 +165,6 @@ const Users = () => {
     <div className="container mt-3">
       <h3>Users</h3>
 
-      {/* SEARCH */}
       <input
         className="form-control mb-3"
         placeholder="Search users..."
@@ -164,33 +176,26 @@ const Users = () => {
       />
 
       {/* CREATE FORM */}
-      <div className="card mb-3">
-        <div className="card-body">
-          <form autoComplete="off" className="row g-2">
+      <form autoComplete="off">
+        <input type="text" style={{ display: "none" }} />
+        <input type="password" style={{ display: "none" }} />
 
-            {/* 🔒 Autofill blockers */}
-            <input type="text" name="fakeusernameremembered" style={{ display: "none" }} />
-            <input type="password" name="fakepasswordremembered" style={{ display: "none" }} />
-
-            {[
-              { key: "username", label: "Username", type: "text", ac: "new-username" },
-              { key: "email", label: "Email", type: "text", ac: "new-email" },
-              { key: "password", label: "Password", type: "password", ac: "new-password" },
-              { key: "confirmPassword", label: "Confirm Password", type: "password", ac: "new-password" },
-            ].map(({ key, label, type, ac }) => (
-              <div className="col-md-3" key={key}>
+        <div className="card mb-3">
+          <div className="card-body row g-2">
+            {["username", "email", "password", "confirmPassword"].map((k) => (
+              <div className="col-md-3" key={k}>
                 <input
-                  type={type}
-                  autoComplete={ac}
-                  className={`form-control ${errors[key] ? "is-invalid" : ""}`}
-                  placeholder={label}
-                  value={(form as any)[key]}
+                  type={k.includes("password") ? "password" : "text"}
+                  autoComplete="new-password"
+                  className={`form-control ${errors[k] ? "is-invalid" : ""}`}
+                  placeholder={k}
+                  value={(form as any)[k]}
                   onChange={(e) =>
-                    setForm({ ...form, [key]: e.target.value })
+                    setForm({ ...form, [k]: e.target.value })
                   }
                 />
-                {errors[key] && (
-                  <div className="invalid-feedback">{errors[key]}</div>
+                {errors[k] && (
+                  <div className="invalid-feedback">{errors[k]}</div>
                 )}
               </div>
             ))}
@@ -233,25 +238,27 @@ const Users = () => {
             </div>
 
             <div className="col-md-12">
-              <button className="btn btn-primary" type="button" onClick={handleCreate}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleCreate}
+              >
                 Create User
               </button>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
+      </form>
 
       {/* TABLE */}
-      <table className="table table-bordered table-hover">
-        <thead className="table-light">
+      <table className="table table-bordered">
+        <thead>
           <tr>
             <th>Username</th>
             <th>Email</th>
-            <th>Status</th>
             <th>Role</th>
             <th>Department</th>
-            <th>Created</th>
-            <th style={{ width: 140 }}>Action</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -259,31 +266,83 @@ const Users = () => {
             <tr key={u.id}>
               <td>{u.username}</td>
               <td>{u.email}</td>
-              <td>
-                <span className={`badge ${u.is_active ? "bg-success" : "bg-secondary"}`}>
-                  {u.is_active ? "Active" : "Inactive"}
-                </span>
-              </td>
               <td>{u.role}</td>
               <td>{u.department || "-"}</td>
-              <td>{u.created_at ? new Date(u.created_at).toLocaleDateString() : "-"}</td>
               <td>
-                <button className="btn btn-sm btn-danger" onClick={() => setDeleteId(u.id)}>
+                <button
+                  className="btn btn-sm btn-warning me-2"
+                  onClick={() => setEditingUser(u)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn btn-sm btn-danger"
+                  onClick={() => setDeleteId(u.id)}
+                >
                   Delete
                 </button>
               </td>
             </tr>
           ))}
-
-          {!paginated.length && (
-            <tr>
-              <td colSpan={7} className="text-center">
-                No users found
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
+
+      {/* EDIT MODAL */}
+      {editingUser && (
+        <div className="modal show d-block bg-dark bg-opacity-50">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-body">
+                <input
+                  className="form-control mb-2"
+                  value={editingUser.email}
+                  onChange={(e) =>
+                    setEditingUser({
+                      ...editingUser,
+                      email: e.target.value,
+                    })
+                  }
+                />
+
+                <button
+                  className="btn btn-success me-2"
+                  onClick={handleUpdate}
+                >
+                  Save
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setEditingUser(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRM */}
+      {deleteId && (
+        <div className="modal show d-block bg-dark bg-opacity-50">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-body">Delete this user?</div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setDeleteId(null)}
+                >
+                  Cancel
+                </button>
+                <button className="btn btn-danger" onClick={handleDelete}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
