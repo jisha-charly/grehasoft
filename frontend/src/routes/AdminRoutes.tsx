@@ -8,7 +8,8 @@ import TaskTypes from "../pages/admin/TaskTypes";
 import Clients from "../pages/admin/Clients";
 import Projects from "../pages/admin/Projects";
 import ProjectDetails from "../pages/admin/ProjectDetails";
-
+import Settings from "../pages/admin/Settings";
+import NotFound from "../pages/NotFound";
 const AdminRoutes = () => {
   return (
     <Routes>
@@ -21,6 +22,15 @@ const AdminRoutes = () => {
         <Route path="clients" element={<Clients />} />
         <Route path="projects" element={<Projects />} />
         <Route path="projects/:id" element={<ProjectDetails />} />
+        <Route path="settings" element={<Settings />} />
+
+        {/* 🔴 ADMIN 404 */}
+        <Route path="*" element={<NotFound />} />
+      
+
+      {/* 🔴 GLOBAL 404 */}
+      <Route path="*" element={<NotFound />} />
+    
       </Route>
     </Routes>
   );

@@ -57,6 +57,7 @@ const Sidebar = () => {
                 isActive
                   ? "bg-primary text-white"
                   : "text-light sidebar-link"
+                  
               }`
             }
           >
