@@ -33,7 +33,10 @@ const Settings = () => {
 
     try {
       setLoading(true);
-      await updateProfile({ username, email });
+     await updateProfile({
+  username,
+  ...(email ? { email } : {}),
+});
 
       localStorage.setItem("username", username);
       setSuccess("Profile updated successfully");

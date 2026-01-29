@@ -11,6 +11,18 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = ["username", "email"]
 
+    def validate_username(self, value):
+        user = self.instance
+        if User.objects.exclude(id=user.id).filter(username=value).exists():
+            raise serializers.ValidationError("Username already exists")
+        return value
+
+    def validate_email(self, value):
+        user = self.instance
+        if value and User.objects.exclude(id=user.id).filter(email=value).exists():
+            raise serializers.ValidationError("Email already exists")
+        return value
+
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
