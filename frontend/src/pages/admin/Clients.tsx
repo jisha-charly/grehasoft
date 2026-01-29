@@ -52,19 +52,19 @@ const Clients = () => {
     }
 
     if (!clientValidators.phone.test(data.phone || "")) {
-      e.phone = "Phone must be 10 digits (India)";
+      e.phone = "Phone must be 10 digits";
+    }
+
+    if (!data.company_name?.trim()) {
+      e.company_name = "Company name is required";
     }
 
     if (data.gst_no && !clientValidators.gst.test(data.gst_no)) {
       e.gst_no = "Invalid GST number";
     }
 
-    if (!data.company_name?.trim()) {
-      e.company_name = "Company name required";
-    }
-
     if (!data.address?.trim()) {
-      e.address = "Address required";
+      e.address = "Address is required";
     }
 
     setErrors(e);
@@ -111,12 +111,18 @@ const Clients = () => {
     setErrors({});
   };
 
-  /* ================= SEARCH ================= */
-  const filtered = clients.filter((c) =>
-    `${c.name} ${c.email} ${c.company_name} ${c.phone}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  /* ================= UNIVERSAL SEARCH ================= */
+  const filtered = clients.filter((c) => {
+    const q = search.toLowerCase();
+    return (
+      c.name.toLowerCase().includes(q) ||
+      c.email.toLowerCase().includes(q) ||
+      c.phone.toLowerCase().includes(q) ||
+      c.company_name.toLowerCase().includes(q) ||
+      (c.gst_no?.toLowerCase().includes(q) ?? false) ||
+      c.address.toLowerCase().includes(q)
+    );
+  });
 
   /* ================= PAGINATION ================= */
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
@@ -128,7 +134,7 @@ const Clients = () => {
   /* ================= UI ================= */
   return (
     <div className="container mt-3">
-      <h3>Clients</h3>
+      <h3 className="mb-3">Clients</h3>
 
       {/* CREATE FORM */}
       <div className="card mb-3">
@@ -136,14 +142,13 @@ const Clients = () => {
           {Object.entries(form).map(([key, value]) => (
             <div className="col-md-4" key={key}>
               <input
-                className={`form-control ${
-                  errors[key] ? "is-invalid" : ""
-                }`}
+                className={`form-control ${errors[key] ? "is-invalid" : ""}`}
                 placeholder={key.replace("_", " ").toUpperCase()}
                 value={value ?? ""}
-                onChange={(e) =>
-                  setForm({ ...form, [key]: e.target.value })
-                }
+                onChange={(e) => {
+                  setForm({ ...form, [key]: e.target.value });
+                  setErrors({ ...errors, [key]: "" });
+                }}
               />
               {errors[key] && (
                 <div className="invalid-feedback">{errors[key]}</div>
@@ -151,7 +156,7 @@ const Clients = () => {
             </div>
           ))}
 
-          <div className="col-md-12">
+          <div className="col-12">
             <button className="btn btn-primary" onClick={handleCreate}>
               Add Client
             </button>
@@ -159,10 +164,10 @@ const Clients = () => {
         </div>
       </div>
 
-      {/* SEARCH */}
+      {/* UNIVERSAL SEARCH */}
       <input
         className="form-control mb-3"
-        placeholder="Search clients..."
+        placeholder="Search by name, email, phone, company, GST, address..."
         value={search}
         onChange={(e) => {
           setSearch(e.target.value);
@@ -193,7 +198,10 @@ const Clients = () => {
               <td>
                 <button
                   className="btn btn-sm btn-warning me-2"
-                  onClick={() => setEditing(c)}
+                  onClick={() => {
+                    setEditing(c);
+                    setErrors({});
+                  }}
                 >
                   Edit
                 </button>
@@ -224,9 +232,7 @@ const Clients = () => {
             <button
               key={i}
               className={`btn btn-sm ${
-                page === i + 1
-                  ? "btn-primary"
-                  : "btn-outline-primary"
+                page === i + 1 ? "btn-primary" : "btn-outline-primary"
               }`}
               onClick={() => setPage(i + 1)}
             >
@@ -255,12 +261,13 @@ const Clients = () => {
                             errors[key] ? "is-invalid" : ""
                           }`}
                           value={value ?? ""}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             setEditing({
                               ...editing,
                               [key]: e.target.value,
-                            })
-                          }
+                            });
+                            setErrors({ ...errors, [key]: "" });
+                          }}
                         />
                         {errors[key] && (
                           <div className="invalid-feedback">
@@ -278,10 +285,7 @@ const Clients = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  className="btn btn-success"
-                  onClick={handleUpdate}
-                >
+                <button className="btn btn-success" onClick={handleUpdate}>
                   Save
                 </button>
               </div>
@@ -295,9 +299,7 @@ const Clients = () => {
         <div className="modal show d-block bg-dark bg-opacity-50">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-              <div className="modal-body">
-                Delete this client?
-              </div>
+              <div className="modal-body">Delete this client?</div>
               <div className="modal-footer">
                 <button
                   className="btn btn-secondary"
@@ -305,10 +307,7 @@ const Clients = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={handleDelete}
-                >
+                <button className="btn btn-danger" onClick={handleDelete}>
                   Delete
                 </button>
               </div>
