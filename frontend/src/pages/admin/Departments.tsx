@@ -1,3 +1,5 @@
+alert("DEPARTMENTS FILE LOADED");
+
 import { useEffect, useState } from "react";
 import type { Department } from "../../types/department";
 import {
