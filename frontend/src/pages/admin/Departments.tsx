@@ -6,6 +6,7 @@ import {
   updateDepartment,
   deleteDepartment,
 } from "../../api/services/department.service";
+import { validateDepartment } from "../../utils/validators";
 
 const Departments = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -16,7 +17,13 @@ const Departments = () => {
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const [deleteDeptId, setDeleteDeptId] = useState<number | null>(null);
 
-  /* ---------------- LOAD ---------------- */
+  const [errors, setErrors] = useState<{ name?: string }>({});
+
+  /* ================= PAGINATION ================= */
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  /* ================= LOAD ================= */
   const loadDepartments = async () => {
     const data = await getDepartments();
     setDepartments(data);
@@ -26,34 +33,48 @@ const Departments = () => {
     loadDepartments();
   }, []);
 
-  /* ---------------- CREATE ---------------- */
+  /* ================= CREATE ================= */
   const handleCreate = async () => {
-    if (!name.trim()) return;
+    const validationErrors = validateDepartment(name, departments);
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) return;
 
     await createDepartment({
-      name,
+      name: name.trim(),
       parent_id: parentId || null,
     });
 
     setName("");
     setParentId("");
+    setErrors({});
     loadDepartments();
   };
 
-  /* ---------------- UPDATE ---------------- */
+  /* ================= UPDATE ================= */
   const handleUpdate = async () => {
     if (!editingDept) return;
 
+    const validationErrors = validateDepartment(
+      editingDept.name,
+      departments,
+      editingDept.id
+    );
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) return;
+
     await updateDepartment(editingDept.id, {
-      name: editingDept.name,
+      name: editingDept.name.trim(),
       parent_id: editingDept.parent_id,
     });
 
     setEditingDept(null);
+    setErrors({});
     loadDepartments();
   };
 
-  /* ---------------- DELETE ---------------- */
+  /* ================= DELETE ================= */
   const handleDelete = async () => {
     if (!deleteDeptId) return;
 
@@ -62,44 +83,78 @@ const Departments = () => {
     loadDepartments();
   };
 
-  /* ---------------- SEARCH ---------------- */
-  const filteredDepartments = departments.filter((d) =>
-    `${d.name} ${d.parent_name ?? ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
+  /* ================= SEARCH (ALL FIELDS) ================= */
+  const filteredDepartments = departments.filter((d) => {
+    const text = search.toLowerCase();
+
+    return (
+      d.name.toLowerCase().includes(text) ||
+      (d.parent_name ?? "").toLowerCase().includes(text) ||
+      (d.created_at
+        ? new Date(d.created_at)
+            .toLocaleDateString("en-GB")
+            .toLowerCase()
+            .includes(text)
+        : false)
+    );
+  });
+
+  /* ================= PAGINATION ================= */
+  const totalPages = Math.ceil(
+    filteredDepartments.length / itemsPerPage
   );
 
-  /* ---------------- UI ---------------- */
+  const paginatedDepartments = filteredDepartments.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  /* ================= UI ================= */
   return (
     <div className="container mt-3">
       <h3>Departments</h3>
 
       {/* CREATE */}
       <div className="card mb-3">
-        <div className="card-body d-flex gap-2 flex-wrap">
-          <input
-            className="form-control"
-            placeholder="Department name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+        <div className="card-body">
+          <div className="row g-2">
+            <div className="col-md-5">
+              <input
+                className="form-control"
+                placeholder="Department name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              {errors.name && (
+                <small className="text-danger">{errors.name}</small>
+              )}
+            </div>
 
-          <select
-            className="form-select"
-            value={parentId}
-            onChange={(e) => setParentId(Number(e.target.value))}
-          >
-            <option value="">Main Department</option>
-            {departments.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
+            <div className="col-md-5">
+              <select
+                className="form-select"
+                value={parentId}
+                onChange={(e) => setParentId(Number(e.target.value))}
+              >
+                <option value="">Main Department</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <button className="btn btn-primary" onClick={handleCreate}>
-            Add
-          </button>
+            <div className="col-md-2 d-grid">
+              <button className="btn btn-primary" onClick={handleCreate}>
+                Add
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -122,35 +177,90 @@ const Departments = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredDepartments.map((d) => (
-            <tr key={d.id}>
-              <td>{d.name}</td>
-              <td>{d.parent_name || "-"}</td>
-              <td>{d.created_at
-    ? new Date(d.created_at).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
-    : "-"}</td>
-              <td>
-                <button
-                  className="btn btn-sm btn-warning me-2"
-                  onClick={() => setEditingDept(d)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn btn-sm btn-danger"
-                  onClick={() => setDeleteDeptId(d.id)}
-                >
-                  Delete
-                </button>
+          {paginatedDepartments.length === 0 ? (
+            <tr>
+              <td colSpan={4} className="text-center">
+                No departments found
               </td>
             </tr>
-          ))}
+          ) : (
+            paginatedDepartments.map((d) => (
+              <tr key={d.id}>
+                <td>{d.name}</td>
+                <td>{d.parent_name || "-"}</td>
+                <td>
+                  {d.created_at
+                    ? new Date(d.created_at).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "-"}
+                </td>
+                <td>
+                  <button
+                    className="btn btn-sm btn-warning me-2"
+                    onClick={() => setEditingDept(d)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => setDeleteDeptId(d.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
+
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <nav>
+          <ul className="pagination justify-content-end">
+            <li className={`page-item ${currentPage === 1 && "disabled"}`}>
+              <button
+                className="page-link"
+                onClick={() => setCurrentPage((p) => p - 1)}
+              >
+                Prev
+              </button>
+            </li>
+
+            {[...Array(totalPages)].map((_, i) => (
+              <li
+                key={i}
+                className={`page-item ${
+                  currentPage === i + 1 ? "active" : ""
+                }`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              </li>
+            ))}
+
+            <li
+              className={`page-item ${
+                currentPage === totalPages && "disabled"
+              }`}
+            >
+              <button
+                className="page-link"
+                onClick={() => setCurrentPage((p) => p + 1)}
+              >
+                Next
+              </button>
+            </li>
+          </ul>
+        </nav>
+      )}
 
       {/* EDIT MODAL */}
       {editingDept && (
@@ -168,9 +278,12 @@ const Departments = () => {
                     setEditingDept({ ...editingDept, name: e.target.value })
                   }
                 />
+                {errors.name && (
+                  <small className="text-danger">{errors.name}</small>
+                )}
 
                 <select
-                  className="form-select"
+                  className="form-select mt-2"
                   value={editingDept.parent_id ?? ""}
                   onChange={(e) =>
                     setEditingDept({
@@ -192,7 +305,10 @@ const Departments = () => {
               <div className="modal-footer">
                 <button
                   className="btn btn-secondary"
-                  onClick={() => setEditingDept(null)}
+                  onClick={() => {
+                    setEditingDept(null);
+                    setErrors({});
+                  }}
                 >
                   Cancel
                 </button>
