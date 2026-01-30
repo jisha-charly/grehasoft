@@ -37,22 +37,28 @@ const Departments = () => {
   }, []);
 
   /* ================= CREATE ================= */
-  const handleCreate = async () => {
-    const validationErrors = validateDepartment(name, departments);
-    setCreateErrors(validationErrors);
+ const handleCreate = async () => {
+  const validationErrors = validateDepartment(name, departments);
 
-    if (Object.keys(validationErrors).length > 0) return;
+  console.log("NAME:", name);
+  console.log("DEPARTMENTS:", departments);
+  console.log("VALIDATION ERRORS:", validationErrors);
 
-    await createDepartment({
-      name: name.trim(),
-      parent_id: parentId || null,
-    });
+  setCreateErrors(validationErrors);
 
-    setName("");
-    setParentId("");
-    setCreateErrors({});
-    loadDepartments();
-  };
+  if (Object.keys(validationErrors).length > 0) return;
+
+  await createDepartment({
+    name: name.trim(),
+    parent_id: parentId || null,
+  });
+
+  setName("");
+  setParentId("");
+  setCreateErrors({});
+  loadDepartments();
+};
+
 
   /* ================= UPDATE ================= */
   const handleUpdate = async () => {
