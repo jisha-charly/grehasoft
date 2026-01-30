@@ -6,9 +6,10 @@ import {
   updateDepartment,
   deleteDepartment,
 } from "../../api/services/department.service";
-import { validateDepartment } from "../../utils/validators";
+import { validateDepartment } from "../../utils/validation";
 
 const Departments = () => {
+  /* ================= STATE ================= */
   const [departments, setDepartments] = useState<Department[]>([]);
   const [name, setName] = useState("");
   const [parentId, setParentId] = useState<number | "">("");
@@ -17,7 +18,9 @@ const Departments = () => {
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const [deleteDeptId, setDeleteDeptId] = useState<number | null>(null);
 
-  const [errors, setErrors] = useState<{ name?: string }>({});
+  // 🔑 Separate error states
+  const [createErrors, setCreateErrors] = useState<{ name?: string }>({});
+  const [editErrors, setEditErrors] = useState<{ name?: string }>({});
 
   /* ================= PAGINATION ================= */
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,7 +39,7 @@ const Departments = () => {
   /* ================= CREATE ================= */
   const handleCreate = async () => {
     const validationErrors = validateDepartment(name, departments);
-    setErrors(validationErrors);
+    setCreateErrors(validationErrors);
 
     if (Object.keys(validationErrors).length > 0) return;
 
@@ -47,7 +50,7 @@ const Departments = () => {
 
     setName("");
     setParentId("");
-    setErrors({});
+    setCreateErrors({});
     loadDepartments();
   };
 
@@ -60,7 +63,7 @@ const Departments = () => {
       departments,
       editingDept.id
     );
-    setErrors(validationErrors);
+    setEditErrors(validationErrors);
 
     if (Object.keys(validationErrors).length > 0) return;
 
@@ -70,7 +73,7 @@ const Departments = () => {
     });
 
     setEditingDept(null);
-    setErrors({});
+    setEditErrors({});
     loadDepartments();
   };
 
@@ -87,16 +90,27 @@ const Departments = () => {
   const filteredDepartments = departments.filter((d) => {
     const text = search.toLowerCase();
 
-    return (
-      d.name.toLowerCase().includes(text) ||
-      (d.parent_name ?? "").toLowerCase().includes(text) ||
-      (d.created_at
-        ? new Date(d.created_at)
-            .toLocaleDateString("en-GB")
-            .toLowerCase()
-            .includes(text)
-        : false)
-    );
+    const nameMatch = d.name.toLowerCase().includes(text);
+    const parentMatch = (d.parent_name ?? "")
+      .toLowerCase()
+      .includes(text);
+
+    const rawDateMatch = (d.created_at ?? "")
+      .toLowerCase()
+      .includes(text);
+
+    const formattedDateMatch = d.created_at
+      ? new Date(d.created_at)
+          .toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })
+          .toLowerCase()
+          .includes(text)
+      : false;
+
+    return nameMatch || parentMatch || rawDateMatch || formattedDateMatch;
   });
 
   /* ================= PAGINATION ================= */
@@ -129,8 +143,10 @@ const Departments = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
-              {errors.name && (
-                <small className="text-danger">{errors.name}</small>
+              {createErrors.name && (
+                <small className="text-danger">
+                  {createErrors.name}
+                </small>
               )}
             </div>
 
@@ -190,17 +206,23 @@ const Departments = () => {
                 <td>{d.parent_name || "-"}</td>
                 <td>
                   {d.created_at
-                    ? new Date(d.created_at).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })
+                    ? new Date(d.created_at).toLocaleDateString(
+                        "en-GB",
+                        {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        }
+                      )
                     : "-"}
                 </td>
                 <td>
                   <button
                     className="btn btn-sm btn-warning me-2"
-                    onClick={() => setEditingDept(d)}
+                    onClick={() => {
+                      setEditingDept(d);
+                      setEditErrors({});
+                    }}
                   >
                     Edit
                   </button>
@@ -278,8 +300,10 @@ const Departments = () => {
                     setEditingDept({ ...editingDept, name: e.target.value })
                   }
                 />
-                {errors.name && (
-                  <small className="text-danger">{errors.name}</small>
+                {editErrors.name && (
+                  <small className="text-danger">
+                    {editErrors.name}
+                  </small>
                 )}
 
                 <select
@@ -307,7 +331,7 @@ const Departments = () => {
                   className="btn btn-secondary"
                   onClick={() => {
                     setEditingDept(null);
-                    setErrors({});
+                    setEditErrors({});
                   }}
                 >
                   Cancel
