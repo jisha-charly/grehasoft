@@ -38,25 +38,9 @@ const Departments = () => {
 
   /* ================= CREATE ================= */
  const handleCreate = async () => {
-  const validationErrors = validateDepartment(name, departments);
+  console.log("CREATE CLICKED"); // 👈 MUST show
 
-  console.log("NAME:", name);
-  console.log("DEPARTMENTS:", departments);
-  console.log("VALIDATION ERRORS:", validationErrors);
-
-  setCreateErrors(validationErrors);
-
-  if (Object.keys(validationErrors).length > 0) return;
-
-  await createDepartment({
-    name: name.trim(),
-    parent_id: parentId || null,
-  });
-
-  setName("");
-  setParentId("");
-  setCreateErrors({});
-  loadDepartments();
+  alert("Create clicked"); // 👈 MUST show
 };
 
 
@@ -172,9 +156,13 @@ const Departments = () => {
             </div>
 
             <div className="col-md-2 d-grid">
-              <button className="btn btn-primary" onClick={handleCreate}>
-                Add
-              </button>
+              <button
+  type="button"
+  className="btn btn-primary"
+  onClick={handleCreate}
+>
+  Add
+</button>
             </div>
           </div>
         </div>
