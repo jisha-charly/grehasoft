@@ -1,5 +1,3 @@
-alert("DEPARTMENTS FILE LOADEDd");
-
 import { useEffect, useState } from "react";
 import type { Department } from "../../types/department";
 import {
@@ -16,23 +14,15 @@ const Departments = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // create form
-  const [form, setForm] = useState<{
-    name: string;
-    parent_id: number | null;
-  }>({
+  const [form, setForm] = useState({
     name: "",
-    parent_id: null,
+    parent_id: null as number | null,
   });
 
-  // errors (simple + visible)
   const [errors, setErrors] = useState<{ name?: string }>({});
-
-  // search & pagination
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  // edit & delete
   const [editing, setEditing] = useState<Department | null>(null);
   const [deleteDept, setDeleteDept] = useState<Department | null>(null);
 
@@ -49,10 +39,7 @@ const Departments = () => {
   }, []);
 
   /* ================= VALIDATION ================= */
-  const validate = (
-    name: string,
-    currentId?: number
-  ) => {
+  const validate = (name: string, currentId?: number) => {
     const trimmed = name.trim();
 
     if (!trimmed) {
@@ -61,9 +48,7 @@ const Departments = () => {
     }
 
     if (trimmed.length < 3) {
-      setErrors({
-        name: "Department name must be at least 3 characters",
-      });
+      setErrors({ name: "Department name must be at least 3 characters" });
       return false;
     }
 
@@ -163,8 +148,6 @@ const Departments = () => {
                 setErrors({});
               }}
             />
-
-            {/* 🔴 ALWAYS VISIBLE ERROR */}
             {errors.name && (
               <div style={{ color: "red", marginTop: 4 }}>
                 {errors.name}
@@ -195,11 +178,7 @@ const Departments = () => {
           </div>
 
           <div className="col-md-2">
-            <button
-              type="button"
-              className="btn btn-primary w-100"
-              onClick={handleCreate}
-            >
+            <button className="btn btn-primary w-100" onClick={handleCreate}>
               Add
             </button>
           </div>
@@ -254,6 +233,25 @@ const Departments = () => {
         </table>
       )}
 
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <div className="d-flex gap-1">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              className={`btn btn-sm ${
+                page === i + 1
+                  ? "btn-primary"
+                  : "btn-outline-primary"
+              }`}
+              onClick={() => setPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* EDIT MODAL */}
       {editing && (
         <div className="modal show d-block bg-dark bg-opacity-50">
@@ -264,14 +262,10 @@ const Departments = () => {
                   className="form-control"
                   value={editing.name}
                   onChange={(e) => {
-                    setEditing({
-                      ...editing,
-                      name: e.target.value,
-                    });
+                    setEditing({ ...editing, name: e.target.value });
                     setErrors({});
                   }}
                 />
-
                 {errors.name && (
                   <div style={{ color: "red", marginTop: 4 }}>
                     {errors.name}
@@ -285,10 +279,7 @@ const Departments = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  className="btn btn-success"
-                  onClick={handleUpdate}
-                >
+                <button className="btn btn-success" onClick={handleUpdate}>
                   Save
                 </button>
               </div>
@@ -312,10 +303,7 @@ const Departments = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={handleDelete}
-                >
+                <button className="btn btn-danger" onClick={handleDelete}>
                   Delete
                 </button>
               </div>
