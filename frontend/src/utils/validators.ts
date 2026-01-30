@@ -27,32 +27,29 @@ export interface ValidationErrors {
 ================================ */
 export const validateDepartment = (
   name: string,
-  departments: Department[],
+  departments: any[],
   currentId?: number
-): ValidationErrors => {
-  const errors: ValidationErrors = {};
-  const trimmedName = name.trim();
+) => {
+  const errors: { name?: string } = {};
+  const trimmed = name.trim();
 
-  // Required
-  if (!trimmedName) {
+  if (!trimmed) {
     errors.name = "Department name is required";
     return errors;
   }
 
-  // Minimum length
-  if (trimmedName.length < 3) {
+  if (trimmed.length < 3) {
     errors.name = "Department name must be at least 3 characters";
     return errors;
   }
 
-  // Duplicate check (case-insensitive)
-  const isDuplicate = departments.some(
+  const exists = departments.some(
     (d) =>
-      d.name.toLowerCase() === trimmedName.toLowerCase() &&
+      d.name.toLowerCase() === trimmed.toLowerCase() &&
       d.id !== currentId
   );
 
-  if (isDuplicate) {
+  if (exists) {
     errors.name = "Department already exists";
   }
 

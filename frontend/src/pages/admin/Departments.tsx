@@ -37,10 +37,26 @@ const Departments = () => {
   }, []);
 
   /* ================= CREATE ================= */
- const handleCreate = async () => {
-  console.log("CREATE CLICKED"); // 👈 MUST show
+const handleCreate = async () => {
+  const validationErrors = validateDepartment(name, departments);
 
-  alert("Create clicked"); // 👈 MUST show
+  // 👇 SET ERRORS
+  setCreateErrors(validationErrors);
+
+  // 👇 STOP HERE IF ERROR EXISTS
+  if (validationErrors.name) {
+    return;
+  }
+
+  await createDepartment({
+    name: name.trim(),
+    parent_id: parentId || null,
+  });
+
+  setName("");
+  setParentId("");
+  setCreateErrors({});
+  loadDepartments();
 };
 
 
