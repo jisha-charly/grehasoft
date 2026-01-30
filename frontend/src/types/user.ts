@@ -4,17 +4,13 @@ export interface User {
   id: number;
   username: string;
   email: string;
-
   role_id: number;
-  role: string;
-
+  role_name: string;
   department_id: number | null;
-  department: string | null;
-
+  department_name: string | null;
   is_active: boolean;
 }
 
-/* ---------- CREATE ---------- */
 export interface CreateUserPayload {
   username: string;
   email: string;
@@ -23,7 +19,6 @@ export interface CreateUserPayload {
   department: number | null;
 }
 
-/* ---------- UPDATE ---------- */
 export interface UpdateUserPayload {
   email: string;
   role: number;
