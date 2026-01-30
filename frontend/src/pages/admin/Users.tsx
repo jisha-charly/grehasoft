@@ -5,15 +5,20 @@ import {
   updateUser,
   deleteUser,
 } from "../../api/services/user.service";
+import { getRoles } from "../../api/services/role.service";
+import { getDepartments } from "../../api/services/department.service";
 import type { User, CreateUserPayload } from "../../types/user";
 
 const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
   const [search, setSearch] = useState("");
 
-  const [showPassword, setShowPassword] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({
     username: "",
@@ -24,12 +29,18 @@ const Users = () => {
     department: "",
   });
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // ================= FETCH =================
   const fetchAll = async () => {
-    const data = await getUsers();
-    setUsers(data);
+    const [u, r, d] = await Promise.all([
+      getUsers(),
+      getRoles(),
+      getDepartments(),
+    ]);
+    setUsers(u);
+    setRoles(r);
+    setDepartments(d);
   };
 
   useEffect(() => {
@@ -45,7 +56,7 @@ const Users = () => {
 
   // ================= VALIDATION =================
   const validate = () => {
-    const e: any = {};
+    const e: Record<string, string> = {};
 
     if (!form.username.trim()) e.username = "Username required";
     if (!form.email.trim()) e.email = "Email required";
@@ -148,7 +159,7 @@ const Users = () => {
         onChange={e => setSearch(e.target.value)}
       />
 
-      {/* CREATE / EDIT */}
+      {/* FORM */}
       <div className="card p-3 mb-4">
         <h5>{editingUser ? "Edit User" : "Create User"}</h5>
 
@@ -158,8 +169,8 @@ const Users = () => {
               autoComplete="off"
               placeholder="Username"
               className={`form-control ${errors.username && "is-invalid"}`}
-              value={form.username}
               disabled={!!editingUser}
+              value={form.username}
               onChange={e =>
                 setForm({ ...form, username: e.target.value })
               }
@@ -189,9 +200,11 @@ const Users = () => {
               }
             >
               <option value="">Select Role</option>
-              <option value="1">ADMIN</option>
-              <option value="2">Software PM</option>
-              <option value="3">Digital Marketing PM</option>
+              {roles.map(r => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
             </select>
             <small className="text-danger">{errors.role}</small>
           </div>
@@ -217,6 +230,7 @@ const Users = () => {
                     top: "50%",
                     transform: "translateY(-50%)",
                     cursor: "pointer",
+                    border: "none",
                   }}
                 >
                   👁
@@ -224,7 +238,7 @@ const Users = () => {
                 <small className="text-danger">{errors.password}</small>
               </div>
 
-              <div className="col-md-4">
+              <div className="col-md-4 position-relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
@@ -243,6 +257,23 @@ const Users = () => {
               </div>
             </>
           )}
+
+          <div className="col-md-4">
+            <select
+              className="form-control"
+              value={form.department}
+              onChange={e =>
+                setForm({ ...form, department: e.target.value })
+              }
+            >
+              <option value="">Select Department</option>
+              {departments.map(d => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <button
@@ -303,8 +334,8 @@ const Users = () => {
         <div className="modal show d-block">
           <div className="modal-dialog">
             <div className="modal-content p-3">
-              <h5>Delete user?</h5>
-              <div className="mt-3 text-end">
+              <h5>Delete this user?</h5>
+              <div className="text-end mt-3">
                 <button
                   className="btn btn-secondary me-2"
                   onClick={() => setDeleteId(null)}
