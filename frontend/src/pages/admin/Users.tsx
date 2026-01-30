@@ -279,7 +279,7 @@ const Users = () => {
           </div>
 
           <button className="btn btn-primary mt-3" onClick={handleCreate}>
-            Create User
+            Create Users
           </button>
         </div>
       </div>
