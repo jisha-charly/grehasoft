@@ -19,7 +19,7 @@ from .serializers import (
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from .serializers import ProfileUpdateSerializer, ChangePasswordSerializer
+from .serializers import ProfileUpdateSerializer, ChangePasswordSerializer,UserSerializer
 User = get_user_model()
 
 
@@ -269,23 +269,11 @@ def delete_department(request, dept_id):
 # =================================================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def users_list(request):
-    if not is_admin(request.user):
-        return Response({"error": "Forbidden"}, status=403)
+def list_users(request):
+    users = User.objects.select_related("role", "department")
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data)
 
-    users = User.objects.filter(deleted_at__isnull=True).select_related("role", "department")
-
-    return Response([
-        {
-            "id": u.id,
-            "username": u.username,
-            "email": u.email,
-            "is_active": u.is_active,
-            "role": u.role.name if u.role else None,
-            "department": u.department.name if u.department else None,
-        }
-        for u in users
-    ])
 
 
 @api_view(["POST"])

@@ -43,6 +43,26 @@ class DepartmentSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+class UserSerializer(serializers.ModelSerializer):
+    role_name = serializers.CharField(source="role.name", read_only=True)
+    department_name = serializers.CharField(
+        source="department.name", read_only=True
+    )
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "email",
+            "role",
+            "role_name",
+            "department",
+            "department_name",
+            "is_active",
+        ]
+
+
 
 class ClientSerializer(serializers.ModelSerializer):
 
