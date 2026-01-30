@@ -14,25 +14,24 @@ const Departments = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // create form (SAME pattern as Roles)
-  const [form, setForm] = useState<{ name: string; parent_id: number | null }>({
+  // create form (same pattern as Roles)
+  const [form, setForm] = useState<{
+    name: string;
+    parent_id: number | null;
+  }>({
     name: "",
     parent_id: null,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // search
+  // search & pagination
   const [search, setSearch] = useState("");
-
-  // edit modal
-  const [editing, setEditing] = useState<Department | null>(null);
-
-  // delete modal
-  const [deleteDept, setDeleteDept] = useState<Department | null>(null);
-
-  // pagination
   const [page, setPage] = useState(1);
+
+  // edit & delete
+  const [editing, setEditing] = useState<Department | null>(null);
+  const [deleteDept, setDeleteDept] = useState<Department | null>(null);
 
   /* ================= FETCH ================= */
   const loadDepartments = async () => {
@@ -134,7 +133,7 @@ const Departments = () => {
     <div className="container mt-4">
       <h3 className="mb-3">Departments</h3>
 
-      {/* SEARCH */}
+      {/* 🔍 SEARCH */}
       <input
         className="form-control mb-3"
         placeholder="Search by department or parent..."
@@ -145,58 +144,64 @@ const Departments = () => {
         }}
       />
 
-      {/* CREATE FORM */}
+      {/* ➕ CREATE FORM (IMPORTANT FIX) */}
       <div className="card mb-3">
-        <div className="card-body row g-2">
-          <div className="col-md-4">
-            <input
-              className={`form-control ${errors.name ? "is-invalid" : ""}`}
-              placeholder="Department name"
-              value={form.name}
-              onChange={(e) => {
-                setForm({ ...form, name: e.target.value });
-                setErrors({ ...errors, name: "" });
-              }}
-            />
-            {errors.name && (
-              <div className="invalid-feedback">{errors.name}</div>
-            )}
-          </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault(); // 🔑 forces validation render
+            handleCreate();
+          }}
+        >
+          <div className="card-body row g-2">
+            <div className="col-md-4">
+              <input
+                className={`form-control ${
+                  errors.name ? "is-invalid" : ""
+                }`}
+                placeholder="Department name"
+                value={form.name}
+                onChange={(e) => {
+                  setForm({ ...form, name: e.target.value });
+                  setErrors({ ...errors, name: "" });
+                }}
+              />
+              {errors.name && (
+                <div className="invalid-feedback">{errors.name}</div>
+              )}
+            </div>
 
-          <div className="col-md-4">
-            <select
-              className="form-select"
-              value={form.parent_id ?? ""}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  parent_id: e.target.value
-                    ? Number(e.target.value)
-                    : null,
-                })
-              }
-            >
-              <option value="">Main Department</option>
-              {departments.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div className="col-md-4">
+              <select
+                className="form-select"
+                value={form.parent_id ?? ""}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    parent_id: e.target.value
+                      ? Number(e.target.value)
+                      : null,
+                  })
+                }
+              >
+                <option value="">Main Department</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div className="col-md-2">
-            <button
-              className="btn btn-primary w-100"
-              onClick={handleCreate}
-            >
-              Add
-            </button>
+            <div className="col-md-2">
+              <button type="submit" className="btn btn-primary w-100">
+                Add
+              </button>
+            </div>
           </div>
-        </div>
+        </form>
       </div>
 
-      {/* TABLE */}
+      {/* 📋 TABLE */}
       {loading ? (
         <p>Loading...</p>
       ) : (
@@ -241,7 +246,7 @@ const Departments = () => {
         </table>
       )}
 
-      {/* PAGINATION */}
+      {/* 📄 PAGINATION */}
       {totalPages > 1 && (
         <div className="d-flex gap-1">
           {Array.from({ length: totalPages }).map((_, i) => (
@@ -260,7 +265,7 @@ const Departments = () => {
         </div>
       )}
 
-      {/* EDIT MODAL */}
+      {/* ✏️ EDIT MODAL */}
       {editing && (
         <div className="modal show d-block bg-dark bg-opacity-50">
           <div className="modal-dialog modal-dialog-centered">
@@ -304,7 +309,7 @@ const Departments = () => {
         </div>
       )}
 
-      {/* DELETE MODAL */}
+      {/* 🗑 DELETE MODAL */}
       {deleteDept && (
         <div className="modal show d-block bg-dark bg-opacity-50">
           <div className="modal-dialog modal-dialog-centered modal-sm">
