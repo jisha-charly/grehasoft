@@ -19,7 +19,7 @@ from .serializers import (
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from .serializers import ProfileUpdateSerializer, ChangePasswordSerializer,UserListSerializer
+from .serializers import ProfileUpdateSerializer, ChangePasswordSerializer,UserSerializer
 User = get_user_model()
 
 
@@ -273,7 +273,7 @@ def list_users(request):
     users = User.objects.filter(deleted_at__isnull=True).select_related(
         "role", "department"
     )
-    serializer = UserListSerializer(users, many=True)
+    serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
 
 

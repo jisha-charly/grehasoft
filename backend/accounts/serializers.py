@@ -43,10 +43,13 @@ class DepartmentSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-class UserListSerializer(serializers.ModelSerializer):
-    role_name = serializers.CharField(source="role.name", read_only=True)
+
+class UserSerializer(serializers.ModelSerializer):
+    role_name = serializers.CharField(
+        source="role.name", read_only=True
+    )
     department_name = serializers.CharField(
-        source="department.name", read_only=True, allow_null=True
+        source="department.name", read_only=True
     )
 
     class Meta:
@@ -55,9 +58,9 @@ class UserListSerializer(serializers.ModelSerializer):
             "id",
             "username",
             "email",
-            "role_id",
+            "role",
             "role_name",
-            "department_id",
+            "department",
             "department_name",
             "is_active",
         ]
