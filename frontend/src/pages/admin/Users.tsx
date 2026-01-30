@@ -1,22 +1,21 @@
 import { useEffect, useState } from "react";
-import { createUser, getUsers, updateUser, deleteUser } from "../../api/services/user.service";
+import {
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+} from "../../api/services/user.service";
+import { getRoles } from "../../api/services/role.service";
+import { getDepartments } from "../../api/services/department.service";
 import type { User } from "../../types/user";
-
-interface Role {
-  id: number;
-  name: string;
-}
-
-interface Department {
-  id: number;
-  name: string;
-}
+import type { Role } from "../../types/role";
+import type { Department } from "../../types/department";
 
 const Users = () => {
+  /* ---------------- STATE ---------------- */
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
-
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const [form, setForm] = useState({
@@ -28,30 +27,26 @@ const Users = () => {
     department: "",
   });
 
-  /* ================= LOAD ALL ================= */
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const fetchAll = async () => {
-    try {
-      const [usersRes, rolesRes, deptRes] = await Promise.all([
-        getUsers(),
-        fetch("/api/roles").then(r => r.json()),
-        fetch("/api/departments").then(r => r.json()),
-      ]);
-
-      setUsers(usersRes);
-      setRoles(rolesRes);
-      setDepartments(deptRes);
-    } catch (err) {
-      console.error("Load error", err);
-    }
+  /* ---------------- LOAD ---------------- */
+  const loadAll = async () => {
+    const [u, r, d] = await Promise.all([
+      getUsers(),
+      getRoles(),
+      getDepartments(),
+    ]);
+    setUsers(u);
+    setRoles(r);
+    setDepartments(d);
   };
 
   useEffect(() => {
-    fetchAll();
+    loadAll();
   }, []);
 
-  /* ================= FORM HELPERS ================= */
-
+  /* ---------------- HELPERS ---------------- */
   const resetForm = () => {
     setForm({
       username: "",
@@ -64,10 +59,15 @@ const Users = () => {
     setEditingUser(null);
   };
 
-  /* ================= CREATE ================= */
-
+  /* ---------------- CREATE ---------------- */
   const handleCreate = async () => {
-    if (!form.username || !form.email || !form.password || !form.role) {
+    if (
+      !form.username ||
+      !form.email ||
+      !form.password ||
+      !form.confirmPassword ||
+      !form.role
+    ) {
       alert("Please fill all required fields");
       return;
     }
@@ -78,135 +78,164 @@ const Users = () => {
     }
 
     const payload = {
-      username: form.username.trim(),
-      email: form.email.trim(),
+      username: form.username,
+      email: form.email,
       password: form.password,
       role: Number(form.role),
-      department: form.department
-        ? Number(form.department)
-        : null, // ✅ IMPORTANT FIX
+      department: form.department ? Number(form.department) : null,
     };
 
     try {
       await createUser(payload);
       alert("User created successfully");
       resetForm();
-      fetchAll();
+      loadAll();
     } catch (err) {
       console.error(err);
       alert("Failed to create user");
     }
   };
 
-  /* ================= UPDATE ================= */
-
+  /* ---------------- UPDATE ---------------- */
   const handleUpdate = async () => {
     if (!editingUser) return;
 
     try {
       await updateUser(editingUser.id, {
         email: editingUser.email,
-        role: Number(editingUser.role_id),
+        role: editingUser.role_id,
         department: editingUser.department_id ?? null,
         is_active: editingUser.is_active,
       });
-
-      alert("User updated successfully");
       resetForm();
-      fetchAll();
+      loadAll();
     } catch (err) {
       console.error(err);
-      alert("Failed to update user");
+      alert("Update failed");
     }
   };
 
-  /* ================= DELETE ================= */
-
+  /* ---------------- DELETE ---------------- */
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure?")) return;
-
-    try {
-      await deleteUser(id);
-      fetchAll();
-    } catch (err) {
-      console.error(err);
-    }
+    if (!confirm("Delete this user?")) return;
+    await deleteUser(id);
+    loadAll();
   };
 
-  /* ================= RENDER ================= */
-
+  /* ---------------- RENDER ---------------- */
   return (
     <div>
-      <h2>Users</h2>
+      <h3 className="mb-3">Users</h3>
 
-      {/* CREATE / EDIT FORM */}
-      <div className="card p-3 mb-4">
-        <h4>{editingUser ? "Edit User" : "Create User"}</h4>
+      {/* -------- CREATE USER -------- */}
+      <div className="card mb-4">
+        <div className="card-body">
+          <h5>Create User</h5>
 
-        <input
-          placeholder="Username"
-          value={form.username}
-          disabled={!!editingUser}
-          onChange={e => setForm({ ...form, username: e.target.value })}
-        />
+          <div className="row g-3">
+            <div className="col-md-4">
+              <input
+                className="form-control"
+                placeholder="Username"
+                value={form.username}
+                onChange={(e) =>
+                  setForm({ ...form, username: e.target.value })
+                }
+              />
+            </div>
 
-        <input
-          placeholder="Email"
-          value={form.email}
-          onChange={e => setForm({ ...form, email: e.target.value })}
-        />
+            <div className="col-md-4">
+              <input
+                className="form-control"
+                placeholder="Email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            </div>
 
-        {!editingUser && (
-          <>
-            <input
-              type="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })}
-            />
+            <div className="col-md-4">
+              <select
+                className="form-select"
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+              >
+                <option value="">Select Role</option>
+                {roles
+                  .filter((r) => r.name !== "ADMIN")
+                  .map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
 
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              value={form.confirmPassword}
-              onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
-            />
-          </>
-        )}
+            <div className="col-md-4 position-relative">
+              <input
+                className="form-control"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={form.password}
+                onChange={(e) =>
+                  setForm({ ...form, password: e.target.value })
+                }
+              />
+              <i
+                className={`bi ${
+                  showPassword ? "bi-eye-slash" : "bi-eye"
+                } position-absolute top-50 end-0 translate-middle-y me-3`}
+                style={{ cursor: "pointer" }}
+                onClick={() => setShowPassword(!showPassword)}
+              />
+            </div>
 
-        <select
-          value={form.role}
-          onChange={e => setForm({ ...form, role: e.target.value })}
-        >
-          <option value="">Select Role</option>
-          {roles.map(r => (
-            <option key={r.id} value={r.id}>
-              {r.name}
-            </option>
-          ))}
-        </select>
+            <div className="col-md-4 position-relative">
+              <input
+                className="form-control"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm Password"
+                value={form.confirmPassword}
+                onChange={(e) =>
+                  setForm({ ...form, confirmPassword: e.target.value })
+                }
+              />
+              <i
+                className={`bi ${
+                  showConfirmPassword ? "bi-eye-slash" : "bi-eye"
+                } position-absolute top-50 end-0 translate-middle-y me-3`}
+                style={{ cursor: "pointer" }}
+                onClick={() =>
+                  setShowConfirmPassword(!showConfirmPassword)
+                }
+              />
+            </div>
 
-        <select
-          value={form.department}
-          onChange={e => setForm({ ...form, department: e.target.value })}
-        >
-          <option value="">Select Department</option>
-          {departments.map(d => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </select>
+            <div className="col-md-4">
+              <select
+                className="form-select"
+                value={form.department}
+                onChange={(e) =>
+                  setForm({ ...form, department: e.target.value })
+                }
+              >
+                <option value="">Select Department</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-        <button onClick={editingUser ? handleUpdate : handleCreate}>
-          {editingUser ? "Update User" : "Create User"}
-        </button>
-
-        {editingUser && <button onClick={resetForm}>Cancel</button>}
+          <button className="btn btn-primary mt-3" onClick={handleCreate}>
+            Create User
+          </button>
+        </div>
       </div>
 
-      {/* USERS LIST */}
-      <table>
+      {/* -------- USERS LIST -------- */}
+      <table className="table table-bordered table-striped">
         <thead>
           <tr>
             <th>Username</th>
@@ -216,21 +245,30 @@ const Users = () => {
             <th>Action</th>
           </tr>
         </thead>
-
         <tbody>
-          {users.map(u => (
+          {users.map((u) => (
             <tr key={u.id}>
               <td>{u.username}</td>
               <td>{u.email}</td>
               <td>{u.role}</td>
               <td>{u.department ?? "-"}</td>
               <td>
-                {u.role === "ADMIN" ? (
-                  "Protected"
+                {u.username === "admin" ? (
+                  <span className="text-muted">Protected</span>
                 ) : (
                   <>
-                    <button onClick={() => setEditingUser(u)}>Edit</button>
-                    <button onClick={() => handleDelete(u.id)}>Delete</button>
+                    <button
+                      className="btn btn-warning btn-sm me-2"
+                      onClick={() => setEditingUser(u)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleDelete(u.id)}
+                    >
+                      Delete
+                    </button>
                   </>
                 )}
               </td>
