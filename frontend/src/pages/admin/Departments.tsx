@@ -6,7 +6,7 @@ import {
   updateDepartment,
   deleteDepartment,
 } from "../../api/services/department.service";
-import { validateDepartment } from "../../utils/validation";
+import { validateDepartment } from "../../utils/validators";
 
 const Departments = () => {
   /* ================= STATE ================= */
