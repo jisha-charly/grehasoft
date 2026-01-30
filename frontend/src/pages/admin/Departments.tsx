@@ -14,7 +14,7 @@ const Departments = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // create form (same pattern as Roles)
+  // create form
   const [form, setForm] = useState<{
     name: string;
     parent_id: number | null;
@@ -23,7 +23,8 @@ const Departments = () => {
     parent_id: null,
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  // errors (simple + visible)
+  const [errors, setErrors] = useState<{ name?: string }>({});
 
   // search & pagination
   const [search, setSearch] = useState("");
@@ -33,7 +34,7 @@ const Departments = () => {
   const [editing, setEditing] = useState<Department | null>(null);
   const [deleteDept, setDeleteDept] = useState<Department | null>(null);
 
-  /* ================= FETCH ================= */
+  /* ================= LOAD ================= */
   const loadDepartments = async () => {
     setLoading(true);
     const data = await getDepartments();
@@ -45,35 +46,43 @@ const Departments = () => {
     loadDepartments();
   }, []);
 
-  /* ================= VALIDATION (ROLES STYLE) ================= */
+  /* ================= VALIDATION ================= */
   const validate = (
-    data: { name?: string },
+    name: string,
     currentId?: number
   ) => {
-    const e: Record<string, string> = {};
-    const name = data.name?.trim() || "";
+    const trimmed = name.trim();
 
-    if (!name) {
-      e.name = "Department name is required";
-    } else if (name.length < 3) {
-      e.name = "Department name must be at least 3 characters";
-    } else if (
-      departments.some(
-        (d) =>
-          d.name.toLowerCase() === name.toLowerCase() &&
-          d.id !== currentId
-      )
-    ) {
-      e.name = "Department already exists";
+    if (!trimmed) {
+      setErrors({ name: "Department name is required" });
+      return false;
     }
 
-    setErrors(e);
-    return Object.keys(e).length === 0;
+    if (trimmed.length < 3) {
+      setErrors({
+        name: "Department name must be at least 3 characters",
+      });
+      return false;
+    }
+
+    const exists = departments.some(
+      (d) =>
+        d.name.toLowerCase() === trimmed.toLowerCase() &&
+        d.id !== currentId
+    );
+
+    if (exists) {
+      setErrors({ name: "Department already exists" });
+      return false;
+    }
+
+    setErrors({});
+    return true;
   };
 
   /* ================= CREATE ================= */
   const handleCreate = async () => {
-    if (!validate(form)) return;
+    if (!validate(form.name)) return;
 
     await createDepartment({
       name: form.name.trim(),
@@ -85,15 +94,10 @@ const Departments = () => {
     loadDepartments();
   };
 
-  /* ================= EDIT ================= */
-  const openEdit = (dept: Department) => {
-    setEditing(dept);
-    setErrors({});
-  };
-
+  /* ================= UPDATE ================= */
   const handleUpdate = async () => {
     if (!editing) return;
-    if (!validate(editing, editing.id)) return;
+    if (!validate(editing.name, editing.id)) return;
 
     await updateDepartment(editing.id, {
       name: editing.name.trim(),
@@ -131,12 +135,12 @@ const Departments = () => {
   /* ================= UI ================= */
   return (
     <div className="container mt-4">
-      <h3 className="mb-3">Departments</h3>
+      <h3>Departments</h3>
 
-      {/* 🔍 SEARCH */}
+      {/* SEARCH */}
       <input
         className="form-control mb-3"
-        placeholder="Search by department or parent..."
+        placeholder="Search departments..."
         value={search}
         onChange={(e) => {
           setSearch(e.target.value);
@@ -144,64 +148,63 @@ const Departments = () => {
         }}
       />
 
-      {/* ➕ CREATE FORM (IMPORTANT FIX) */}
+      {/* CREATE */}
       <div className="card mb-3">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault(); // 🔑 forces validation render
-            handleCreate();
-          }}
-        >
-          <div className="card-body row g-2">
-            <div className="col-md-4">
-              <input
-                className={`form-control ${
-                  errors.name ? "is-invalid" : ""
-                }`}
-                placeholder="Department name"
-                value={form.name}
-                onChange={(e) => {
-                  setForm({ ...form, name: e.target.value });
-                  setErrors({ ...errors, name: "" });
-                }}
-              />
-              {errors.name && (
-                <div className="invalid-feedback">{errors.name}</div>
-              )}
-            </div>
+        <div className="card-body row g-2">
+          <div className="col-md-4">
+            <input
+              className="form-control"
+              placeholder="Department name"
+              value={form.name}
+              onChange={(e) => {
+                setForm({ ...form, name: e.target.value });
+                setErrors({});
+              }}
+            />
 
-            <div className="col-md-4">
-              <select
-                className="form-select"
-                value={form.parent_id ?? ""}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    parent_id: e.target.value
-                      ? Number(e.target.value)
-                      : null,
-                  })
-                }
-              >
-                <option value="">Main Department</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="col-md-2">
-              <button type="submit" className="btn btn-primary w-100">
-                Add
-              </button>
-            </div>
+            {/* 🔴 ALWAYS VISIBLE ERROR */}
+            {errors.name && (
+              <div style={{ color: "red", marginTop: 4 }}>
+                {errors.name}
+              </div>
+            )}
           </div>
-        </form>
+
+          <div className="col-md-4">
+            <select
+              className="form-select"
+              value={form.parent_id ?? ""}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  parent_id: e.target.value
+                    ? Number(e.target.value)
+                    : null,
+                })
+              }
+            >
+              <option value="">Main Department</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="col-md-2">
+            <button
+              type="button"
+              className="btn btn-primary w-100"
+              onClick={handleCreate}
+            >
+              Add
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* 📋 TABLE */}
+      {/* TABLE */}
       {loading ? (
         <p>Loading...</p>
       ) : (
@@ -228,7 +231,10 @@ const Departments = () => {
                   <td>
                     <button
                       className="btn btn-warning btn-sm me-2"
-                      onClick={() => openEdit(d)}
+                      onClick={() => {
+                        setEditing(d);
+                        setErrors({});
+                      }}
                     >
                       Edit
                     </button>
@@ -246,46 +252,26 @@ const Departments = () => {
         </table>
       )}
 
-      {/* 📄 PAGINATION */}
-      {totalPages > 1 && (
-        <div className="d-flex gap-1">
-          {Array.from({ length: totalPages }).map((_, i) => (
-            <button
-              key={i}
-              className={`btn btn-sm ${
-                page === i + 1
-                  ? "btn-primary"
-                  : "btn-outline-primary"
-              }`}
-              onClick={() => setPage(i + 1)}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ✏️ EDIT MODAL */}
+      {/* EDIT MODAL */}
       {editing && (
         <div className="modal show d-block bg-dark bg-opacity-50">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-body">
                 <input
-                  className={`form-control ${
-                    errors.name ? "is-invalid" : ""
-                  }`}
+                  className="form-control"
                   value={editing.name}
                   onChange={(e) => {
                     setEditing({
                       ...editing,
                       name: e.target.value,
                     });
-                    setErrors({ ...errors, name: "" });
+                    setErrors({});
                   }}
                 />
+
                 {errors.name && (
-                  <div className="invalid-feedback d-block">
+                  <div style={{ color: "red", marginTop: 4 }}>
                     {errors.name}
                   </div>
                 )}
@@ -309,7 +295,7 @@ const Departments = () => {
         </div>
       )}
 
-      {/* 🗑 DELETE MODAL */}
+      {/* DELETE MODAL */}
       {deleteDept && (
         <div className="modal show d-block bg-dark bg-opacity-50">
           <div className="modal-dialog modal-dialog-centered modal-sm">
