@@ -15,10 +15,11 @@ const Users = () => {
   const [departments, setDepartments] = useState<any[]>([]);
   const [search, setSearch] = useState("");
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
-
-  const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({
     username: "",
@@ -29,7 +30,7 @@ const Users = () => {
     department: "",
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<any>({});
 
   // ================= FETCH =================
   const fetchAll = async () => {
@@ -56,7 +57,7 @@ const Users = () => {
 
   // ================= VALIDATION =================
   const validate = () => {
-    const e: Record<string, string> = {};
+    const e: any = {};
 
     if (!form.username.trim()) e.username = "Username required";
     if (!form.email.trim()) e.email = "Email required";
@@ -84,32 +85,24 @@ const Users = () => {
       department: form.department ? Number(form.department) : null,
     };
 
-    try {
-      await createUser(payload);
-      resetForm();
-      fetchAll();
-    } catch {
-      setErrors({ api: "Failed to create user" });
-    }
+    await createUser(payload);
+    resetForm();
+    fetchAll();
   };
 
   // ================= UPDATE =================
   const handleUpdate = async () => {
-    if (!editingUser) return;
+    if (!editingUser || !validate()) return;
 
-    try {
-      await updateUser(editingUser.id, {
-        email: form.email,
-        role: Number(form.role),
-        department: form.department ? Number(form.department) : null,
-        is_active: editingUser.is_active,
-      });
+    await updateUser(editingUser.id, {
+      email: form.email,
+      role: Number(form.role),
+      department: form.department ? Number(form.department) : null,
+      is_active: editingUser.is_active,
+    });
 
-      resetForm();
-      fetchAll();
-    } catch {
-      setErrors({ api: "Failed to update user" });
-    }
+    resetForm();
+    fetchAll();
   };
 
   // ================= DELETE =================
@@ -159,7 +152,7 @@ const Users = () => {
         onChange={e => setSearch(e.target.value)}
       />
 
-      {/* FORM */}
+      {/* CREATE / EDIT CARD */}
       <div className="card p-3 mb-4">
         <h5>{editingUser ? "Edit User" : "Create User"}</h5>
 
@@ -169,8 +162,8 @@ const Users = () => {
               autoComplete="off"
               placeholder="Username"
               className={`form-control ${errors.username && "is-invalid"}`}
-              disabled={!!editingUser}
               value={form.username}
+              disabled={!!editingUser}
               onChange={e =>
                 setForm({ ...form, username: e.target.value })
               }
@@ -224,14 +217,8 @@ const Users = () => {
                 />
                 <span
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: "absolute",
-                    right: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    cursor: "pointer",
-                    border: "none",
-                  }}
+                  className="position-absolute top-50 end-0 translate-middle-y me-3"
+                  style={{ cursor: "pointer", border: "none" }}
                 >
                   👁
                 </span>
@@ -240,7 +227,7 @@ const Users = () => {
 
               <div className="col-md-4 position-relative">
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showConfirm ? "text" : "password"}
                   autoComplete="new-password"
                   placeholder="Confirm Password"
                   className={`form-control ${
@@ -251,6 +238,13 @@ const Users = () => {
                     setForm({ ...form, confirmPassword: e.target.value })
                   }
                 />
+                <span
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="position-absolute top-50 end-0 translate-middle-y me-3"
+                  style={{ cursor: "pointer", border: "none" }}
+                >
+                  👁
+                </span>
                 <small className="text-danger">
                   {errors.confirmPassword}
                 </small>
@@ -276,14 +270,19 @@ const Users = () => {
           </div>
         </div>
 
-        <button
-          className="btn btn-primary mt-3"
-          onClick={editingUser ? handleUpdate : handleCreate}
-        >
-          {editingUser ? "Update User" : "Create User"}
-        </button>
-
-        <small className="text-danger">{errors.api}</small>
+        <div className="mt-3 text-end">
+          {editingUser && (
+            <button className="btn btn-secondary me-2" onClick={resetForm}>
+              Cancel
+            </button>
+          )}
+          <button
+            className="btn btn-primary"
+            onClick={editingUser ? handleUpdate : handleCreate}
+          >
+            {editingUser ? "Update User" : "Create User"}
+          </button>
+        </div>
       </div>
 
       {/* TABLE */}
@@ -334,7 +333,7 @@ const Users = () => {
         <div className="modal show d-block">
           <div className="modal-dialog">
             <div className="modal-content p-3">
-              <h5>Delete this user?</h5>
+              <h5>Delete user?</h5>
               <div className="text-end mt-3">
                 <button
                   className="btn btn-secondary me-2"
