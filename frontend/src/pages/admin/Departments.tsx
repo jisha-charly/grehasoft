@@ -18,7 +18,7 @@ const Departments = () => {
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const [deleteDeptId, setDeleteDeptId] = useState<number | null>(null);
 
-  // 🔑 Separate error states
+  // 🔑 Separate error states (IMPORTANT)
   const [createErrors, setCreateErrors] = useState<{ name?: string }>({});
   const [editErrors, setEditErrors] = useState<{ name?: string }>({});
 
@@ -37,28 +37,29 @@ const Departments = () => {
   }, []);
 
   /* ================= CREATE ================= */
-const handleCreate = async () => {
-  const validationErrors = validateDepartment(name, departments);
+  const handleCreate = async (
+    e?: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    // 🚨 STOP parent form submit
+    e?.preventDefault();
+    e?.stopPropagation();
 
-  // 👇 SET ERRORS
-  setCreateErrors(validationErrors);
+    const validationErrors = validateDepartment(name, departments);
+    setCreateErrors(validationErrors);
 
-  // 👇 STOP HERE IF ERROR EXISTS
-  if (validationErrors.name) {
-    return;
-  }
+    // ⛔ Stop if error exists
+    if (validationErrors.name) return;
 
-  await createDepartment({
-    name: name.trim(),
-    parent_id: parentId || null,
-  });
+    await createDepartment({
+      name: name.trim(),
+      parent_id: parentId || null,
+    });
 
-  setName("");
-  setParentId("");
-  setCreateErrors({});
-  loadDepartments();
-};
-
+    setName("");
+    setParentId("");
+    setCreateErrors({});
+    loadDepartments();
+  };
 
   /* ================= UPDATE ================= */
   const handleUpdate = async () => {
@@ -71,7 +72,7 @@ const handleCreate = async () => {
     );
     setEditErrors(validationErrors);
 
-    if (Object.keys(validationErrors).length > 0) return;
+    if (validationErrors.name) return;
 
     await updateDepartment(editingDept.id, {
       name: editingDept.name.trim(),
@@ -149,10 +150,12 @@ const handleCreate = async () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
+
+              {/* ✅ VALIDATION MESSAGE */}
               {createErrors.name && (
-                <small className="text-danger">
+                <div className="text-danger mt-1">
                   {createErrors.name}
-                </small>
+                </div>
               )}
             </div>
 
@@ -173,12 +176,12 @@ const handleCreate = async () => {
 
             <div className="col-md-2 d-grid">
               <button
-  type="button"
-  className="btn btn-primary"
-  onClick={handleCreate}
->
-  Add
-</button>
+                type="button"
+                className="btn btn-primary"
+                onClick={(e) => handleCreate(e)}
+              >
+                Add
+              </button>
             </div>
           </div>
         </div>
@@ -307,13 +310,17 @@ const handleCreate = async () => {
                   className="form-control mb-2"
                   value={editingDept.name}
                   onChange={(e) =>
-                    setEditingDept({ ...editingDept, name: e.target.value })
+                    setEditingDept({
+                      ...editingDept,
+                      name: e.target.value,
+                    })
                   }
                 />
+
                 {editErrors.name && (
-                  <small className="text-danger">
+                  <div className="text-danger">
                     {editErrors.name}
-                  </small>
+                  </div>
                 )}
 
                 <select
@@ -346,7 +353,10 @@ const handleCreate = async () => {
                 >
                   Cancel
                 </button>
-                <button className="btn btn-success" onClick={handleUpdate}>
+                <button
+                  className="btn btn-success"
+                  onClick={handleUpdate}
+                >
                   Save
                 </button>
               </div>
@@ -370,7 +380,10 @@ const handleCreate = async () => {
                 >
                   Cancel
                 </button>
-                <button className="btn btn-danger" onClick={handleDelete}>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleDelete}
+                >
                   Delete
                 </button>
               </div>
