@@ -1,46 +1,25 @@
 import { useEffect, useState } from "react";
+import { createUser, getUsers, updateUser, deleteUser } from "../../api/services/user.service";
 import type { User } from "../../types/user";
-import type { Role } from "../../types/role";
-import type { Department } from "../../types/department";
 
-import {
-  getUsers,
-  createUser,
-  updateUser,
-  deleteUser,
-} from "../../api/services/user.service";
-import { getRoles } from "../../api/services/role.service";
-import { getDepartments } from "../../api/services/department.service";
-import { userValidators } from "../../utils/validators";
-import { toast } from "react-toastify";
+interface Role {
+  id: number;
+  name: string;
+}
 
-const ITEMS_PER_PAGE = 5;
-
-type UserForm = {
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  role: number | "";
-  department: number | "";
-};
+interface Department {
+  id: number;
+  name: string;
+}
 
 const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
 
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const [form, setForm] = useState<UserForm>({
+  const [form, setForm] = useState({
     username: "",
     email: "",
     password: "",
@@ -49,87 +28,29 @@ const Users = () => {
     department: "",
   });
 
-  /* ================= LOAD ================= */
-  const loadAll = async () => {
-    const [u, r, d] = await Promise.all([
-      getUsers(),
-      getRoles(),
-      getDepartments(),
-    ]);
-    setUsers(u);
-    setRoles(r);
-    setDepartments(d);
+  /* ================= LOAD ALL ================= */
+
+  const fetchAll = async () => {
+    try {
+      const [usersRes, rolesRes, deptRes] = await Promise.all([
+        getUsers(),
+        fetch("/api/roles").then(r => r.json()),
+        fetch("/api/departments").then(r => r.json()),
+      ]);
+
+      setUsers(usersRes);
+      setRoles(rolesRes);
+      setDepartments(deptRes);
+    } catch (err) {
+      console.error("Load error", err);
+    }
   };
 
   useEffect(() => {
-    loadAll();
+    fetchAll();
   }, []);
 
-  /* ================= VALIDATION ================= */
-  const validateCreate = () => {
-    const e: Record<string, string> = {};
-
-    if (form.username.trim().length < 3)
-      e.username = "Minimum 3 characters";
-
-    if (!userValidators.email.test(form.email))
-      e.email = "Invalid email";
-
-    if (!userValidators.password.test(form.password))
-      e.password = "Minimum 6 characters";
-
-    if (form.password !== form.confirmPassword)
-      e.confirmPassword = "Passwords do not match";
-
-    if (!form.role) e.role = "Role required";
-
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  /* ================= CREATE ================= */
-  const handleCreate = async () => {
-    if (!validateCreate()) return;
-
-    const payload = {
-      username: form.username.trim(),
-      email: form.email.trim(),
-      password: form.password,
-      role: Number(form.role),
-      department: form.department ? Number(form.department) : 0, // ✅ ALWAYS NUMBER
-    };
-
-    await createUser(payload);
-    toast.success("User created successfully");
-    resetForm();
-    loadAll();
-  };
-
-  /* ================= UPDATE ================= */
-  const handleUpdate = async () => {
-    if (!editingUser) return;
-
-    await updateUser(editingUser.id, {
-      email: editingUser.email,
-      role: editingUser.role_id,
-      department: editingUser.department_id ?? 0, // ✅ ALWAYS NUMBER
-      is_active: editingUser.is_active,
-    });
-
-    toast.success("User updated successfully");
-    setEditingUser(null);
-    loadAll();
-  };
-
-  /* ================= DELETE ================= */
-  const handleDelete = async () => {
-    if (!deleteId) return;
-
-    await deleteUser(deleteId);
-    toast.success("User deleted successfully");
-    setDeleteId(null);
-    loadAll();
-  };
+  /* ================= FORM HELPERS ================= */
 
   const resetForm = () => {
     setForm({
@@ -140,149 +61,183 @@ const Users = () => {
       role: "",
       department: "",
     });
-    setErrors({});
+    setEditingUser(null);
   };
 
-  /* ================= SEARCH ================= */
-  const filtered = users.filter((u) =>
-    `${u.username} ${u.email} ${u.role} ${u.department || ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  /* ================= CREATE ================= */
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
-  );
+  const handleCreate = async () => {
+    if (!form.username || !form.email || !form.password || !form.role) {
+      alert("Please fill all required fields");
+      return;
+    }
 
-  /* ================= UI ================= */
+    if (form.password !== form.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    const payload = {
+      username: form.username.trim(),
+      email: form.email.trim(),
+      password: form.password,
+      role: Number(form.role),
+      department: form.department
+        ? Number(form.department)
+        : null, // ✅ IMPORTANT FIX
+    };
+
+    try {
+      await createUser(payload);
+      alert("User created successfully");
+      resetForm();
+      fetchAll();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to create user");
+    }
+  };
+
+  /* ================= UPDATE ================= */
+
+  const handleUpdate = async () => {
+    if (!editingUser) return;
+
+    try {
+      await updateUser(editingUser.id, {
+        email: editingUser.email,
+        role: Number(editingUser.role_id),
+        department: editingUser.department_id ?? null,
+        is_active: editingUser.is_active,
+      });
+
+      alert("User updated successfully");
+      resetForm();
+      fetchAll();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update user");
+    }
+  };
+
+  /* ================= DELETE ================= */
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure?")) return;
+
+    try {
+      await deleteUser(id);
+      fetchAll();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  /* ================= RENDER ================= */
+
   return (
-    <div className="container mt-3">
-      <h3>Users</h3>
+    <div>
+      <h2>Users</h2>
 
-      {/* CREATE USER */}
-      <div className="card mb-3">
-        <div className="card-body">
-          <h5>Create User</h5>
+      {/* CREATE / EDIT FORM */}
+      <div className="card p-3 mb-4">
+        <h4>{editingUser ? "Edit User" : "Create User"}</h4>
 
-          <div className="row g-2">
-            <div className="col-md-4">
-              <input
-                className={`form-control ${errors.username ? "is-invalid" : ""}`}
-                placeholder="Username"
-                value={form.username}
-                onChange={(e) =>
-                  setForm({ ...form, username: e.target.value })
-                }
-              />
-            </div>
+        <input
+          placeholder="Username"
+          value={form.username}
+          disabled={!!editingUser}
+          onChange={e => setForm({ ...form, username: e.target.value })}
+        />
 
-            <div className="col-md-4">
-              <input
-                className={`form-control ${errors.email ? "is-invalid" : ""}`}
-                placeholder="Email"
-                value={form.email}
-                onChange={(e) =>
-                  setForm({ ...form, email: e.target.value })
-                }
-              />
-            </div>
+        <input
+          placeholder="Email"
+          value={form.email}
+          onChange={e => setForm({ ...form, email: e.target.value })}
+        />
 
-            <div className="col-md-4">
-              <select
-                className={`form-select ${errors.role ? "is-invalid" : ""}`}
-                value={form.role}
-                onChange={(e) =>
-                  setForm({ ...form, role: Number(e.target.value) })
-                }
-              >
-                <option value="">Select Role</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {!editingUser && (
+          <>
+            <input
+              type="password"
+              placeholder="Password"
+              value={form.password}
+              onChange={e => setForm({ ...form, password: e.target.value })}
+            />
 
-            <div className="col-md-4">
-              <select
-                className="form-select"
-                value={form.department}
-                onChange={(e) =>
-                  setForm({ ...form, department: Number(e.target.value) })
-                }
-              >
-                <option value="">Select Department</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={form.confirmPassword}
+              onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
+            />
+          </>
+        )}
 
-            {/* PASSWORD */}
-            <div className="col-md-4 position-relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                className={`form-control ${errors.password ? "is-invalid" : ""}`}
-                placeholder="Password"
-                value={form.password}
-                onChange={(e) =>
-                  setForm({ ...form, password: e.target.value })
-                }
-              />
-              <i
-                className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}
-                style={{
-                  position: "absolute",
-                  right: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  cursor: "pointer",
-                }}
-                onClick={() => setShowPassword(!showPassword)}
-              />
-            </div>
+        <select
+          value={form.role}
+          onChange={e => setForm({ ...form, role: e.target.value })}
+        >
+          <option value="">Select Role</option>
+          {roles.map(r => (
+            <option key={r.id} value={r.id}>
+              {r.name}
+            </option>
+          ))}
+        </select>
 
-            {/* CONFIRM PASSWORD */}
-            <div className="col-md-4 position-relative">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                className={`form-control ${
-                  errors.confirmPassword ? "is-invalid" : ""
-                }`}
-                placeholder="Confirm Password"
-                value={form.confirmPassword}
-                onChange={(e) =>
-                  setForm({ ...form, confirmPassword: e.target.value })
-                }
-              />
-              <i
-                className={`bi ${
-                  showConfirmPassword ? "bi-eye-slash" : "bi-eye"
-                }`}
-                style={{
-                  position: "absolute",
-                  right: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  cursor: "pointer",
-                }}
-                onClick={() =>
-                  setShowConfirmPassword(!showConfirmPassword)
-                }
-              />
-            </div>
-          </div>
+        <select
+          value={form.department}
+          onChange={e => setForm({ ...form, department: e.target.value })}
+        >
+          <option value="">Select Department</option>
+          {departments.map(d => (
+            <option key={d.id} value={d.id}>
+              {d.name}
+            </option>
+          ))}
+        </select>
 
-          <button className="btn btn-primary mt-3" onClick={handleCreate}>
-            Create Users
-          </button>
-        </div>
+        <button onClick={editingUser ? handleUpdate : handleCreate}>
+          {editingUser ? "Update User" : "Create User"}
+        </button>
+
+        {editingUser && <button onClick={resetForm}>Cancel</button>}
       </div>
+
+      {/* USERS LIST */}
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Department</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {users.map(u => (
+            <tr key={u.id}>
+              <td>{u.username}</td>
+              <td>{u.email}</td>
+              <td>{u.role}</td>
+              <td>{u.department ?? "-"}</td>
+              <td>
+                {u.role === "ADMIN" ? (
+                  "Protected"
+                ) : (
+                  <>
+                    <button onClick={() => setEditingUser(u)}>Edit</button>
+                    <button onClick={() => handleDelete(u.id)}>Delete</button>
+                  </>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

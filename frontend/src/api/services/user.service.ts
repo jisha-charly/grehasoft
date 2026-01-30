@@ -1,7 +1,9 @@
+// src/api/services/user.service.ts
+
 import api from "../axios";
 import type { User } from "../../types/user";
 
-/* ---------------- USERS ---------------- */
+/* ================= USERS ================= */
 
 export const getUsers = async (): Promise<User[]> => {
   const res = await api.get("users/");
@@ -13,7 +15,7 @@ export const createUser = async (data: {
   email: string;
   password: string;
   role: number;
-  department: number;
+  department: number | null; // ✅ FIX HERE
 }) => {
   await api.post("users/create/", data);
 };
@@ -23,7 +25,7 @@ export const updateUser = async (
   data: {
     email: string;
     role: number;
-    department: number | null;
+    department: number | null; // ✅ ALREADY CORRECT
     is_active: boolean;
   }
 ) => {

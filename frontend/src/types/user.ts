@@ -1,12 +1,16 @@
+// src/types/user.ts
+
 export interface User {
   id: number;
   username: string;
   email: string;
-  is_active: boolean;
-  role: string;
-  role_id: number;
-  department: string | null;
-  department_id: number | null;
-  created_at: string;
-}
 
+  role_id: number;
+  role: string;
+
+  department_id: number | null;
+  department: string | null;
+
+  is_active: boolean;
+  created_at?: string;
+}
