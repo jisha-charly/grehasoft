@@ -12,29 +12,41 @@ const ITEMS_PER_PAGE = 5;
 const Departments = () => {
   /* ================= STATE ================= */
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
 
+  // create form (SAME pattern as Roles)
   const [form, setForm] = useState<{ name: string; parent_id: number | null }>({
     name: "",
     parent_id: null,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [editing, setEditing] = useState<Department | null>(null);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  /* ================= LOAD ================= */
+  // search
+  const [search, setSearch] = useState("");
+
+  // edit modal
+  const [editing, setEditing] = useState<Department | null>(null);
+
+  // delete modal
+  const [deleteDept, setDeleteDept] = useState<Department | null>(null);
+
+  // pagination
+  const [page, setPage] = useState(1);
+
+  /* ================= FETCH ================= */
   const loadDepartments = async () => {
+    setLoading(true);
     const data = await getDepartments();
     setDepartments(data);
+    setLoading(false);
   };
 
   useEffect(() => {
     loadDepartments();
   }, []);
 
-  /* ================= VALIDATION (CLIENTS STYLE) ================= */
+  /* ================= VALIDATION (ROLES STYLE) ================= */
   const validate = (
     data: { name?: string },
     currentId?: number
@@ -74,7 +86,12 @@ const Departments = () => {
     loadDepartments();
   };
 
-  /* ================= UPDATE ================= */
+  /* ================= EDIT ================= */
+  const openEdit = (dept: Department) => {
+    setEditing(dept);
+    setErrors({});
+  };
+
   const handleUpdate = async () => {
     if (!editing) return;
     if (!validate(editing, editing.id)) return;
@@ -85,15 +102,14 @@ const Departments = () => {
     });
 
     setEditing(null);
-    setErrors({});
     loadDepartments();
   };
 
   /* ================= DELETE ================= */
   const handleDelete = async () => {
-    if (!deleteId) return;
-    await deleteDepartment(deleteId);
-    setDeleteId(null);
+    if (!deleteDept) return;
+    await deleteDepartment(deleteDept.id);
+    setDeleteDept(null);
     loadDepartments();
   };
 
@@ -102,8 +118,7 @@ const Departments = () => {
     const q = search.toLowerCase();
     return (
       d.name.toLowerCase().includes(q) ||
-      (d.parent_name ?? "").toLowerCase().includes(q) ||
-      (d.created_at ?? "").toLowerCase().includes(q)
+      (d.parent_name?.toLowerCase().includes(q) ?? false)
     );
   });
 
@@ -116,13 +131,24 @@ const Departments = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="container mt-3">
-      <h3>Departments</h3>
+    <div className="container mt-4">
+      <h3 className="mb-3">Departments</h3>
 
-      {/* CREATE */}
+      {/* SEARCH */}
+      <input
+        className="form-control mb-3"
+        placeholder="Search by department or parent..."
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPage(1);
+        }}
+      />
+
+      {/* CREATE FORM */}
       <div className="card mb-3">
         <div className="card-body row g-2">
-          <div className="col-md-5">
+          <div className="col-md-4">
             <input
               className={`form-control ${errors.name ? "is-invalid" : ""}`}
               placeholder="Department name"
@@ -137,7 +163,7 @@ const Departments = () => {
             )}
           </div>
 
-          <div className="col-md-5">
+          <div className="col-md-4">
             <select
               className="form-select"
               value={form.parent_id ?? ""}
@@ -159,70 +185,61 @@ const Departments = () => {
             </select>
           </div>
 
-          <div className="col-md-2 d-grid">
-            <button className="btn btn-primary" onClick={handleCreate}>
+          <div className="col-md-2">
+            <button
+              className="btn btn-primary w-100"
+              onClick={handleCreate}
+            >
               Add
             </button>
           </div>
         </div>
       </div>
 
-      {/* SEARCH */}
-      <input
-        className="form-control mb-3"
-        placeholder="Search departments..."
-        value={search}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPage(1);
-        }}
-      />
-
       {/* TABLE */}
-      <table className="table table-bordered table-hover">
-        <thead className="table-light">
-          <tr>
-            <th>Name</th>
-            <th>Parent</th>
-            <th>Created</th>
-            <th style={{ width: 140 }}>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginated.map((d) => (
-            <tr key={d.id}>
-              <td>{d.name}</td>
-              <td>{d.parent_name || "-"}</td>
-              <td>{d.created_at}</td>
-              <td>
-                <button
-                  className="btn btn-sm btn-warning me-2"
-                  onClick={() => {
-                    setEditing(d);
-                    setErrors({});
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn btn-sm btn-danger"
-                  onClick={() => setDeleteId(d.id)}
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-
-          {!paginated.length && (
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <table className="table table-bordered table-hover">
+          <thead className="table-light">
             <tr>
-              <td colSpan={4} className="text-center">
-                No departments found
-              </td>
+              <th>Name</th>
+              <th>Parent</th>
+              <th style={{ width: 160 }}>Action</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {paginated.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="text-center">
+                  No departments found
+                </td>
+              </tr>
+            ) : (
+              paginated.map((d) => (
+                <tr key={d.id}>
+                  <td>{d.name}</td>
+                  <td>{d.parent_name || "-"}</td>
+                  <td>
+                    <button
+                      className="btn btn-warning btn-sm me-2"
+                      onClick={() => openEdit(d)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => setDeleteDept(d)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      )}
 
       {/* PAGINATION */}
       {totalPages > 1 && (
@@ -275,7 +292,10 @@ const Departments = () => {
                 >
                   Cancel
                 </button>
-                <button className="btn btn-success" onClick={handleUpdate}>
+                <button
+                  className="btn btn-success"
+                  onClick={handleUpdate}
+                >
                   Save
                 </button>
               </div>
@@ -285,17 +305,17 @@ const Departments = () => {
       )}
 
       {/* DELETE MODAL */}
-      {deleteId && (
+      {deleteDept && (
         <div className="modal show d-block bg-dark bg-opacity-50">
-          <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-dialog modal-dialog-centered modal-sm">
             <div className="modal-content">
               <div className="modal-body">
-                Delete this department?
+                Delete <b>{deleteDept.name}</b>?
               </div>
               <div className="modal-footer">
                 <button
                   className="btn btn-secondary"
-                  onClick={() => setDeleteId(null)}
+                  onClick={() => setDeleteDept(null)}
                 >
                   Cancel
                 </button>
