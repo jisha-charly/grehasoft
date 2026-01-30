@@ -12,5 +12,21 @@ export interface User {
   department: string | null;
 
   is_active: boolean;
-  created_at?: string;
+}
+
+/* ---------- CREATE ---------- */
+export interface CreateUserPayload {
+  username: string;
+  email: string;
+  password: string;
+  role: number;
+  department: number | null;
+}
+
+/* ---------- UPDATE ---------- */
+export interface UpdateUserPayload {
+  email: string;
+  role: number;
+  department: number | null;
+  is_active: boolean;
 }
