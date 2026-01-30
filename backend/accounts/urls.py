@@ -6,7 +6,7 @@ urlpatterns = [
     path("profile/update/", views.update_profile, name="update-profile"),
     path("profile/change-password/", views.change_password, name="change-password"),
     # ---------------- USERS ----------------
-    path("users/", views.users_list),
+    path("users/", views.list_users),
     path("users/create/", views.create_user),
     path("users/<int:user_id>/update/", views.update_user),
     path("users/<int:user_id>/delete/", views.delete_user),
