@@ -19,7 +19,7 @@ from .serializers import (
 )
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from .serializers import ProfileUpdateSerializer, ChangePasswordSerializer,UserSerializer
+from .serializers import ProfileUpdateSerializer, ChangePasswordSerializer,UserListSerializer
 User = get_user_model()
 
 
@@ -270,8 +270,8 @@ def delete_department(request, dept_id):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_users(request):
-    users = User.objects.select_related("role", "department")
-    serializer = UserSerializer(users, many=True)
+    users = User.objects.filter(is_active=True)
+    serializer = UserListSerializer(users, many=True)
     return Response(serializer.data)
 
 
