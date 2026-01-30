@@ -13,13 +13,15 @@ const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
 
+  const [search, setSearch] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
 
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [form, setForm] = useState({
     username: "",
@@ -50,20 +52,20 @@ const Users = () => {
 
   // ================= SEARCH =================
   const filteredUsers = users.filter(u =>
-    `${u.username} ${u.email} ${u.role_name} ${u.department_name ?? ""}`
+    `${u.username} ${u.email} ${u.role_name ?? ""} ${u.department_name ?? ""}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
 
   // ================= VALIDATION =================
-  const validate = () => {
+  const validate = (isEdit = false) => {
     const e: any = {};
 
     if (!form.username.trim()) e.username = "Username required";
     if (!form.email.trim()) e.email = "Email required";
     if (!form.role) e.role = "Role required";
 
-    if (!editingUser) {
+    if (!isEdit) {
       if (!form.password) e.password = "Password required";
       if (form.password !== form.confirmPassword)
         e.confirmPassword = "Passwords do not match";
@@ -85,24 +87,33 @@ const Users = () => {
       department: form.department ? Number(form.department) : null,
     };
 
-    await createUser(payload);
-    resetForm();
-    fetchAll();
+    try {
+      await createUser(payload);
+      resetForm();
+      fetchAll();
+    } catch {
+      setErrors({ api: "Failed to create user" });
+    }
   };
 
   // ================= UPDATE =================
   const handleUpdate = async () => {
-    if (!editingUser || !validate()) return;
+    if (!editingUser) return;
+    if (!validate(true)) return;
 
-    await updateUser(editingUser.id, {
-      email: form.email,
-      role: Number(form.role),
-      department: form.department ? Number(form.department) : null,
-      is_active: editingUser.is_active,
-    });
+    try {
+      await updateUser(editingUser.id, {
+        email: form.email,
+        role: Number(form.role),
+        department: form.department ? Number(form.department) : null,
+        is_active: editingUser.is_active,
+      });
 
-    resetForm();
-    fetchAll();
+      closeEdit();
+      fetchAll();
+    } catch {
+      setErrors({ api: "Failed to update user" });
+    }
   };
 
   // ================= DELETE =================
@@ -110,6 +121,7 @@ const Users = () => {
     if (!deleteId) return;
     await deleteUser(deleteId);
     setDeleteId(null);
+    setShowDeleteModal(false);
     fetchAll();
   };
 
@@ -124,10 +136,16 @@ const Users = () => {
       role: String(u.role_id),
       department: u.department_id ? String(u.department_id) : "",
     });
+    setShowEditModal(true);
+  };
+
+  const closeEdit = () => {
+    setShowEditModal(false);
+    setEditingUser(null);
+    resetForm();
   };
 
   const resetForm = () => {
-    setEditingUser(null);
     setForm({
       username: "",
       email: "",
@@ -152,9 +170,9 @@ const Users = () => {
         onChange={e => setSearch(e.target.value)}
       />
 
-      {/* CREATE / EDIT CARD */}
+      {/* CREATE USER */}
       <div className="card p-3 mb-4">
-        <h5>{editingUser ? "Edit User" : "Create User"}</h5>
+        <h5>Create User</h5>
 
         <div className="row g-3">
           <div className="col-md-4">
@@ -163,7 +181,6 @@ const Users = () => {
               placeholder="Username"
               className={`form-control ${errors.username && "is-invalid"}`}
               value={form.username}
-              disabled={!!editingUser}
               onChange={e =>
                 setForm({ ...form, username: e.target.value })
               }
@@ -202,55 +219,62 @@ const Users = () => {
             <small className="text-danger">{errors.role}</small>
           </div>
 
-          {!editingUser && (
-            <>
-              <div className="col-md-4 position-relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  placeholder="Password"
-                  className={`form-control ${errors.password && "is-invalid"}`}
-                  value={form.password}
-                  onChange={e =>
-                    setForm({ ...form, password: e.target.value })
-                  }
-                />
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="position-absolute top-50 end-0 translate-middle-y me-3"
-                  style={{ cursor: "pointer", border: "none" }}
-                >
-                  👁
-                </span>
-                <small className="text-danger">{errors.password}</small>
-              </div>
+          <div className="col-md-4 position-relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              placeholder="Password"
+              className={`form-control ${errors.password && "is-invalid"}`}
+              value={form.password}
+              onChange={e =>
+                setForm({ ...form, password: e.target.value })
+              }
+            />
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+                border: "none",
+              }}
+            >
+              👁
+            </span>
+            <small className="text-danger">{errors.password}</small>
+          </div>
 
-              <div className="col-md-4 position-relative">
-                <input
-                  type={showConfirm ? "text" : "password"}
-                  autoComplete="new-password"
-                  placeholder="Confirm Password"
-                  className={`form-control ${
-                    errors.confirmPassword && "is-invalid"
-                  }`}
-                  value={form.confirmPassword}
-                  onChange={e =>
-                    setForm({ ...form, confirmPassword: e.target.value })
-                  }
-                />
-                <span
-                  onClick={() => setShowConfirm(!showConfirm)}
-                  className="position-absolute top-50 end-0 translate-middle-y me-3"
-                  style={{ cursor: "pointer", border: "none" }}
-                >
-                  👁
-                </span>
-                <small className="text-danger">
-                  {errors.confirmPassword}
-                </small>
-              </div>
-            </>
-          )}
+          <div className="col-md-4 position-relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              placeholder="Confirm Password"
+              className={`form-control ${
+                errors.confirmPassword && "is-invalid"
+              }`}
+              value={form.confirmPassword}
+              onChange={e =>
+                setForm({ ...form, confirmPassword: e.target.value })
+              }
+            />
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+              }}
+            >
+              👁
+            </span>
+            <small className="text-danger">
+              {errors.confirmPassword}
+            </small>
+          </div>
 
           <div className="col-md-4">
             <select
@@ -270,22 +294,13 @@ const Users = () => {
           </div>
         </div>
 
-        <div className="mt-3 text-end">
-          {editingUser && (
-            <button className="btn btn-secondary me-2" onClick={resetForm}>
-              Cancel
-            </button>
-          )}
-          <button
-            className="btn btn-primary"
-            onClick={editingUser ? handleUpdate : handleCreate}
-          >
-            {editingUser ? "Update User" : "Create User"}
-          </button>
-        </div>
+        <button className="btn btn-primary mt-3" onClick={handleCreate}>
+          Create User
+        </button>
+        <small className="text-danger d-block">{errors.api}</small>
       </div>
 
-      {/* TABLE */}
+      {/* USERS TABLE */}
       <table className="table table-bordered">
         <thead>
           <tr>
@@ -301,7 +316,7 @@ const Users = () => {
             <tr key={u.id}>
               <td>{u.username}</td>
               <td>{u.email}</td>
-              <td>{u.role_name}</td>
+              <td>{u.role_name ?? "-"}</td>
               <td>{u.department_name ?? "-"}</td>
               <td>
                 {u.username === "admin" ? (
@@ -316,7 +331,10 @@ const Users = () => {
                     </button>
                     <button
                       className="btn btn-danger btn-sm"
-                      onClick={() => setDeleteId(u.id)}
+                      onClick={() => {
+                        setDeleteId(u.id);
+                        setShowDeleteModal(true);
+                      }}
                     >
                       Delete
                     </button>
@@ -328,23 +346,69 @@ const Users = () => {
         </tbody>
       </table>
 
+      {/* EDIT MODAL */}
+      {showEditModal && (
+        <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content p-4">
+              <h5>Edit User</h5>
+
+              <input className="form-control mb-3" value={form.username} disabled />
+              <input
+                className="form-control mb-3"
+                value={form.email}
+                onChange={e => setForm({ ...form, email: e.target.value })}
+              />
+
+              <select
+                className="form-control mb-3"
+                value={form.role}
+                onChange={e => setForm({ ...form, role: e.target.value })}
+              >
+                <option value="">Select Role</option>
+                {roles.map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+
+              <select
+                className="form-control mb-3"
+                value={form.department}
+                onChange={e => setForm({ ...form, department: e.target.value })}
+              >
+                <option value="">Select Department</option>
+                {departments.map(d => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+
+              <div className="text-end">
+                <button className="btn btn-secondary me-2" onClick={closeEdit}>
+                  Cancel
+                </button>
+                <button className="btn btn-success" onClick={handleUpdate}>
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* DELETE MODAL */}
-      {deleteId && (
-        <div className="modal show d-block">
-          <div className="modal-dialog">
-            <div className="modal-content p-3">
+      {showDeleteModal && (
+        <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content p-4">
               <h5>Delete user?</h5>
               <div className="text-end mt-3">
                 <button
                   className="btn btn-secondary me-2"
-                  onClick={() => setDeleteId(null)}
+                  onClick={() => setShowDeleteModal(false)}
                 >
                   Cancel
                 </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={confirmDelete}
-                >
+                <button className="btn btn-danger" onClick={confirmDelete}>
                   Delete
                 </button>
               </div>
@@ -352,6 +416,7 @@ const Users = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };
