@@ -6,7 +6,6 @@ import {
   updateDepartment,
   deleteDepartment,
 } from "../../api/services/department.service";
-import { validateDepartment } from "../../utils/validators";
 
 const Departments = () => {
   /* ================= STATE ================= */
@@ -18,13 +17,8 @@ const Departments = () => {
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const [deleteDeptId, setDeleteDeptId] = useState<number | null>(null);
 
-  // 🔑 Separate error states (IMPORTANT)
-  const [createErrors, setCreateErrors] = useState<{ name?: string }>({});
-  const [editErrors, setEditErrors] = useState<{ name?: string }>({});
-
-  /* ================= PAGINATION ================= */
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  /* ✅ SIMPLE ERROR STATES (NO UTILS) */
+  const [nameError, setNameError] = useState("");
 
   /* ================= LOAD ================= */
   const loadDepartments = async () => {
@@ -36,19 +30,29 @@ const Departments = () => {
     loadDepartments();
   }, []);
 
+  /* ================= VALIDATION (BULLETPROOF) ================= */
+  const validateName = (value: string) => {
+    const trimmed = value.trim();
+
+    if (!trimmed) return "Department name is required";
+    if (trimmed.length < 3)
+      return "Department name must be at least 3 characters";
+
+    const exists = departments.some(
+      (d) => d.name.toLowerCase() === trimmed.toLowerCase()
+    );
+
+    if (exists) return "Department already exists";
+
+    return "";
+  };
+
   /* ================= CREATE ================= */
-  const handleCreate = async (
-    e?: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    // 🚨 STOP parent form submit
-    e?.preventDefault();
-    e?.stopPropagation();
+  const handleCreate = async () => {
+    const error = validateName(name);
+    setNameError(error);
 
-    const validationErrors = validateDepartment(name, departments);
-    setCreateErrors(validationErrors);
-
-    // ⛔ Stop if error exists
-    if (validationErrors.name) return;
+    if (error) return;
 
     await createDepartment({
       name: name.trim(),
@@ -57,37 +61,13 @@ const Departments = () => {
 
     setName("");
     setParentId("");
-    setCreateErrors({});
-    loadDepartments();
-  };
-
-  /* ================= UPDATE ================= */
-  const handleUpdate = async () => {
-    if (!editingDept) return;
-
-    const validationErrors = validateDepartment(
-      editingDept.name,
-      departments,
-      editingDept.id
-    );
-    setEditErrors(validationErrors);
-
-    if (validationErrors.name) return;
-
-    await updateDepartment(editingDept.id, {
-      name: editingDept.name.trim(),
-      parent_id: editingDept.parent_id,
-    });
-
-    setEditingDept(null);
-    setEditErrors({});
+    setNameError("");
     loadDepartments();
   };
 
   /* ================= DELETE ================= */
   const handleDelete = async () => {
     if (!deleteDeptId) return;
-
     await deleteDepartment(deleteDeptId);
     setDeleteDeptId(null);
     loadDepartments();
@@ -95,44 +75,13 @@ const Departments = () => {
 
   /* ================= SEARCH (ALL FIELDS) ================= */
   const filteredDepartments = departments.filter((d) => {
-    const text = search.toLowerCase();
-
-    const nameMatch = d.name.toLowerCase().includes(text);
-    const parentMatch = (d.parent_name ?? "")
-      .toLowerCase()
-      .includes(text);
-
-    const rawDateMatch = (d.created_at ?? "")
-      .toLowerCase()
-      .includes(text);
-
-    const formattedDateMatch = d.created_at
-      ? new Date(d.created_at)
-          .toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })
-          .toLowerCase()
-          .includes(text)
-      : false;
-
-    return nameMatch || parentMatch || rawDateMatch || formattedDateMatch;
+    const t = search.toLowerCase();
+    return (
+      d.name.toLowerCase().includes(t) ||
+      (d.parent_name ?? "").toLowerCase().includes(t) ||
+      (d.created_at ?? "").toLowerCase().includes(t)
+    );
   });
-
-  /* ================= PAGINATION ================= */
-  const totalPages = Math.ceil(
-    filteredDepartments.length / itemsPerPage
-  );
-
-  const paginatedDepartments = filteredDepartments.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search]);
 
   /* ================= UI ================= */
   return (
@@ -145,16 +94,23 @@ const Departments = () => {
           <div className="row g-2">
             <div className="col-md-5">
               <input
-                className="form-control"
+                className={`form-control ${
+                  nameError ? "is-invalid" : ""
+                }`}
                 placeholder="Department name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setNameError(validateName(e.target.value));
+                }}
+                onBlur={(e) =>
+                  setNameError(validateName(e.target.value))
+                }
               />
 
-              {/* ✅ VALIDATION MESSAGE */}
-              {createErrors.name && (
-                <div className="text-danger mt-1">
-                  {createErrors.name}
+              {nameError && (
+                <div className="invalid-feedback d-block">
+                  {nameError}
                 </div>
               )}
             </div>
@@ -178,7 +134,8 @@ const Departments = () => {
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={(e) => handleCreate(e)}
+                disabled={!!nameError}
+                onClick={handleCreate}
               >
                 Add
               </button>
@@ -196,174 +153,33 @@ const Departments = () => {
       />
 
       {/* TABLE */}
-      <table className="table table-bordered table-hover">
-        <thead className="table-light">
+      <table className="table table-bordered">
+        <thead>
           <tr>
             <th>Name</th>
             <th>Parent</th>
             <th>Created</th>
-            <th style={{ width: 160 }}>Action</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
-          {paginatedDepartments.length === 0 ? (
-            <tr>
-              <td colSpan={4} className="text-center">
-                No departments found
+          {filteredDepartments.map((d) => (
+            <tr key={d.id}>
+              <td>{d.name}</td>
+              <td>{d.parent_name || "-"}</td>
+              <td>{d.created_at || "-"}</td>
+              <td>
+                <button
+                  className="btn btn-sm btn-danger"
+                  onClick={() => setDeleteDeptId(d.id)}
+                >
+                  Delete
+                </button>
               </td>
             </tr>
-          ) : (
-            paginatedDepartments.map((d) => (
-              <tr key={d.id}>
-                <td>{d.name}</td>
-                <td>{d.parent_name || "-"}</td>
-                <td>
-                  {d.created_at
-                    ? new Date(d.created_at).toLocaleDateString(
-                        "en-GB",
-                        {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        }
-                      )
-                    : "-"}
-                </td>
-                <td>
-                  <button
-                    className="btn btn-sm btn-warning me-2"
-                    onClick={() => {
-                      setEditingDept(d);
-                      setEditErrors({});
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => setDeleteDeptId(d.id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
+          ))}
         </tbody>
       </table>
-
-      {/* PAGINATION */}
-      {totalPages > 1 && (
-        <nav>
-          <ul className="pagination justify-content-end">
-            <li className={`page-item ${currentPage === 1 && "disabled"}`}>
-              <button
-                className="page-link"
-                onClick={() => setCurrentPage((p) => p - 1)}
-              >
-                Prev
-              </button>
-            </li>
-
-            {[...Array(totalPages)].map((_, i) => (
-              <li
-                key={i}
-                className={`page-item ${
-                  currentPage === i + 1 ? "active" : ""
-                }`}
-              >
-                <button
-                  className="page-link"
-                  onClick={() => setCurrentPage(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              </li>
-            ))}
-
-            <li
-              className={`page-item ${
-                currentPage === totalPages && "disabled"
-              }`}
-            >
-              <button
-                className="page-link"
-                onClick={() => setCurrentPage((p) => p + 1)}
-              >
-                Next
-              </button>
-            </li>
-          </ul>
-        </nav>
-      )}
-
-      {/* EDIT MODAL */}
-      {editingDept && (
-        <div className="modal show d-block bg-dark bg-opacity-50">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5>Edit Department</h5>
-              </div>
-              <div className="modal-body">
-                <input
-                  className="form-control mb-2"
-                  value={editingDept.name}
-                  onChange={(e) =>
-                    setEditingDept({
-                      ...editingDept,
-                      name: e.target.value,
-                    })
-                  }
-                />
-
-                {editErrors.name && (
-                  <div className="text-danger">
-                    {editErrors.name}
-                  </div>
-                )}
-
-                <select
-                  className="form-select mt-2"
-                  value={editingDept.parent_id ?? ""}
-                  onChange={(e) =>
-                    setEditingDept({
-                      ...editingDept,
-                      parent_id: Number(e.target.value) || null,
-                    })
-                  }
-                >
-                  <option value="">Main Department</option>
-                  {departments
-                    .filter((d) => d.id !== editingDept.id)
-                    .map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className="modal-footer">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setEditingDept(null);
-                    setEditErrors({});
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="btn btn-success"
-                  onClick={handleUpdate}
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* DELETE MODAL */}
       {deleteDeptId && (
@@ -371,7 +187,7 @@ const Departments = () => {
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-body">
-                Are you sure you want to delete this department?
+                Are you sure you want to delete?
               </div>
               <div className="modal-footer">
                 <button
