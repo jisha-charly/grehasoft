@@ -270,10 +270,11 @@ def delete_department(request, dept_id):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_users(request):
-    users = User.objects.filter(is_active=True)
+    users = User.objects.filter(deleted_at__isnull=True).select_related(
+        "role", "department"
+    )
     serializer = UserListSerializer(users, many=True)
     return Response(serializer.data)
-
 
 
 @api_view(["POST"])
