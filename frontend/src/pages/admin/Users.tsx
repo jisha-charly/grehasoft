@@ -5,15 +5,20 @@ import {
   updateUser,
   deleteUser,
 } from "../../api/services/user.service";
+import { getRoles } from "../../api/services/role.service";
+import { getDepartments } from "../../api/services/department.service";
 import type { User, CreateUserPayload } from "../../types/user";
 
 const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
   const [search, setSearch] = useState("");
 
-  const [showPassword, setShowPassword] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const [form, setForm] = useState({
     username: "",
@@ -24,28 +29,37 @@ const Users = () => {
     department: "",
   });
 
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // ================= FETCH =================
+  /* ================= FETCH ================= */
+
   const fetchAll = async () => {
-    const data = await getUsers();
-    setUsers(data);
+    const [u, r, d] = await Promise.all([
+      getUsers(),
+      getRoles(),
+      getDepartments(),
+    ]);
+    setUsers(u);
+    setRoles(r);
+    setDepartments(d);
   };
 
   useEffect(() => {
     fetchAll();
   }, []);
 
-  // ================= SEARCH =================
+  /* ================= SEARCH ================= */
+
   const filteredUsers = users.filter(u =>
     `${u.username} ${u.email} ${u.role_name} ${u.department_name ?? ""}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
 
-  // ================= VALIDATION =================
+  /* ================= VALIDATION ================= */
+
   const validate = () => {
-    const e: any = {};
+    const e: Record<string, string> = {};
 
     if (!form.username.trim()) e.username = "Username required";
     if (!form.email.trim()) e.email = "Email required";
@@ -61,7 +75,8 @@ const Users = () => {
     return Object.keys(e).length === 0;
   };
 
-  // ================= CREATE =================
+  /* ================= CREATE ================= */
+
   const handleCreate = async () => {
     if (!validate()) return;
 
@@ -73,35 +88,29 @@ const Users = () => {
       department: form.department ? Number(form.department) : null,
     };
 
-    try {
-      await createUser(payload);
-      resetForm();
-      fetchAll();
-    } catch {
-      setErrors({ api: "Failed to create user" });
-    }
+    await createUser(payload);
+    resetForm();
+    fetchAll();
   };
 
-  // ================= UPDATE =================
+  /* ================= UPDATE ================= */
+
   const handleUpdate = async () => {
     if (!editingUser) return;
 
-    try {
-      await updateUser(editingUser.id, {
-        email: form.email,
-        role: Number(form.role),
-        department: form.department ? Number(form.department) : null,
-        is_active: editingUser.is_active,
-      });
+    await updateUser(editingUser.id, {
+      email: form.email,
+      role: Number(form.role),
+      department: form.department ? Number(form.department) : null,
+      is_active: editingUser.is_active,
+    });
 
-      resetForm();
-      fetchAll();
-    } catch {
-      setErrors({ api: "Failed to update user" });
-    }
+    resetForm();
+    fetchAll();
   };
 
-  // ================= DELETE =================
+  /* ================= DELETE ================= */
+
   const confirmDelete = async () => {
     if (!deleteId) return;
     await deleteUser(deleteId);
@@ -109,7 +118,8 @@ const Users = () => {
     fetchAll();
   };
 
-  // ================= HELPERS =================
+  /* ================= HELPERS ================= */
+
   const startEdit = (u: User) => {
     setEditingUser(u);
     setForm({
@@ -135,7 +145,8 @@ const Users = () => {
     setErrors({});
   };
 
-  // ================= UI =================
+  /* ================= UI ================= */
+
   return (
     <div className="container-fluid">
       <h3>Users</h3>
@@ -148,9 +159,13 @@ const Users = () => {
         onChange={e => setSearch(e.target.value)}
       />
 
-      {/* CREATE / EDIT */}
+      {/* FORM */}
       <div className="card p-3 mb-4">
         <h5>{editingUser ? "Edit User" : "Create User"}</h5>
+
+        {/* Autofill trap */}
+        <input type="text" name="fake-user" autoComplete="username" hidden />
+        <input type="password" name="fake-pass" autoComplete="new-password" hidden />
 
         <div className="row g-3">
           <div className="col-md-4">
@@ -160,9 +175,7 @@ const Users = () => {
               className={`form-control ${errors.username && "is-invalid"}`}
               value={form.username}
               disabled={!!editingUser}
-              onChange={e =>
-                setForm({ ...form, username: e.target.value })
-              }
+              onChange={e => setForm({ ...form, username: e.target.value })}
             />
             <small className="text-danger">{errors.username}</small>
           </div>
@@ -173,9 +186,7 @@ const Users = () => {
               placeholder="Email"
               className={`form-control ${errors.email && "is-invalid"}`}
               value={form.email}
-              onChange={e =>
-                setForm({ ...form, email: e.target.value })
-              }
+              onChange={e => setForm({ ...form, email: e.target.value })}
             />
             <small className="text-danger">{errors.email}</small>
           </div>
@@ -184,14 +195,12 @@ const Users = () => {
             <select
               className={`form-control ${errors.role && "is-invalid"}`}
               value={form.role}
-              onChange={e =>
-                setForm({ ...form, role: e.target.value })
-              }
+              onChange={e => setForm({ ...form, role: e.target.value })}
             >
               <option value="">Select Role</option>
-              <option value="1">ADMIN</option>
-              <option value="2">Software PM</option>
-              <option value="3">Digital Marketing PM</option>
+              {roles.map(r => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
             </select>
             <small className="text-danger">{errors.role}</small>
           </div>
@@ -205,9 +214,7 @@ const Users = () => {
                   placeholder="Password"
                   className={`form-control ${errors.password && "is-invalid"}`}
                   value={form.password}
-                  onChange={e =>
-                    setForm({ ...form, password: e.target.value })
-                  }
+                  onChange={e => setForm({ ...form, password: e.target.value })}
                 />
                 <span
                   onClick={() => setShowPassword(!showPassword)}
@@ -229,20 +236,29 @@ const Users = () => {
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   placeholder="Confirm Password"
-                  className={`form-control ${
-                    errors.confirmPassword && "is-invalid"
-                  }`}
+                  className={`form-control ${errors.confirmPassword && "is-invalid"}`}
                   value={form.confirmPassword}
                   onChange={e =>
                     setForm({ ...form, confirmPassword: e.target.value })
                   }
                 />
-                <small className="text-danger">
-                  {errors.confirmPassword}
-                </small>
+                <small className="text-danger">{errors.confirmPassword}</small>
               </div>
             </>
           )}
+
+          <div className="col-md-4">
+            <select
+              className="form-control"
+              value={form.department}
+              onChange={e => setForm({ ...form, department: e.target.value })}
+            >
+              <option value="">Select Department</option>
+              {departments.map(d => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <button
@@ -251,8 +267,6 @@ const Users = () => {
         >
           {editingUser ? "Update User" : "Create User"}
         </button>
-
-        <small className="text-danger">{errors.api}</small>
       </div>
 
       {/* TABLE */}
@@ -304,7 +318,7 @@ const Users = () => {
           <div className="modal-dialog">
             <div className="modal-content p-3">
               <h5>Delete user?</h5>
-              <div className="mt-3 text-end">
+              <div className="text-end mt-3">
                 <button
                   className="btn btn-secondary me-2"
                   onClick={() => setDeleteId(null)}
