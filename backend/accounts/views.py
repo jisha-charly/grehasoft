@@ -268,61 +268,62 @@ def delete_department(request, dept_id):
 # =================================================
 # USERS (ADMIN ONLY)
 # =================================================
-@api_view(["GET"])
+@api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
-def list_users(request):
-    users = User.objects.filter(deleted_at__isnull=True).select_related(
-        "role", "department"
-    )
-    serializer = UserSerializer(users, many=True)
-    return Response(serializer.data)
+def users_list_create(request):
+    # LIST USERS
+    if request.method == "GET":
+        users = User.objects.filter(deleted_at__isnull=True).select_related(
+            "role", "department"
+        )
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+    # CREATE USER
+    if request.method == "POST":
+        if not is_admin(request.user):
+            return Response({"error": "Forbidden"}, status=403)
+
+        User.objects.create_user(
+            username=request.data["username"],
+            email=request.data["email"],
+            password=request.data["password"],
+            role_id=request.data.get("role"),
+            department_id=request.data.get("department"),
+            is_active=True,
+        )
+
+        return Response({"message": "User created"}, status=201)
 
 
-@api_view(["POST"])
+@api_view(["PUT", "DELETE"])
 @permission_classes([IsAuthenticated])
-def create_user(request):
-    if not is_admin(request.user):
-        return Response({"error": "Forbidden"}, status=403)
-
-    User.objects.create_user(
-        username=request.data["username"],
-        email=request.data["email"],
-        password=request.data["password"],
-        role_id=request.data.get("role"),
-        department_id=request.data.get("department"),
-        is_active=True,
-    )
-
-    return Response({"message": "User created"}, status=201)
-
-
-@api_view(["PUT"])
-@permission_classes([IsAuthenticated])
-def update_user(request, user_id):
+def user_update_delete(request, user_id):
     user = get_object_or_404(User, id=user_id)
-    user.email = request.data.get("email", user.email)
-    user.role_id = request.data.get("role")
-    user.department_id = request.data.get("department")
-    user.is_active = request.data.get("is_active", True)
-    user.save()
-    return Response({"message": "User updated"})
 
+    # UPDATE
+    if request.method == "PUT":
+        user.email = request.data.get("email", user.email)
+        user.role_id = request.data.get("role")
+        user.department_id = request.data.get("department")
+        user.is_active = request.data.get("is_active", True)
+        user.save()
+        return Response({"message": "User updated"})
 
-@api_view(["DELETE"])
-@permission_classes([IsAuthenticated])
-def delete_user(request, user_id):
-    if not is_admin(request.user):
-        return Response({"error": "Forbidden"}, status=403)
+    # DELETE
+    if request.method == "DELETE":
+        if not is_admin(request.user):
+            return Response({"error": "Forbidden"}, status=403)
 
-    user = get_object_or_404(User, id=user_id)
-    if user == request.user:
-        return Response({"error": "Cannot delete yourself"}, status=400)
+        if user == request.user:
+            return Response({"error": "Cannot delete yourself"}, status=400)
 
-    user.deleted_at = timezone.now()
-    user.is_active = False
-    user.save()
+        user.deleted_at = timezone.now()
+        user.is_active = False
+        user.save()
 
-    return Response({"message": "User deleted"})
+        return Response({"message": "User deleted"})
+
 
 
 # =================================================

@@ -6,10 +6,8 @@ urlpatterns = [
     path("profile/update/", views.update_profile, name="update-profile"),
     path("profile/change-password/", views.change_password, name="change-password"),
     # ---------------- USERS ----------------
-    path("users/", views.list_users),                 # GET
-    path("users/", views.create_user),               # POST
-    path("users/<int:user_id>/", views.update_user), # PUT
-    path("users/<int:user_id>/", views.delete_user), # DELETE
+    path("users/", views.users_list_create),
+    path("users/<int:user_id>/", views.user_update_delete),
 
     # ---------------- DEPARTMENTS ----------------
     path("departments/", views.list_departments),
