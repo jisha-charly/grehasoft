@@ -100,14 +100,12 @@ const Users = () => {
   catch (err: any) {
   const apiError = err?.response?.data?.error;
 
-  // Serializer field errors
-  if (apiError && typeof apiError === "object") {
+  // FIELD ERRORS (serializer)
+  if (typeof apiError === "object") {
     const fieldErrors: any = {};
-
     Object.keys(apiError).forEach(key => {
-      fieldErrors[key] = apiError[key][0]; // take first message
+      fieldErrors[key] = apiError[key][0];
     });
-
     setErrors(fieldErrors);
     return;
   }
