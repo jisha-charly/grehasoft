@@ -9,6 +9,9 @@ import { getRoles } from "../../api/services/role.service";
 import { getDepartments } from "../../api/services/department.service";
 import type { User, CreateUserPayload } from "../../types/user";
 
+import eyeOpen from "../../assets/eye-open.png";
+import eyeClosed from "../../assets/eye-closed.png";
+
 const emptyForm = {
   username: "",
   email: "",
@@ -164,6 +167,7 @@ const Users = () => {
         <div className="row g-3">
           <div className="col-md-4">
             <input
+              autoComplete="off"
               placeholder="Username"
               className={`form-control ${errors.username && "is-invalid"}`}
               value={form.username}
@@ -174,6 +178,7 @@ const Users = () => {
 
           <div className="col-md-4">
             <input
+              autoComplete="off"
               placeholder="Email"
               className={`form-control ${errors.email && "is-invalid"}`}
               value={form.email}
@@ -200,12 +205,16 @@ const Users = () => {
           <div className="col-md-4 position-relative">
             <input
               type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
               placeholder="Password"
               className={`form-control pe-5 ${errors.password && "is-invalid"}`}
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
             />
-            <span
+
+            <img
+              src={showPassword ? eyeClosed : eyeOpen}
+              alt="toggle password"
               onClick={() => setShowPassword(!showPassword)}
               style={{
                 position: "absolute",
@@ -213,10 +222,10 @@ const Users = () => {
                 top: "50%",
                 transform: "translateY(-50%)",
                 cursor: "pointer",
+                width: 20,
               }}
-            >
-              {showPassword ? "🙈" : "👁️"}
-            </span>
+            />
+
             <small className="text-danger">{errors.password}</small>
           </div>
 
@@ -224,6 +233,7 @@ const Users = () => {
           <div className="col-md-4 position-relative">
             <input
               type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
               placeholder="Confirm Password"
               className={`form-control pe-5 ${errors.confirmPassword && "is-invalid"}`}
               value={form.confirmPassword}
@@ -231,7 +241,10 @@ const Users = () => {
                 setForm({ ...form, confirmPassword: e.target.value })
               }
             />
-            <span
+
+            <img
+              src={showPassword ? eyeClosed : eyeOpen}
+              alt="toggle password"
               onClick={() => setShowPassword(!showPassword)}
               style={{
                 position: "absolute",
@@ -239,10 +252,10 @@ const Users = () => {
                 top: "50%",
                 transform: "translateY(-50%)",
                 cursor: "pointer",
+                width: 20,
               }}
-            >
-              {showPassword ? "🙈" : "👁️"}
-            </span>
+            />
+
             <small className="text-danger">{errors.confirmPassword}</small>
           </div>
 
@@ -319,7 +332,10 @@ const Users = () => {
             <div className="modal-content p-4">
               <h5>Delete user?</h5>
               <div className="text-end mt-3">
-                <button className="btn btn-secondary me-2" onClick={() => setShowDeleteModal(false)}>
+                <button
+                  className="btn btn-secondary me-2"
+                  onClick={() => setShowDeleteModal(false)}
+                >
                   Cancel
                 </button>
                 <button className="btn btn-danger" onClick={confirmDelete}>
