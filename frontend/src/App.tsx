@@ -1,7 +1,7 @@
 import AppRoutes from "./routes/AppRoutes";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import "./css/kanban.css";
 const App = () => {
   return (
     <>
