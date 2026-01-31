@@ -198,12 +198,12 @@ const Users = () => {
             <small className="text-danger">{errors.role}</small>
           </div>
 
-          <div className="col-md-4">
+           {/* PASSWORD */}
+          <div className="col-md-4 position-relative">
             <input
               type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
               placeholder="Password"
-              className={`form-control ${errors.password && "is-invalid"}`}
+              className={`form-control pe-5 ${errors.password && "is-invalid"}`}
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
             />
@@ -222,12 +222,12 @@ const Users = () => {
             <small className="text-danger">{errors.password}</small>
           </div>
 
-          <div className="col-md-4">
+          {/* CONFIRM PASSWORD */}
+          <div className="col-md-4 position-relative">
             <input
               type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
               placeholder="Confirm Password"
-              className={`form-control ${errors.confirmPassword && "is-invalid"}`}
+              className={`form-control pe-5 ${errors.confirmPassword && "is-invalid"}`}
               value={form.confirmPassword}
               onChange={e =>
                 setForm({ ...form, confirmPassword: e.target.value })
@@ -247,6 +247,7 @@ const Users = () => {
             </span>
             <small className="text-danger">{errors.confirmPassword}</small>
           </div>
+
 
           <div className="col-md-4">
             <select
