@@ -10,7 +10,7 @@ import Projects from "../pages/admin/Projects";
 import ProjectDetails from "../pages/admin/ProjectDetails";
 import Settings from "../pages/admin/Settings";
 import NotFound from "../pages/NotFound";
-import TasksPage from "../pages/tasks/TasksPage";
+import TasksPage from "../pages/admin/tasks/TasksPage";
 const AdminRoutes = () => {
   return (
     <Routes>
