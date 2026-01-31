@@ -41,8 +41,6 @@ const Users = () => {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [creating, setCreating] = useState(false);
-
 
   // ================= FETCH =================
   const fetchAll = async () => {
@@ -99,26 +97,21 @@ const Users = () => {
     setErrors({});
     fetchAll();
   } catch (err: any) {
-  const data = err?.response?.data;
+  let message = "Failed to create user";
 
-  // Case 1: DRF serializer field errors (object)
-  if (data && typeof data === "object") {
-    const fieldErrors: any = {};
-
-    Object.keys(data).forEach(key => {
-      fieldErrors[key] = Array.isArray(data[key])
-        ? data[key][0]
-        : data[key];
-    });
-
-    setErrors(fieldErrors);
-    return;
+  if (err?.response?.status === 401) {
+    message = "Session expired. Please login again.";
+  } else if (err?.response?.status === 403) {
+    message = "You are not allowed to create users.";
+  } else {
+    message =
+      err?.response?.data?.error ||
+      err?.response?.data?.message ||
+      message;
   }
 
-  // Case 2: simple error message
-  setErrors({ api: "Failed to create user" });
-}
-
+  setErrors({ api: message });
+  }
   };
 
   // ================= EDIT =================
@@ -259,14 +252,9 @@ const Users = () => {
           </div>
         </div>
 
-        <button
-  type="button"
-  className="btn btn-primary mt-3"
-  onClick={handleCreate}
->
-  Create User
-</button>
-
+        <button className="btn btn-primary mt-3" onClick={handleCreate}>
+          Create User
+        </button>
        {errors.api && (
   <small className="text-danger d-block mt-2">
     {errors.api}
