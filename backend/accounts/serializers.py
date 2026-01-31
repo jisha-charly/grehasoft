@@ -251,26 +251,22 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     
  # ================= Task management=================   
 class TaskSerializer(serializers.ModelSerializer):
-    created_by_name = serializers.CharField(source="created_by.username", read_only=True)
-    task_type_name = serializers.CharField(source="task_type.name", read_only=True)
-
     class Meta:
         model = Task
         fields = [
             "id",
-            "project",
             "title",
             "description",
-            "task_type",
-            "task_type_name",
             "priority",
             "status",
             "board_order",
             "due_date",
+            "project",
+            "task_type",
             "created_by",
-            "created_by_name",
             "created_at",
         ]
+        read_only_fields = ["created_by", "created_at"]
 
 
 class TaskCreateUpdateSerializer(serializers.ModelSerializer):

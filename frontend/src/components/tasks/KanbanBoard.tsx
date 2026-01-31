@@ -4,30 +4,45 @@ import {
   DragEndEvent,
 } from "@dnd-kit/core";
 import { useEffect, useState } from "react";
+
 import { getTasksByProject, reorderTasks } from "../../api/services/task.service";
 import { KANBAN_COLUMNS } from "../../constants/kanban";
 import KanbanColumn from "./KanbanColumn";
-import { Task, TaskStatus } from "../../types/task";
 
-export default function KanbanBoard({ projectId }: { projectId: number }) {
+import type { Task, TaskStatus } from "../../types/task";
+
+interface Props {
+  projectId: number;
+}
+
+const KanbanBoard = ({ projectId }: Props) => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  // ================= LOAD TASKS =================
+  /* ===============================
+     LOAD TASKS BY PROJECT
+  =============================== */
   useEffect(() => {
-    getTasksByProject(projectId).then(res => {
-      if (Array.isArray(res.data)) {
-        setTasks(res.data);
-      }
-    });
+    if (!projectId) return;
+
+    const loadTasks = async () => {
+      const res = await getTasksByProject(projectId);
+      setTasks(res.data);
+    };
+
+    loadTasks();
   }, [projectId]);
 
-  // ================= GROUP BY STATUS =================
+  /* ===============================
+     GROUP TASKS BY STATUS
+  =============================== */
   const grouped = (status: TaskStatus) =>
     tasks
       .filter(t => t.status === status)
       .sort((a, b) => a.board_order - b.board_order);
 
-  // ================= DRAG END =================
+  /* ===============================
+     DRAG END HANDLER
+  =============================== */
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
@@ -35,35 +50,34 @@ export default function KanbanBoard({ projectId }: { projectId: number }) {
     const draggedTask = tasks.find(t => t.id === active.id);
     if (!draggedTask) return;
 
-    // Determine new status
-    const newStatus = KANBAN_COLUMNS.some(c => c.id === over.id)
-      ? (over.id as TaskStatus)
-      : draggedTask.status;
+    const newStatus = over.id as TaskStatus;
 
-    // Update task status
-    let updatedTasks: Task[] = tasks.map(t =>
+    // update task status
+    let updated: Task[] = tasks.map(t =>
       t.id === draggedTask.id
         ? { ...t, status: newStatus }
         : t
     );
 
-    // Recalculate board_order per column
+    // reassign board_order per column
     KANBAN_COLUMNS.forEach(col => {
-      const columnTasks = updatedTasks
+      const columnTasks = updated
         .filter(t => t.status === col.id)
-        .sort((a, b) => a.board_order - b.board_order)
-        .map((t, index) => ({ ...t, board_order: index }));
+        .map((t, index) => ({
+          ...t,
+          board_order: index,
+        }));
 
-      updatedTasks = updatedTasks.map(
+      updated = updated.map(
         t => columnTasks.find(ct => ct.id === t.id) ?? t
       );
     });
 
-    setTasks(updatedTasks);
+    setTasks(updated);
 
-    // Save order to backend
+    // persist order to backend
     await reorderTasks(
-      updatedTasks.map(t => ({
+      updated.map(t => ({
         id: t.id,
         status: t.status,
         board_order: t.board_order,
@@ -71,13 +85,15 @@ export default function KanbanBoard({ projectId }: { projectId: number }) {
     );
   };
 
-  // ================= UI =================
+  /* ===============================
+     RENDER
+  =============================== */
   return (
     <DndContext
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <div className="row">
+      <div className="row mt-3">
         {KANBAN_COLUMNS.map(col => (
           <KanbanColumn
             key={col.id}
@@ -89,4 +105,6 @@ export default function KanbanBoard({ projectId }: { projectId: number }) {
       </div>
     </DndContext>
   );
-}
+};
+
+export default KanbanBoard;

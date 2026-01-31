@@ -721,3 +721,22 @@ def update_task_order(request):
         )
 
     return Response({"message": "Board updated"})
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def project_tasks(request, project_id):
+    if request.method == "GET":
+        tasks = Task.objects.filter(
+            project_id=project_id,
+            deleted_at__isnull=True
+        ).order_by("board_order")
+        return Response(TaskSerializer(tasks, many=True).data)
+
+    if request.method == "POST":
+        serializer = TaskSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(
+                project_id=project_id,
+                created_by=request.user
+            )
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
