@@ -5,7 +5,7 @@ from rest_framework import serializers
 from .models import Client
 from .models import Project, ProjectMilestone, ProjectMember
 from .models import Department
-
+from .models import Task, TaskAssignment, TaskProgress
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -246,3 +246,63 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         if User.objects.filter(email=value).exclude(id=user_id).exists():
             raise serializers.ValidationError("Email already exists")
         return value
+    
+
+    
+ # ================= Task management=================   
+class TaskSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.CharField(source="created_by.username", read_only=True)
+    task_type_name = serializers.CharField(source="task_type.name", read_only=True)
+
+    class Meta:
+        model = Task
+        fields = [
+            "id",
+            "project",
+            "title",
+            "description",
+            "task_type",
+            "task_type_name",
+            "priority",
+            "status",
+            "board_order",
+            "due_date",
+            "created_by",
+            "created_by_name",
+            "created_at",
+        ]
+
+
+class TaskCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = [
+            "project",
+            "title",
+            "description",
+            "task_type",
+            "priority",
+            "status",
+            "board_order",
+            "due_date",
+        ]
+
+
+class TaskAssignmentSerializer(serializers.ModelSerializer):
+    employee_name = serializers.CharField(source="employee.username", read_only=True)
+
+    class Meta:
+        model = TaskAssignment
+        fields = [
+            "id",
+            "task",
+            "employee",
+            "employee_name",
+            "assigned_at",
+            "unassigned_at",
+        ]
+
+class TaskProgressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskProgress
+        fields = "__all__"

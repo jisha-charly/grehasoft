@@ -10,6 +10,7 @@ import Projects from "../pages/admin/Projects";
 import ProjectDetails from "../pages/admin/ProjectDetails";
 import Settings from "../pages/admin/Settings";
 import NotFound from "../pages/NotFound";
+import TasksPage from "../pages/tasks/TasksPage";
 const AdminRoutes = () => {
   return (
     <Routes>
@@ -22,6 +23,7 @@ const AdminRoutes = () => {
         <Route path="clients" element={<Clients />} />
         <Route path="projects" element={<Projects />} />
         <Route path="projects/:id" element={<ProjectDetails />} />
+        <Route path="/admin/tasks" element={<TasksPage />} />
         <Route path="settings" element={<Settings />} />
 
         {/* 🔴 ADMIN 404 */}

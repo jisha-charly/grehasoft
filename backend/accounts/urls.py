@@ -54,4 +54,15 @@ urlpatterns = [
     path("projects/<int:project_id>/members/add/", views.add_project_member),
     path("project-members/<int:id>/update/", views.update_project_member),
     path("project-members/<int:id>/remove/", views.remove_project_member),
+ # ---------------- TASK MANAGEMENT----------------
+
+    path("tasks/project/<int:project_id>/", views.list_tasks_by_project),
+    path("tasks/", views.create_task),
+    path("tasks/<int:task_id>/", views.update_task),
+    path("tasks/<int:task_id>/delete/", views.delete_task),
+
+    path("tasks/assign/", views.assign_task_user),
+    path("tasks/unassign/", views.unassign_task_user),
+
+    path("tasks/reorder/", views.update_task_order),
 ]
