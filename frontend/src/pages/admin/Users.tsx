@@ -247,7 +247,11 @@ const Users = () => {
         <button className="btn btn-primary mt-3" onClick={handleCreate}>
           Create User
         </button>
-        <small className="text-danger d-block">{errors.api}</small>
+       {errors.api && (
+  <small className="text-danger d-block mt-2">
+    {errors.api}
+  </small>
+)}
       </div>
 
       {/* USERS TABLE */}
