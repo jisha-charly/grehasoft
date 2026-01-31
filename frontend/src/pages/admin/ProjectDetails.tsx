@@ -8,7 +8,7 @@ import AddTaskForm from "../../components/tasks/AddTaskForm";
 
 import { getProjectById } from "../../api/services/project.service";
 
-type TabType = "milestones" | "members" | "tasks";
+type Tab = "milestones" | "members" | "tasks";
 
 const ProjectDetails = () => {
   const { id } = useParams();
@@ -17,18 +17,19 @@ const ProjectDetails = () => {
   const projectId = Number(id);
 
   const [projectName, setProjectName] = useState("");
-  const [activeTab, setActiveTab] = useState<TabType>("milestones");
+  const [activeTab, setActiveTab] = useState<Tab>("milestones");
+
+  const reloadTasks = () => {
+    // This will be passed to AddTaskForm
+    // KanbanBoard listens to projectId and reloads automatically
+  };
 
   useEffect(() => {
     if (!projectId) return;
 
     const loadProject = async () => {
-      try {
-        const project = await getProjectById(projectId);
-        setProjectName(project.name);
-      } catch (err) {
-        console.error("Failed to load project", err);
-      }
+      const project = await getProjectById(projectId);
+      setProjectName(project.name);
     };
 
     loadProject();
@@ -43,7 +44,7 @@ const ProjectDetails = () => {
       {/* HEADER */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div>
-          <h4 className="mb-0">{projectName || "Project Details"}</h4>
+          <h4 className="mb-0">{projectName}</h4>
           <small className="text-muted">Project ID: {projectId}</small>
         </div>
 
@@ -59,9 +60,7 @@ const ProjectDetails = () => {
       <ul className="nav nav-tabs mb-3">
         <li className="nav-item">
           <button
-            className={`nav-link ${
-              activeTab === "milestones" ? "active" : ""
-            }`}
+            className={`nav-link ${activeTab === "milestones" ? "active" : ""}`}
             onClick={() => setActiveTab("milestones")}
           >
             Milestones
@@ -70,9 +69,7 @@ const ProjectDetails = () => {
 
         <li className="nav-item">
           <button
-            className={`nav-link ${
-              activeTab === "members" ? "active" : ""
-            }`}
+            className={`nav-link ${activeTab === "members" ? "active" : ""}`}
             onClick={() => setActiveTab("members")}
           >
             Members
@@ -100,16 +97,15 @@ const ProjectDetails = () => {
 
       {activeTab === "tasks" && (
         <>
-          {/* ADD TASK FORM */}
+          {/* ✅ ADD TASK FORM (THIS WAS MISSING) */}
           <AddTaskForm
             projectId={projectId}
-            onCreated={() => {
-              // simplest reliable refresh for now
-              window.location.reload();
-            }}
+            onCreated={reloadTasks}
           />
 
-          {/* KANBAN BOARD */}
+          <hr />
+
+          {/* ✅ KANBAN BOARD */}
           <KanbanBoard projectId={projectId} />
         </>
       )}
