@@ -7,7 +7,7 @@ export default function TasksPage() {
   return (
     <div className="container-fluid">
       <h3>Task Management</h3>
-      <KanbanBoard projectId={projectId} />
+      <KanbanBoard projectId={1} />
     </div>
   );
 }
