@@ -1,7 +1,11 @@
 import api from "../axios";
-
-export const getTasksByProject = (projectId: number) =>
-  api.get(`/tasks/project/${projectId}/`);
+import type { Task } from "../../types/task";
+export const getTasksByProject = async (
+  projectId: number
+): Promise<Task[]> => {
+  const res = await api.get(`/tasks/?project_id=${projectId}`);
+  return res.data;
+};
 
 export const createTask = async (data: {
   title: string;

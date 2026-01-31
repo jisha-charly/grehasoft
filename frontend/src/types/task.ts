@@ -9,4 +9,5 @@ export interface Task {
   title: string;
   status: TaskStatus;
   board_order: number;
+  priority?: string;
 }
