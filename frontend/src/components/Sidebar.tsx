@@ -21,7 +21,7 @@ const sidebarItems = [
   { label: "Task Types", path: "/admin/task-types", icon: <MdTask /> },
   { label: "Clients", path: "/admin/clients", icon: <MdBusiness /> },
   { label: "Projects", path: "/admin/projects", icon: <MdWork /> },
-  { label: "TASK MANAGEMENT", path: "admin/tasks/taskpage", icon: <MdGroups /> },
+  { label: "TASK MANAGEMENT", path: "admin/taskpage", icon: <MdGroups /> },
   { label: "Leads", path: "/admin/leads", icon: <MdCall /> },
   { label: "Reports", path: "/admin/reports", icon: <MdAssessment /> },
   { label: "Settings", path: "/admin/settings", icon: <MdSettings /> },

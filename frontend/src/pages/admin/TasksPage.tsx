@@ -1,4 +1,4 @@
-import KanbanBoard from "../../../components/tasks/KanbanBoard"
+import KanbanBoard from "../../components/tasks/KanbanBoard"
 
 export default function TasksPage() {
   // later you can get projectId from route or dropdown
