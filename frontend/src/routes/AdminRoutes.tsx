@@ -23,7 +23,8 @@ const AdminRoutes = () => {
         <Route path="clients" element={<Clients />} />
         <Route path="projects" element={<Projects />} />
         <Route path="projects/:id" element={<ProjectDetails />} />
-        <Route path="taskspage" element={<TasksPage />} />
+        <Route path="tasks" element={<TasksPage />} />
+
         <Route path="settings" element={<Settings />} />
 
         {/* 🔴 ADMIN 404 */}
