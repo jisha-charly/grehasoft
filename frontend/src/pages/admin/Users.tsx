@@ -198,56 +198,32 @@ const Users = () => {
             <small className="text-danger">{errors.role}</small>
           </div>
 
-           {/* PASSWORD */}
-          <div className="col-md-4 position-relative">
+          <div className="col-md-4">
             <input
               type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
               placeholder="Password"
-              className={`form-control pe-5 ${errors.password && "is-invalid"}`}
+              className={`form-control ${errors.password && "is-invalid"}`}
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
             />
-            <span
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: "absolute",
-                right: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                cursor: "pointer",
-              }}
-            >
-              {showPassword ? "🙈" : "👁️"}
-            </span>
+            
             <small className="text-danger">{errors.password}</small>
           </div>
 
-          {/* CONFIRM PASSWORD */}
-          <div className="col-md-4 position-relative">
+          <div className="col-md-4">
             <input
               type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
               placeholder="Confirm Password"
-              className={`form-control pe-5 ${errors.confirmPassword && "is-invalid"}`}
+              className={`form-control ${errors.confirmPassword && "is-invalid"}`}
               value={form.confirmPassword}
               onChange={e =>
                 setForm({ ...form, confirmPassword: e.target.value })
               }
             />
-            <span
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: "absolute",
-                right: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                cursor: "pointer",
-              }}
-            >
-              {showPassword ? "🙈" : "👁️"}
-            </span>
             <small className="text-danger">{errors.confirmPassword}</small>
           </div>
-
 
           <div className="col-md-4">
             <select
