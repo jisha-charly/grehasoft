@@ -207,6 +207,18 @@ const Users = () => {
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
             />
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+              }}
+            >
+              {showPassword ? "🙈" : "👁️"}
+            </span>
             <small className="text-danger">{errors.password}</small>
           </div>
 
@@ -221,6 +233,18 @@ const Users = () => {
                 setForm({ ...form, confirmPassword: e.target.value })
               }
             />
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+              }}
+            >
+              {showPassword ? "🙈" : "👁️"}
+            </span>
             <small className="text-danger">{errors.confirmPassword}</small>
           </div>
 
