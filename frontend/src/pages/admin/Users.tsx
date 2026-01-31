@@ -92,13 +92,18 @@ const Users = () => {
     };
 
     try {
-      await createUser(payload);
-      setForm(emptyForm);
-      setErrors({});
-      fetchAll();
-    } catch {
-      setErrors({ api: "Failed to create user" });
-    }
+    await createUser(payload);
+    setForm(emptyForm);
+    setErrors({});
+    fetchAll();
+  } catch (err: any) {
+    const message =
+      err?.response?.data?.error ||
+      err?.response?.data?.message ||
+      "Failed to create user";
+
+    setErrors({ api: message });
+  }
   };
 
   // ================= EDIT =================
