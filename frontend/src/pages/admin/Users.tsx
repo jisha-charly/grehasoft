@@ -97,20 +97,16 @@ const Users = () => {
     setErrors({});
     fetchAll();
   } catch (err: any) {
-  let message = "Failed to create user";
+  const apiError = err?.response?.data?.error;
 
-  if (err?.response?.status === 401) {
-    message = "Session expired. Please login again.";
-  } else if (err?.response?.status === 403) {
-    message = "You are not allowed to create users.";
-  } else {
-    message =
-      err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      message;
-  }
-
-  setErrors({ api: message });
+  // FIELD ERRORS (serializer)
+  if (typeof apiError === "object") {
+    const fieldErrors: any = {};
+    Object.keys(apiError).forEach(key => {
+      fieldErrors[key] = apiError[key][0];
+    });
+    setErrors(fieldErrors);
+    return;
   }
   };
 
