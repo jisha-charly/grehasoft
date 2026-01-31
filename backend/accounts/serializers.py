@@ -189,3 +189,60 @@ class ProjectMemberSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+        # ================= LIST USER =================
+class UserSerializer(serializers.ModelSerializer):
+    role_name = serializers.CharField(source="role.name", read_only=True)
+    department_name = serializers.CharField(source="department.name", read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "email",
+            "role",
+            "role_name",
+            "department",
+            "department_name",
+            "is_active",
+        ]
+
+
+# ================= CREATE USER =================
+class UserCreateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "password", "role", "department"]
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Username already exists")
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email already exists")
+        return value
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        user = User(**validated_data)
+        user.set_password(password)
+        user.is_active = True
+        user.save()
+        return user
+
+
+# ================= UPDATE USER =================
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["email", "role", "department", "is_active"]
+
+    def validate_email(self, value):
+        user_id = self.instance.id
+        if User.objects.filter(email=value).exclude(id=user_id).exists():
+            raise serializers.ValidationError("Email already exists")
+        return value
