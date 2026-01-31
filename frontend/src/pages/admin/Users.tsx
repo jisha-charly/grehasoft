@@ -97,12 +97,20 @@ const Users = () => {
     setErrors({});
     fetchAll();
   } catch (err: any) {
-    const message =
+  let message = "Failed to create user";
+
+  if (err?.response?.status === 401) {
+    message = "Session expired. Please login again.";
+  } else if (err?.response?.status === 403) {
+    message = "You are not allowed to create users.";
+  } else {
+    message =
       err?.response?.data?.error ||
       err?.response?.data?.message ||
-      "Failed to create user";
+      message;
+  }
 
-    setErrors({ api: message });
+  setErrors({ api: message });
   }
   };
 
