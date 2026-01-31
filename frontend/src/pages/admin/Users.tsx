@@ -26,11 +26,11 @@ const Users = () => {
   const [search, setSearch] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // 🔹 Create form state (ONLY for create)
+  // CREATE
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<any>({});
 
-  // 🔹 Edit modal state (SEPARATE)
+  // EDIT
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState({
     email: "",
@@ -157,14 +157,13 @@ const Users = () => {
         onChange={e => setSearch(e.target.value)}
       />
 
-      {/* CREATE USER (ALWAYS CREATE ONLY) */}
+      {/* CREATE USER */}
       <div className="card p-3 mb-4">
         <h5>Create User</h5>
 
         <div className="row g-3">
           <div className="col-md-4">
             <input
-              autoComplete="off"
               placeholder="Username"
               className={`form-control ${errors.username && "is-invalid"}`}
               value={form.username}
@@ -175,7 +174,6 @@ const Users = () => {
 
           <div className="col-md-4">
             <input
-              autoComplete="off"
               placeholder="Email"
               className={`form-control ${errors.email && "is-invalid"}`}
               value={form.email}
@@ -198,29 +196,53 @@ const Users = () => {
             <small className="text-danger">{errors.role}</small>
           </div>
 
-          <div className="col-md-4">
+          {/* PASSWORD */}
+          <div className="col-md-4 position-relative">
             <input
               type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
               placeholder="Password"
-              className={`form-control ${errors.password && "is-invalid"}`}
+              className={`form-control pe-5 ${errors.password && "is-invalid"}`}
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
             />
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+              }}
+            >
+              {showPassword ? "🙈" : "👁️"}
+            </span>
             <small className="text-danger">{errors.password}</small>
           </div>
 
-          <div className="col-md-4">
+          {/* CONFIRM PASSWORD */}
+          <div className="col-md-4 position-relative">
             <input
               type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
               placeholder="Confirm Password"
-              className={`form-control ${errors.confirmPassword && "is-invalid"}`}
+              className={`form-control pe-5 ${errors.confirmPassword && "is-invalid"}`}
               value={form.confirmPassword}
               onChange={e =>
                 setForm({ ...form, confirmPassword: e.target.value })
               }
             />
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+              }}
+            >
+              {showPassword ? "🙈" : "👁️"}
+            </span>
             <small className="text-danger">{errors.confirmPassword}</small>
           </div>
 
@@ -290,58 +312,6 @@ const Users = () => {
         </tbody>
       </table>
 
-      {/* EDIT MODAL */}
-      {showEditModal && (
-        <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content p-4">
-              <h5>Edit User</h5>
-
-              <input className="form-control mb-3" value={editingUser?.username} disabled />
-
-              <input
-                className="form-control mb-3"
-                value={editForm.email}
-                onChange={e => setEditForm({ ...editForm, email: e.target.value })}
-              />
-
-              <select
-                className="form-control mb-3"
-                value={editForm.role}
-                onChange={e => setEditForm({ ...editForm, role: e.target.value })}
-              >
-                <option value="">Select Role</option>
-                {roles.map(r => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
-
-              <select
-                className="form-control mb-3"
-                value={editForm.department}
-                onChange={e =>
-                  setEditForm({ ...editForm, department: e.target.value })
-                }
-              >
-                <option value="">Select Department</option>
-                {departments.map(d => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
-
-              <div className="text-end">
-                <button className="btn btn-secondary me-2" onClick={closeEdit}>
-                  Cancel
-                </button>
-                <button className="btn btn-success" onClick={handleUpdate}>
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* DELETE MODAL */}
       {showDeleteModal && (
         <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
@@ -349,10 +319,7 @@ const Users = () => {
             <div className="modal-content p-4">
               <h5>Delete user?</h5>
               <div className="text-end mt-3">
-                <button
-                  className="btn btn-secondary me-2"
-                  onClick={() => setShowDeleteModal(false)}
-                >
+                <button className="btn btn-secondary me-2" onClick={() => setShowDeleteModal(false)}>
                   Cancel
                 </button>
                 <button className="btn btn-danger" onClick={confirmDelete}>
