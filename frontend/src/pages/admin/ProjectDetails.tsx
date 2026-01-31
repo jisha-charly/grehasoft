@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import Milestones from "../../components/projects/Milestones";
 import ProjectMembers from "../../components/projects/ProjectMembers";
 import KanbanBoard from "../../components/tasks/KanbanBoard";
+import AddTaskForm from "../../components/tasks/AddTaskForm";
 
 import { getProjectById } from "../../api/services/project.service";
+
+type TabType = "milestones" | "members" | "tasks";
 
 const ProjectDetails = () => {
   const { id } = useParams();
@@ -14,16 +17,18 @@ const ProjectDetails = () => {
   const projectId = Number(id);
 
   const [projectName, setProjectName] = useState("");
-  const [activeTab, setActiveTab] = useState<
-    "milestones" | "members" | "tasks"
-  >("milestones");
+  const [activeTab, setActiveTab] = useState<TabType>("milestones");
 
   useEffect(() => {
     if (!projectId) return;
 
     const loadProject = async () => {
-      const project = await getProjectById(projectId);
-      setProjectName(project.name);
+      try {
+        const project = await getProjectById(projectId);
+        setProjectName(project.name);
+      } catch (err) {
+        console.error("Failed to load project", err);
+      }
     };
 
     loadProject();
@@ -35,7 +40,7 @@ const ProjectDetails = () => {
 
   return (
     <div className="container mt-3">
-      {/* ================= HEADER ================= */}
+      {/* HEADER */}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div>
           <h4 className="mb-0">{projectName || "Project Details"}</h4>
@@ -43,7 +48,6 @@ const ProjectDetails = () => {
         </div>
 
         <button
-          type="button"
           className="btn btn-outline-secondary"
           onClick={() => navigate("/admin/projects")}
         >
@@ -51,7 +55,7 @@ const ProjectDetails = () => {
         </button>
       </div>
 
-      {/* ================= TABS ================= */}
+      {/* TABS */}
       <ul className="nav nav-tabs mb-3">
         <li className="nav-item">
           <button
@@ -77,9 +81,7 @@ const ProjectDetails = () => {
 
         <li className="nav-item">
           <button
-            className={`nav-link ${
-              activeTab === "tasks" ? "active" : ""
-            }`}
+            className={`nav-link ${activeTab === "tasks" ? "active" : ""}`}
             onClick={() => setActiveTab("tasks")}
           >
             Tasks
@@ -87,8 +89,7 @@ const ProjectDetails = () => {
         </li>
       </ul>
 
-      {/* ================= TAB CONTENT ================= */}
-
+      {/* TAB CONTENT */}
       {activeTab === "milestones" && (
         <Milestones projectId={projectId} />
       )}
@@ -98,7 +99,19 @@ const ProjectDetails = () => {
       )}
 
       {activeTab === "tasks" && (
-        <KanbanBoard projectId={projectId} />
+        <>
+          {/* ADD TASK FORM */}
+          <AddTaskForm
+            projectId={projectId}
+            onCreated={() => {
+              // simplest reliable refresh for now
+              window.location.reload();
+            }}
+          />
+
+          {/* KANBAN BOARD */}
+          <KanbanBoard projectId={projectId} />
+        </>
       )}
     </div>
   );

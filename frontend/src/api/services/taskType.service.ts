@@ -4,10 +4,9 @@ import type { TaskType } from "../../types/tasktypes";
 /* ================= TASK TYPES ================= */
 
 export const getTaskTypes = async (): Promise<TaskType[]> => {
-  const res = await api.get<TaskType[]>("task-types/");
-  return res.data;
+  const res = await api.get("/task-types/");
+  return res.data; // ✅ return ONLY data
 };
-
 export const createTaskType = async (data: {
   name: string;
   description?: string;

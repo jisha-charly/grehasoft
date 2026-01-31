@@ -1,9 +1,9 @@
 import { useState } from "react";
-import KanbanBoard from "../../components/tasks/KanbanBoard";
 import { createTask } from "../../api/services/task.service";
 
 const TasksPage = () => {
-  const projectId = 1; // 🔴 TEMP (later make dynamic)
+  const projectId = 1; // TEMP (later from route)
+  const taskTypeId = 1; // TEMP (later from dropdown)
 
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("todo");
@@ -19,20 +19,16 @@ const TasksPage = () => {
 
     try {
       await createTask({
-        project: projectId,
         title,
         status,
-        priority: "medium",
-        board_order: 0,
+        project_id: projectId,   // ✅ FIXED
+        task_type_id: taskTypeId // ✅ REQUIRED
       });
 
       setTitle("");
       setStatus("todo");
-
-      // 🔁 refresh page → Kanban reloads
-      window.location.reload();
     } catch (err) {
-      console.error(err);
+      console.error("Task create failed", err);
       alert("Failed to create task");
     } finally {
       setLoading(false);
@@ -40,42 +36,26 @@ const TasksPage = () => {
   };
 
   return (
-    <div className="container-fluid">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3>Task Management</h3>
+    <div>
+      <input
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        placeholder="Task title"
+      />
 
-        {/* CREATE TASK */}
-        <div className="d-flex gap-2">
-          <input
-            className="form-control"
-            placeholder="Task title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+      <select
+        value={status}
+        onChange={e => setStatus(e.target.value)}
+      >
+        <option value="todo">To Do</option>
+        <option value="in_progress">In Progress</option>
+        <option value="done">Done</option>
+        <option value="blocked">Blocked</option>
+      </select>
 
-          <select
-            className="form-select"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="todo">To Do</option>
-            <option value="in_progress">In Progress</option>
-            <option value="done">Done</option>
-            <option value="blocked">Blocked</option>
-          </select>
-
-          <button
-            className="btn btn-primary"
-            onClick={handleCreateTask}
-            disabled={loading}
-          >
-            {loading ? "Creating..." : "Add Task"}
-          </button>
-        </div>
-      </div>
-
-      {/* KANBAN */}
-      <KanbanBoard projectId={projectId} />
+      <button onClick={handleCreateTask} disabled={loading}>
+        {loading ? "Creating..." : "Add Task"}
+      </button>
     </div>
   );
 };
