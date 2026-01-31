@@ -271,7 +271,7 @@ def delete_department(request, dept_id):
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def users_list_create(request):
-    # LIST USERS
+    # ================= LIST USERS =================
     if request.method == "GET":
         users = User.objects.filter(deleted_at__isnull=True).select_related(
             "role", "department"
@@ -279,21 +279,51 @@ def users_list_create(request):
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
-    # CREATE USER
+    # ================= CREATE USER =================
     if request.method == "POST":
-        if not is_admin(request.user):
+        # 🔐 Admin check (SAFE)
+        if not request.user.is_authenticated or not is_admin(request.user):
             return Response({"error": "Forbidden"}, status=403)
 
+        # 📥 Safe data access
+        username = request.data.get("username")
+        email = request.data.get("email")
+        password = request.data.get("password")
+        role = request.data.get("role")
+        department = request.data.get("department")
+
+        # ❗ Required fields
+        if not username or not email or not password:
+            return Response(
+                {"error": "Username, email and password are required"},
+                status=400
+            )
+
+        # ❗ Duplicate checks
+        if User.objects.filter(username=username).exists():
+            return Response(
+                {"error": "Username already exists"},
+                status=400
+            )
+
+        if User.objects.filter(email=email).exists():
+            return Response(
+                {"error": "Email already exists"},
+                status=400
+            )
+
+        # ✅ Create user
         User.objects.create_user(
-            username=request.data["username"],
-            email=request.data["email"],
-            password=request.data["password"],
-            role_id=request.data.get("role"),
-            department_id=request.data.get("department"),
+            username=username,
+            email=email,
+            password=password,
+            role_id=role,
+            department_id=department,
             is_active=True,
         )
 
         return Response({"message": "User created"}, status=201)
+
 
 
 @api_view(["PUT", "DELETE"])
