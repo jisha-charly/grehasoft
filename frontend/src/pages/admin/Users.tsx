@@ -96,15 +96,18 @@ const Users = () => {
     setForm(emptyForm);
     setErrors({});
     fetchAll();
-  } catch (err: any) {
+  } 
+  catch (err: any) {
   const apiError = err?.response?.data?.error;
 
-  // FIELD ERRORS (serializer)
-  if (typeof apiError === "object") {
+  // Serializer field errors
+  if (apiError && typeof apiError === "object") {
     const fieldErrors: any = {};
+
     Object.keys(apiError).forEach(key => {
-      fieldErrors[key] = apiError[key][0];
+      fieldErrors[key] = apiError[key][0]; // take first message
     });
+
     setErrors(fieldErrors);
     return;
   }
