@@ -20,7 +20,7 @@ from .serializers import (
 from django.contrib.auth import get_user_model
 
 from django.contrib.auth.password_validation import validate_password
-from .serializers import ProfileUpdateSerializer, ChangePasswordSerializer,UserSerializer,UserCreateSerializer,UserUpdateSerializer
+from .serializers import ProfileUpdateSerializer, ChangePasswordSerializer,UserSerializer
 User = get_user_model()
 
 
@@ -271,7 +271,7 @@ def delete_department(request, dept_id):
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def users_list_create(request):
-    # ================= LIST =================
+    # ================= LIST USERS =================
     if request.method == "GET":
         users = User.objects.filter(deleted_at__isnull=True).select_related(
             "role", "department"
@@ -279,65 +279,74 @@ def users_list_create(request):
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
-    # ================= CREATE =================
+    # ================= CREATE USER =================
     if request.method == "POST":
-        if not is_admin(request.user):
+        # 🔐 Admin check (SAFE)
+        if not request.user.is_authenticated or not is_admin(request.user):
             return Response({"error": "Forbidden"}, status=403)
 
-        serializer = UserCreateSerializer(data=request.data)
+        # 📥 Safe data access
+        username = request.data.get("username")
+        email = request.data.get("email")
+        password = request.data.get("password")
+        role = request.data.get("role")
+        department = request.data.get("department")
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "User created"}, status=201)
+        # ❗ Required fields
+        if not username or not email or not password:
+            return Response(
+                {"error": "Username, email and password are required"},
+                status=400
+            )
 
-        return Response({"error": serializer.errors}, status=400)
+        # ❗ Duplicate checks
+        if User.objects.filter(username=username).exists():
+            return Response(
+                {"error": "Username already exists"},
+                status=400
+            )
 
+        if User.objects.filter(email=email).exists():
+            return Response(
+                {"error": "Email already exists"},
+                status=400
+            )
+
+        # ✅ Create user
+        User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            role_id=role,
+            department_id=department,
+            is_active=True,
+        )
+
+        return Response({"message": "User created"}, status=201)
 
 
 
 @api_view(["PUT", "DELETE"])
 @permission_classes([IsAuthenticated])
 def user_update_delete(request, user_id):
-    user = get_object_or_404(
-        User,
-        id=user_id,
-        deleted_at__isnull=True
-    )
+    user = get_object_or_404(User, id=user_id)
 
-    # 🔒 Protect admin
-    if user.username == "admin":
-        return Response(
-            {"error": "Admin user cannot be modified"},
-            status=400
-        )
-
-    # ================= UPDATE =================
+    # UPDATE
     if request.method == "PUT":
-        if not is_admin(request.user):
-            return Response({"error": "Forbidden"}, status=403)
+        user.email = request.data.get("email", user.email)
+        user.role_id = request.data.get("role")
+        user.department_id = request.data.get("department")
+        user.is_active = request.data.get("is_active", True)
+        user.save()
+        return Response({"message": "User updated"})
 
-        serializer = UserUpdateSerializer(
-            user,
-            data=request.data,
-            partial=True
-        )
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "User updated"})
-
-        return Response({"error": serializer.errors}, status=400)
-
-    # ================= DELETE (SOFT) =================
+    # DELETE
     if request.method == "DELETE":
         if not is_admin(request.user):
             return Response({"error": "Forbidden"}, status=403)
 
         if user == request.user:
-            return Response(
-                {"error": "You cannot delete yourself"},
-                status=400
-            )
+            return Response({"error": "Cannot delete yourself"}, status=400)
 
         user.deleted_at = timezone.now()
         user.is_active = False
