@@ -41,6 +41,8 @@ const Users = () => {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+
 
   // ================= FETCH =================
   const fetchAll = async () => {
@@ -257,9 +259,14 @@ const Users = () => {
           </div>
         </div>
 
-        <button className="btn btn-primary mt-3" onClick={handleCreate}>
-          Create User
-        </button>
+        <button
+  type="button"
+  className="btn btn-primary mt-3"
+  onClick={handleCreate}
+>
+  Create User
+</button>
+
        {errors.api && (
   <small className="text-danger d-block mt-2">
     {errors.api}
