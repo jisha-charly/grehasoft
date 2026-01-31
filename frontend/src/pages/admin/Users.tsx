@@ -9,9 +9,6 @@ import { getRoles } from "../../api/services/role.service";
 import { getDepartments } from "../../api/services/department.service";
 import type { User, CreateUserPayload } from "../../types/user";
 
-import eyeOpen from "../../assets/eye-open.png";
-import eyeClosed from "../../assets/eye-closed.png";
-
 const emptyForm = {
   username: "",
   email: "",
@@ -29,11 +26,11 @@ const Users = () => {
   const [search, setSearch] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // CREATE
+  // 🔹 Create form state (ONLY for create)
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<any>({});
 
-  // EDIT
+  // 🔹 Edit modal state (SEPARATE)
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState({
     email: "",
@@ -160,7 +157,7 @@ const Users = () => {
         onChange={e => setSearch(e.target.value)}
       />
 
-      {/* CREATE USER */}
+      {/* CREATE USER (ALWAYS CREATE ONLY) */}
       <div className="card p-3 mb-4">
         <h5>Create User</h5>
 
@@ -201,61 +198,29 @@ const Users = () => {
             <small className="text-danger">{errors.role}</small>
           </div>
 
-          {/* PASSWORD */}
-          <div className="col-md-4 position-relative">
+          <div className="col-md-4">
             <input
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
               placeholder="Password"
-              className={`form-control pe-5 ${errors.password && "is-invalid"}`}
+              className={`form-control ${errors.password && "is-invalid"}`}
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
             />
-
-            <img
-              src={showPassword ? eyeClosed : eyeOpen}
-              alt="toggle password"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: "absolute",
-                right: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                cursor: "pointer",
-                width: 20,
-              }}
-            />
-
             <small className="text-danger">{errors.password}</small>
           </div>
 
-          {/* CONFIRM PASSWORD */}
-          <div className="col-md-4 position-relative">
+          <div className="col-md-4">
             <input
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
               placeholder="Confirm Password"
-              className={`form-control pe-5 ${errors.confirmPassword && "is-invalid"}`}
+              className={`form-control ${errors.confirmPassword && "is-invalid"}`}
               value={form.confirmPassword}
               onChange={e =>
                 setForm({ ...form, confirmPassword: e.target.value })
               }
             />
-
-            <img
-              src={showPassword ? eyeClosed : eyeOpen}
-              alt="toggle password"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: "absolute",
-                right: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                cursor: "pointer",
-                width: 20,
-              }}
-            />
-
             <small className="text-danger">{errors.confirmPassword}</small>
           </div>
 
@@ -324,6 +289,58 @@ const Users = () => {
           ))}
         </tbody>
       </table>
+
+      {/* EDIT MODAL */}
+      {showEditModal && (
+        <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content p-4">
+              <h5>Edit User</h5>
+
+              <input className="form-control mb-3" value={editingUser?.username} disabled />
+
+              <input
+                className="form-control mb-3"
+                value={editForm.email}
+                onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+              />
+
+              <select
+                className="form-control mb-3"
+                value={editForm.role}
+                onChange={e => setEditForm({ ...editForm, role: e.target.value })}
+              >
+                <option value="">Select Role</option>
+                {roles.map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+
+              <select
+                className="form-control mb-3"
+                value={editForm.department}
+                onChange={e =>
+                  setEditForm({ ...editForm, department: e.target.value })
+                }
+              >
+                <option value="">Select Department</option>
+                {departments.map(d => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+
+              <div className="text-end">
+                <button className="btn btn-secondary me-2" onClick={closeEdit}>
+                  Cancel
+                </button>
+                <button className="btn btn-success" onClick={handleUpdate}>
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* DELETE MODAL */}
       {showDeleteModal && (
