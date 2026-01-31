@@ -1,16 +1,14 @@
-.card {
-  border-radius: 12px;
+.kanban-column {
+  min-height: 420px;
+  background: #f8f9fa;
 }
 
-.card-header {
-  border-radius: 12px 12px 0 0;
+.task-card {
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.card-body::-webkit-scrollbar {
-  width: 6px;
-}
-
-.card-body::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
+.task-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
 }
