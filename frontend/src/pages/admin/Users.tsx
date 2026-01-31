@@ -97,21 +97,26 @@ const Users = () => {
     setErrors({});
     fetchAll();
   } catch (err: any) {
-  let message = "Failed to create user";
+  const data = err?.response?.data;
 
-  if (err?.response?.status === 401) {
-    message = "Session expired. Please login again.";
-  } else if (err?.response?.status === 403) {
-    message = "You are not allowed to create users.";
-  } else {
-    message =
-      err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      message;
+  // Case 1: DRF serializer field errors (object)
+  if (data && typeof data === "object") {
+    const fieldErrors: any = {};
+
+    Object.keys(data).forEach(key => {
+      fieldErrors[key] = Array.isArray(data[key])
+        ? data[key][0]
+        : data[key];
+    });
+
+    setErrors(fieldErrors);
+    return;
   }
 
-  setErrors({ api: message });
-  }
+  // Case 2: simple error message
+  setErrors({ api: "Failed to create user" });
+}
+
   };
 
   // ================= EDIT =================
