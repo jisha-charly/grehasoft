@@ -1,12 +1,11 @@
 """
-Django settings for backend project.
-Production-ready for Railway deployment.
+Django settings for backend project
+Production-ready for Railway
 """
 
-import os
 from pathlib import Path
 from datetime import timedelta
-
+import os
 import dj_database_url
 
 # --------------------------------------------------
@@ -29,6 +28,8 @@ ALLOWED_HOSTS = ["*"]
 # APPLICATIONS
 # --------------------------------------------------
 INSTALLED_APPS = [
+    "corsheaders",  # ⚠️ MUST be first
+
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -36,11 +37,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # Third-party
     "rest_framework",
-    "corsheaders",
 
-    # Local apps
+    # local
     "accounts",
     "tasks",
 ]
@@ -50,12 +49,16 @@ INSTALLED_APPS = [
 # MIDDLEWARE
 # --------------------------------------------------
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",   # MUST be first
+    "corsheaders.middleware.CorsMiddleware",  # ⚠️ MUST be first
     "django.middleware.security.SecurityMiddleware",
+
     "whitenoise.middleware.WhiteNoiseMiddleware",
+
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+
     "django.middleware.csrf.CsrfViewMiddleware",
+
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -63,46 +66,19 @@ MIDDLEWARE = [
 
 
 # --------------------------------------------------
-# URL CONFIG
+# URLS / WSGI
 # --------------------------------------------------
 ROOT_URLCONF = "backend.urls"
-
-
-# --------------------------------------------------
-# TEMPLATES
-# --------------------------------------------------
-TEMPLATES = [
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
-        "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-            ],
-        },
-    },
-]
-
-
-# --------------------------------------------------
-# WSGI
-# --------------------------------------------------
 WSGI_APPLICATION = "backend.wsgi.application"
 
 
 # --------------------------------------------------
 # DATABASE
-# (Railway Postgres via DATABASE_URL, SQLite locally)
 # --------------------------------------------------
 DATABASES = {
     "default": dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
-        ssl_require=False,
     )
 }
 
@@ -119,7 +95,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # --------------------------------------------------
-# INTERNATIONALIZATION
+# I18N
 # --------------------------------------------------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -128,52 +104,25 @@ USE_TZ = True
 
 
 # --------------------------------------------------
-# STATIC FILES (Whitenoise)
+# STATIC FILES
 # --------------------------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 # --------------------------------------------------
-# DEFAULT PRIMARY KEY
-# --------------------------------------------------
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-
-# --------------------------------------------------
-# AUTH USER MODEL
+# AUTH
 # --------------------------------------------------
 AUTH_USER_MODEL = "accounts.User"
 
 
 # --------------------------------------------------
-# CORS / CSRF (FIXED)
-# --------------------------------------------------
-
-# ❌ DO NOT use CORS_ALLOW_ALL_ORIGINS with credentials
-CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOWED_ORIGINS = [
-    "https://jisha-charly-grehasoft-8119-git-jisha-jisha-charlys-projects.vercel.app",
-]
-
-CSRF_TRUSTED_ORIGINS = [
-    "https://jisha-charly-grehasoft-8119-git-jisha-jisha-charlys-projects.vercel.app",
-    "https://grehasoft-production.up.railway.app",
-]
-
-
-# --------------------------------------------------
-# REST FRAMEWORK / JWT
+# DJANGO REST + JWT
 # --------------------------------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
     ),
 }
 
@@ -182,3 +131,37 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+
+# --------------------------------------------------
+# CORS (THIS FIXES YOUR ISSUE)
+# --------------------------------------------------
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "origin",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
+
+
+# --------------------------------------------------
+# CSRF
+# --------------------------------------------------
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.vercel.app",
+    "https://*.railway.app",
+]
