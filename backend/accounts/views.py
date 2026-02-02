@@ -15,7 +15,7 @@ from .serializers import (
     ProjectSerializer,
     ProjectMilestoneSerializer,
     ProjectMemberSerializer,
-    DepartmentSerializer,TaskSerializer,TaskAssignmentSerializer,TaskCreateUpdateSerializer,TaskProgressSerializer
+    DepartmentSerializer,TaskSerializer,TaskAssignmentSerializer,TaskCreateUpdateSerializer,TaskProgressSerializer,TaskTypeSerializer
 )
 from django.contrib.auth import get_user_model
 
@@ -631,13 +631,9 @@ def remove_project_member(request, id):
 # =================================================
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def list_tasks_by_project(request, project_id):
-    tasks = Task.objects.filter(
-        project_id=project_id,
-        deleted_at__isnull=True
-    ).order_by("board_order")
-
-    serializer = TaskSerializer(tasks, many=True)
+def list_task_types(request):
+    task_types = TaskType.objects.filter(deleted_at__isnull=True)
+    serializer = TaskTypeSerializer(task_types, many=True)
     return Response(serializer.data)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])

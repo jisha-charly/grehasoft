@@ -285,7 +285,10 @@ class TaskSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["created_by", "created_at", "project", "task_type"]
-
+class TaskTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskType
+        fields = ["id", "name"]
 
 class TaskCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
