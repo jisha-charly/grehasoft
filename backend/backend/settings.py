@@ -30,10 +30,6 @@ ALLOWED_HOSTS = ["*"]
 # APPLICATIONS
 # --------------------------------------------------
 INSTALLED_APPS = [
-    # THIRD PARTY (corsheaders MUST be first)
-    "corsheaders",
-
-    # DJANGO
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -41,10 +37,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # THIRD PARTY
+    # Third-party
     "rest_framework",
+    "corsheaders",
 
-    # LOCAL APPS
+    # Local apps
     "accounts",
     "tasks",
 ]
@@ -73,7 +70,7 @@ ROOT_URLCONF = "backend.urls"
 
 
 # --------------------------------------------------
-# TEMPLATES  (REQUIRED for admin – this fixed your crash)
+# TEMPLATES (ADMIN FIX INCLUDED)
 # --------------------------------------------------
 TEMPLATES = [
     {
@@ -99,13 +96,13 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 
 # --------------------------------------------------
-# DATABASE
-# Railway provides DATABASE_URL automatically
+# DATABASE (Railway Postgres / Local SQLite fallback)
 # --------------------------------------------------
 DATABASES = {
     "default": dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
+        ssl_require=not DEBUG,
     )
 }
 
@@ -146,37 +143,31 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # --------------------------------------------------
-# AUTH
+# CORS / CSRF (FIXED – NO WILDCARD)
 # --------------------------------------------------
-AUTH_USER_MODEL = "accounts.User"
+CORS_ALLOWED_ORIGINS = [
+    "https://jisha-charly-grehasoft-8119-git-jisha-jisha-charlys-projects.vercel.app",
+]
 
-
-# --------------------------------------------------
-# DRF + JWT
-# --------------------------------------------------
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-}
-
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "AUTH_HEADER_TYPES": ("Bearer",),
-}
-
-
-# --------------------------------------------------
-# CORS / CSRF (FIXES YOUR VERCEL ERROR)
-# --------------------------------------------------
-CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
 
 CORS_ALLOW_HEADERS = [
     "authorization",
     "content-type",
+    "accept",
+    "origin",
+    "user-agent",
     "x-csrftoken",
+    "x-requested-with",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -186,16 +177,21 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 # --------------------------------------------------
-# LOGGING (OPTIONAL BUT HELPFUL)
+# AUTH / JWT
 # --------------------------------------------------
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {
-        "console": {"class": "logging.StreamHandler"},
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO",
-    },
+AUTH_USER_MODEL = "accounts.User"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "AUTH_HEADER_TYPES": ("Bearer",),
 }
