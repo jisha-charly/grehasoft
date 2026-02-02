@@ -134,10 +134,14 @@ SIMPLE_JWT = {
 
 
 # --------------------------------------------------
-# CORS (THIS FIXES YOUR ISSUE)
+# CORS (FIXED)
 # --------------------------------------------------
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "https://jisha-charly-grehasoft-8119-git-jisha-jisha-charlys-projects.vercel.app",
+]
 
 CORS_ALLOW_HEADERS = [
     "accept",
@@ -156,6 +160,7 @@ CORS_ALLOW_METHODS = [
     "DELETE",
     "OPTIONS",
 ]
+
 
 
 # --------------------------------------------------
