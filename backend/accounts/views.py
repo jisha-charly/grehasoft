@@ -30,10 +30,14 @@ User = get_user_model()
 def is_admin(user):
     return (
         user.is_authenticated
-        and hasattr(user, "role")
-        and user.role
-        and user.role.name.upper() == "ADMIN"
+        and user.is_superuser
+        or (
+            hasattr(user, "role")
+            and user.role
+            and user.role.name.upper() == "ADMIN"
+        )
     )
+
 
 
 # ==========================
