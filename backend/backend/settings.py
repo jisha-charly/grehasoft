@@ -7,10 +7,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 
-
 import dj_database_url
-
-
 
 # --------------------------------------------------
 # BASE DIR
@@ -45,7 +42,7 @@ INSTALLED_APPS = [
 
     # Local apps
     "accounts",
-    "tasks", 
+    "tasks",
 ]
 
 
@@ -53,7 +50,7 @@ INSTALLED_APPS = [
 # MIDDLEWARE
 # --------------------------------------------------
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",   # MUST be first
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -98,12 +95,14 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 
 # --------------------------------------------------
-# DATABASE (PostgreSQL on Railway / SQLite locally)
+# DATABASE
+# (Railway Postgres via DATABASE_URL, SQLite locally)
 # --------------------------------------------------
 DATABASES = {
     "default": dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
+        ssl_require=False,
     )
 }
 
@@ -144,25 +143,37 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # --------------------------------------------------
-# CORS / CSRF
+# AUTH USER MODEL
 # --------------------------------------------------
-CORS_ALLOW_ALL_ORIGINS = True
+AUTH_USER_MODEL = "accounts.User"
+
+
+# --------------------------------------------------
+# CORS / CSRF (FIXED)
+# --------------------------------------------------
+
+# ❌ DO NOT use CORS_ALLOW_ALL_ORIGINS with credentials
 CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOWED_ORIGINS = [
+    "https://jisha-charly-grehasoft-8119-git-jisha-jisha-charlys-projects.vercel.app",
+]
+
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.vercel.app",
-    "https://*.railway.app",
+    "https://jisha-charly-grehasoft-8119-git-jisha-jisha-charlys-projects.vercel.app",
+    "https://grehasoft-production.up.railway.app",
 ]
 
 
 # --------------------------------------------------
-# AUTH / JWT
+# REST FRAMEWORK / JWT
 # --------------------------------------------------
-AUTH_USER_MODEL = "accounts.User"
-
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
     ),
 }
 
