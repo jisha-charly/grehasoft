@@ -630,6 +630,16 @@ def remove_project_member(request, id):
 # Task Management
 # =================================================
 @api_view(["GET"])
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def list_tasks_by_project(request, project_id):
+    tasks = Task.objects.filter(
+        project_id=project_id,
+        deleted_at__isnull=True
+    ).order_by("board_order")
+
+    serializer = TaskSerializer(tasks, many=True)
+    return Response(serializer.data)
 @permission_classes([IsAuthenticated])
 def list_task_types(request):
     task_types = TaskType.objects.filter(deleted_at__isnull=True)
