@@ -4,11 +4,11 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 
-from .models import Task, TaskType
+from .models import Task, TaskType,TaskAssignment
 from .serializers import (
     TaskSerializer,
     TaskTypeSerializer,
-    TaskCreateUpdateSerializer,
+    TaskCreateUpdateSerializer,TaskAssignmentSerializer,
 )
 
 
@@ -103,3 +103,77 @@ def delete_task(request, task_id):
     task.deleted_at = now()
     task.save()
     return Response({"message": "Task deleted"})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def assign_task_user(request):
+    task_id = request.data.get("task")
+    employee_id = request.data.get("employee")
+
+    assignment, created = TaskAssignment.objects.get_or_create(
+        task_id=task_id,
+        employee_id=employee_id,
+        defaults={"assigned_by": request.user}
+    )
+
+    return Response(TaskAssignmentSerializer(assignment).data, status=201)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def unassign_task_user(request):
+    task_id = request.data.get("task")
+    employee_id = request.data.get("employee")
+
+    try:
+        assignment = TaskAssignment.objects.get(
+            task_id=task_id,
+            employee_id=employee_id,
+            unassigned_at__isnull=True
+        )
+        assignment.unassigned_at = now()
+        assignment.save()
+        return Response({"message": "User unassigned"})
+    except TaskAssignment.DoesNotExist:
+        return Response({"error": "Assignment not found"}, status=404)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def update_task_order(request):
+    """
+    payload:
+    [
+      { "id": 5, "status": "todo", "board_order": 0 },
+      { "id": 8, "status": "in_progress", "board_order": 1 }
+    ]
+    """
+    for item in request.data:
+        Task.objects.filter(id=item["id"]).update(
+            status=item["status"],
+            board_order=item["board_order"]
+        )
+
+    return Response({"message": "Board updated"})
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def project_tasks(request, project_id):
+    if request.method == "GET":
+        tasks = Task.objects.filter(
+            project_id=project_id,
+            deleted_at__isnull=True
+        ).order_by("board_order")
+        return Response(TaskSerializer(tasks, many=True).data)
+
+    if request.method == "POST":
+        serializer = TaskSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(
+                project_id=project_id,
+                created_by=request.user
+            )
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
