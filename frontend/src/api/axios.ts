@@ -1,18 +1,16 @@
-import axios, { AxiosHeaders } from "axios";
+import axios from "axios";
 import { API_BASE_URL } from "../config/env";
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${API_BASE_URL}/api`,
 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access");
 
   if (token) {
-    if (!config.headers) {
-      config.headers = new AxiosHeaders();
-    }
-    config.headers.set("Authorization", `Bearer ${token}`);
+    // ✅ Axios v1 safe way
+    config.headers?.set("Authorization", `Bearer ${token}`);
   }
 
   return config;
