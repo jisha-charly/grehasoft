@@ -642,12 +642,14 @@ def list_tasks_by_project(request, project_id):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_task(request):
-    serializer = TaskCreateUpdateSerializer(data=request.data)
+    serializer = TaskSerializer(data=request.data)
     if serializer.is_valid():
-        task = serializer.save(created_by=request.user)
-        return Response(TaskSerializer(task).data, status=201)
+        serializer.save(created_by=request.user)
+        return Response(serializer.data, status=201)
 
+    print(serializer.errors)  # 👈 DEBUG helper
     return Response(serializer.errors, status=400)
+
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def update_task(request, task_id):

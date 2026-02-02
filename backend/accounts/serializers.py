@@ -250,7 +250,23 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     
  # ================= Task management=================   
+from rest_framework import serializers
+from .models import Task, Project, TaskType
+
 class TaskSerializer(serializers.ModelSerializer):
+    project_id = serializers.PrimaryKeyRelatedField(
+        queryset=Project.objects.all(),
+        source="project",
+        write_only=True
+    )
+    task_type_id = serializers.PrimaryKeyRelatedField(
+        queryset=TaskType.objects.all(),
+        source="task_type",
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+
     class Meta:
         model = Task
         fields = [
@@ -261,12 +277,14 @@ class TaskSerializer(serializers.ModelSerializer):
             "status",
             "board_order",
             "due_date",
+            "project_id",
+            "task_type_id",
             "project",
             "task_type",
             "created_by",
             "created_at",
         ]
-        read_only_fields = ["created_by", "created_at"]
+        read_only_fields = ["created_by", "created_at", "project", "task_type"]
 
 
 class TaskCreateUpdateSerializer(serializers.ModelSerializer):
