@@ -9,13 +9,13 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from accounts.models import Department, Role
-from .models import TaskType, Client, Project, ProjectMilestone, ProjectMember,Task,TaskAssignment,TaskProgress
+from .models import  Client, Project, ProjectMilestone, ProjectMember
 from .serializers import (
     ClientSerializer,
     ProjectSerializer,
     ProjectMilestoneSerializer,
     ProjectMemberSerializer,
-    DepartmentSerializer,TaskSerializer,TaskAssignmentSerializer,TaskCreateUpdateSerializer,TaskProgressSerializer,TaskTypeSerializer
+    DepartmentSerializer,
 )
 from django.contrib.auth import get_user_model
 

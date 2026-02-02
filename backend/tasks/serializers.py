@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Task, TaskType, TaskAssignment, TaskProgress
-from projects.models import Project   # adjust import if needed
+from accounts.models import Project
+ # adjust import if needed
 
 
 # =========================

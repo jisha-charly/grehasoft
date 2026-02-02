@@ -23,11 +23,7 @@ urlpatterns = [
     path("roles/<int:role_id>/update/", views.update_role),
     path("roles/<int:role_id>/delete/", views.delete_role),
 
-    # ---------------- TASK TYPES ----------------
-    path("task-types/", views.list_task_types),
-    path("task-types/create/", views.create_task_type),
-    path("task-types/<int:pk>/update/", views.update_task_type),
-    path("task-types/<int:pk>/delete/", views.delete_task_type),
+   
 
     # ---------------- CLIENTS ----------------
     path("clients/", views.list_clients),
@@ -54,16 +50,4 @@ urlpatterns = [
     path("projects/<int:project_id>/members/add/", views.add_project_member),
     path("project-members/<int:id>/update/", views.update_project_member),
     path("project-members/<int:id>/remove/", views.remove_project_member),
- # ---------------- TASK MANAGEMENT----------------
-
-    path("project/<int:project_id>/", views.list_tasks_by_project),
-     path("task-types/", views.list_task_types),
-    path("tasks/", views.create_task),
-    path("tasks/<int:task_id>/", views.update_task),
-    path("tasks/<int:task_id>/delete/", views.delete_task),
-path("projects/<int:project_id>/tasks/", views.project_tasks),
-    path("tasks/assign/", views.assign_task_user),
-    path("tasks/unassign/", views.unassign_task_user),
-
-    path("tasks/reorder/", views.update_task_order),
 ]

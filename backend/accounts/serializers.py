@@ -5,7 +5,7 @@ from rest_framework import serializers
 from .models import Client
 from .models import Project, ProjectMilestone, ProjectMember
 from .models import Department
-from .models import Task, TaskAssignment, TaskProgress
+
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
