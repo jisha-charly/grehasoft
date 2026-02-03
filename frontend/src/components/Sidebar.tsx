@@ -32,9 +32,15 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.clear();
-    navigate("/");
-  };
+  // 1. Remove tokens
+  localStorage.removeItem("access");
+  localStorage.removeItem("refresh");
+  localStorage.removeItem("user"); // if exists
+
+  // 2. Force redirect (prevents back button)
+  window.location.replace("/login");
+};
+
 
   return (
     <aside

@@ -11,9 +11,15 @@ const Topbar: React.FC<TopbarProps> = ({ title }) => {
   const username = localStorage.getItem("username") || "Admin";
 
   const handleLogout = () => {
-    localStorage.clear();
-    navigate("/");
-  };
+  // 1. Remove tokens
+  localStorage.removeItem("access");
+  localStorage.removeItem("refresh");
+  localStorage.removeItem("user"); // if exists
+
+  // 2. Force redirect (prevents back button)
+  window.location.replace("/login");
+};
+
 
   return (
     <nav className="navbar bg-white border-bottom px-4 py-2 d-flex justify-content-between">
