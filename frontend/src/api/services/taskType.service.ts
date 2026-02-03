@@ -5,22 +5,25 @@ import type { TaskType } from "../../types/tasktypes";
 
 export const getTaskTypes = async (): Promise<TaskType[]> => {
   const res = await api.get("/task-types/");
-  return res.data; // ✅ return ONLY data
+  return res.data;
 };
+
 export const createTaskType = async (data: {
   name: string;
   description?: string;
 }) => {
-  await api.post("task-types/create/", data);
+  const res = await api.post("/task-types/", data);
+  return res.data;
 };
 
 export const updateTaskType = async (
   id: number,
   data: { name: string; description?: string }
 ) => {
-  await api.put(`task-types/${id}/update/`, data);
+  const res = await api.put(`/task-types/${id}/`, data);
+  return res.data;
 };
 
 export const deleteTaskType = async (id: number) => {
-  await api.delete(`task-types/${id}/delete/`);
+  await api.delete(`/task-types/${id}/`);
 };
