@@ -16,8 +16,12 @@ class TaskType(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        db_table = "accounts_tasktype"   # 🔥 THIS FIXES EVERYTHING
+
     def __str__(self):
         return self.name
+
 
 
 # =================================================
