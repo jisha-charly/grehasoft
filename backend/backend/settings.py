@@ -13,15 +13,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 # --------------------------------------------------
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "unsafe-dev-key")
+
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [
+    "grehasoft.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 
 
 # --------------------------------------------------
 # APPLICATIONS
 # --------------------------------------------------
 INSTALLED_APPS = [
+    "corsheaders",
+
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -30,7 +37,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     # Third-party
-    "corsheaders",
     "rest_framework",
 
     # Local apps
@@ -63,7 +69,7 @@ WSGI_APPLICATION = "backend.wsgi.application"
 
 
 # --------------------------------------------------
-# TEMPLATES (ADMIN FIX)
+# TEMPLATES
 # --------------------------------------------------
 TEMPLATES = [
     {
@@ -114,14 +120,12 @@ USE_TZ = True
 
 
 # --------------------------------------------------
-# STATIC FILES (RENDER FIX)
+# STATIC FILES (RENDER SAFE)
 # --------------------------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+STATICFILES_DIRS = []  # Important: avoid missing-folder warning
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
@@ -133,7 +137,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # --------------------------------------------------
-# AUTH
+# AUTH USER
 # --------------------------------------------------
 AUTH_USER_MODEL = "accounts.User"
 
@@ -158,9 +162,15 @@ SIMPLE_JWT = {
 
 
 # --------------------------------------------------
-# CORS + CSRF (RENDER + VERCEL FIX)
+# CORS (VERCEL + LOCAL)
 # --------------------------------------------------
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "https://jisha-charly-grehasoft-8119-git-jisha-jisha-charlys-projects.vercel.app",
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [
@@ -173,9 +183,11 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://*.onrender.com",
-    "https://*.vercel.app",
-    "https://*.railway.app",
-]
 
+# --------------------------------------------------
+# CSRF (REQUIRED FOR ADMIN + AUTH)
+# --------------------------------------------------
+CSRF_TRUSTED_ORIGINS = [
+    "https://grehasoft.onrender.com",
+    "https://jisha-charly-grehasoft-8119-git-jisha-jisha-charlys-projects.vercel.app",
+]
