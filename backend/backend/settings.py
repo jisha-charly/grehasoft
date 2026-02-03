@@ -3,7 +3,11 @@ from pathlib import Path
 from datetime import timedelta
 import dj_database_url
 
+# --------------------------------------------------
+# BASE DIR
+# --------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 # --------------------------------------------------
 # SECURITY
@@ -12,6 +16,7 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "unsafe-dev-key")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = ["*"]
+
 
 # --------------------------------------------------
 # APPLICATIONS
@@ -33,11 +38,12 @@ INSTALLED_APPS = [
     "tasks",
 ]
 
+
 # --------------------------------------------------
-# MIDDLEWARE  (ORDER IS CRITICAL)
+# MIDDLEWARE (ORDER IS IMPORTANT)
 # --------------------------------------------------
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",  # MUST BE FIRST
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -48,10 +54,13 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+
 # --------------------------------------------------
-# URL CONFIG
+# URL / WSGI
 # --------------------------------------------------
 ROOT_URLCONF = "backend.urls"
+WSGI_APPLICATION = "backend.wsgi.application"
+
 
 # --------------------------------------------------
 # TEMPLATES (ADMIN FIX)
@@ -72,10 +81,6 @@ TEMPLATES = [
     },
 ]
 
-# --------------------------------------------------
-# WSGI
-# --------------------------------------------------
-WSGI_APPLICATION = "backend.wsgi.application"
 
 # --------------------------------------------------
 # DATABASE
@@ -87,6 +92,7 @@ DATABASES = {
     )
 }
 
+
 # --------------------------------------------------
 # PASSWORD VALIDATION
 # --------------------------------------------------
@@ -97,6 +103,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+
 # --------------------------------------------------
 # INTERNATIONALIZATION
 # --------------------------------------------------
@@ -105,22 +112,31 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
+
 # --------------------------------------------------
-# STATIC FILES
+# STATIC FILES (RENDER FIX)
 # --------------------------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 # --------------------------------------------------
 # DEFAULT PRIMARY KEY
 # --------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
 # --------------------------------------------------
 # AUTH
 # --------------------------------------------------
 AUTH_USER_MODEL = "accounts.User"
+
 
 # --------------------------------------------------
 # DRF + JWT
@@ -140,8 +156,9 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+
 # --------------------------------------------------
-# CORS (THIS FIXES YOUR ISSUE)
+# CORS + CSRF (RENDER + VERCEL FIX)
 # --------------------------------------------------
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
@@ -157,6 +174,12 @@ CORS_ALLOW_HEADERS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com",
     "https://*.vercel.app",
     "https://*.railway.app",
 ]
+if os.environ.get("RENDER") == "true":
+    MIGRATION_MODULES = {
+        "accounts": None,
+        "tasks": None,
+    }
