@@ -5,7 +5,7 @@ from .models import (
     User,
     Role,
     Department,
-    TaskType,
+    
     Client,
     Project,
     ProjectMilestone,
@@ -66,13 +66,6 @@ class UserAdmin(BaseUserAdmin):
     )
 
 
-# ---------------------------
-# TASK TYPE
-# ---------------------------
-@admin.register(TaskType)
-class TaskTypeAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "created_at")
-    search_fields = ("name",)
 
 
 # ---------------------------
