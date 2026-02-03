@@ -178,8 +178,4 @@ CSRF_TRUSTED_ORIGINS = [
     "https://*.vercel.app",
     "https://*.railway.app",
 ]
-if os.environ.get("RENDER") == "true":
-    MIGRATION_MODULES = {
-        "accounts": None,
-        "tasks": None,
-    }
+
