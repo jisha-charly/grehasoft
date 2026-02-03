@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   MdDashboard,
   MdApartment,
@@ -12,9 +12,11 @@ import {
   MdSettings,
   MdLogout,
 } from "react-icons/md";
+
 import "../css/sidebar.css";
+
 const sidebarItems = [
-  { label: "Dashboard", path: "/admin/dashboard", icon: <MdDashboard /> },
+  { label: "Dashboard", path: "/admin", icon: <MdDashboard /> },
   { label: "Roles", path: "/admin/roles", icon: <MdPeople /> },
   { label: "Departments", path: "/admin/departments", icon: <MdApartment /> },
   { label: "Users", path: "/admin/users", icon: <MdPeople /> },
@@ -22,25 +24,21 @@ const sidebarItems = [
   { label: "Clients", path: "/admin/clients", icon: <MdBusiness /> },
   { label: "Projects", path: "/admin/projects", icon: <MdWork /> },
   { label: "Task Management", path: "/admin/tasks", icon: <MdGroups /> },
-
   { label: "Leads", path: "/admin/leads", icon: <MdCall /> },
   { label: "Reports", path: "/admin/reports", icon: <MdAssessment /> },
   { label: "Settings", path: "/admin/settings", icon: <MdSettings /> },
 ];
 
 const Sidebar = () => {
-  const navigate = useNavigate();
-
   const handleLogout = () => {
-  // 1. Remove tokens
-  localStorage.removeItem("access");
-  localStorage.removeItem("refresh");
-  localStorage.removeItem("user"); // if exists
+    // Clear auth data
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("user");
 
-  // 2. Force redirect (prevents back button)
-  window.location.replace("/login");
-};
-
+    // Force redirect (prevents back button access)
+    window.location.replace("/login");
+  };
 
   return (
     <aside
@@ -48,7 +46,7 @@ const Sidebar = () => {
       style={{ width: 260, minHeight: "100vh" }}
     >
       {/* BRAND */}
-      <div className="px-3 py-3  border-secondary">
+      <div className="px-3 py-3 border-bottom border-secondary">
         <h5 className="mb-0 fw-bold">Grehasoft</h5>
         <small className="text-secondary">Admin Panel</small>
       </div>
@@ -59,12 +57,12 @@ const Sidebar = () => {
           <NavLink
             key={item.path}
             to={item.path}
+            end={item.path === "/admin"} // important for dashboard active state
             className={({ isActive }) =>
               `d-flex align-items-center gap-3 px-3 py-2 rounded text-decoration-none mb-1 ${
                 isActive
                   ? "bg-primary text-white"
                   : "text-light sidebar-link"
-                  
               }`
             }
           >
@@ -75,7 +73,7 @@ const Sidebar = () => {
       </div>
 
       {/* LOGOUT */}
-      <div className="px-3 py-3  border-secondary">
+      <div className="px-3 py-3 border-top border-secondary">
         <button
           onClick={handleLogout}
           className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"

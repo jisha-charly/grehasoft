@@ -1,0 +1,32 @@
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from projects.models import Project
+from clients.models import Client
+from tasks.models import Task
+from accounts.models import User
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def dashboard_analytics(request):
+    data = {
+        "total_projects": Project.objects.count(),
+        "ongoing_projects": Project.objects.filter(status="ongoing").count(),
+        "completed_projects": Project.objects.filter(status="completed").count(),
+
+        "total_clients": Client.objects.count(),
+        "active_clients": Client.objects.filter(
+            projects__status="ongoing"
+        ).distinct().count(),
+
+        "total_users": User.objects.count(),
+
+        "total_tasks": Task.objects.count(),
+        "tasks_todo": Task.objects.filter(status="todo").count(),
+        "tasks_in_progress": Task.objects.filter(status="in_progress").count(),
+        "tasks_done": Task.objects.filter(status="done").count(),
+    }
+
+    return Response(data)

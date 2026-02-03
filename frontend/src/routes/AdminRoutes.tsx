@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 
-import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminLayout from "../pages/admin/AdminLayout";
+import Dashboard from "../pages/admin/Dashboard";
 import Roles from "../pages/admin/Roles";
 import Departments from "../pages/admin/Departments";
 import Users from "../pages/admin/Users";
@@ -9,13 +10,20 @@ import Clients from "../pages/admin/Clients";
 import Projects from "../pages/admin/Projects";
 import ProjectDetails from "../pages/admin/ProjectDetails";
 import Settings from "../pages/admin/Settings";
-import NotFound from "../pages/NotFound";
 import TasksPage from "../pages/admin/TasksPage";
+import NotFound from "../pages/NotFound";
+
 const AdminRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<AdminDashboard />}>
-        <Route path="dashboard" element={<h2>Dashboard Overview</h2>} />
+      {/* ADMIN LAYOUT */}
+      <Route element={<AdminLayout />}>
+        
+        {/* DEFAULT: /admin */}
+        <Route index element={<Dashboard />} />
+
+        {/* EXPLICIT ROUTES */}
+        
         <Route path="roles" element={<Roles />} />
         <Route path="departments" element={<Departments />} />
         <Route path="users" element={<Users />} />
@@ -24,16 +32,10 @@ const AdminRoutes = () => {
         <Route path="projects" element={<Projects />} />
         <Route path="projects/:id" element={<ProjectDetails />} />
         <Route path="tasks" element={<TasksPage />} />
-
         <Route path="settings" element={<Settings />} />
 
-        {/* 🔴 ADMIN 404 */}
+        {/* ADMIN 404 */}
         <Route path="*" element={<NotFound />} />
-      
-
-      {/* 🔴 GLOBAL 404 */}
-      <Route path="*" element={<NotFound />} />
-    
       </Route>
     </Routes>
   );

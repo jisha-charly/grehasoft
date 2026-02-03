@@ -30,4 +30,6 @@ urlpatterns = [
     # your app urls
     path("api/", include("accounts.urls")),
   path("api/", include("tasks.urls")),   # 👈 REQUIRED
+  path("api/dashboard/", include("dashboard.urls")),
+
 ]
