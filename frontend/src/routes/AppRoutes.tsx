@@ -1,12 +1,28 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Login";
 import AdminRoutes from "./AdminRoutes";
+import ProtectedRoute from "./ProtectedRoute";
 
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/admin/*" element={<AdminRoutes />} />
+
+      {/* Default redirect */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
+      {/* PUBLIC */}
+      <Route path="/login" element={<Login />} />
+
+      {/* PROTECTED */}
+      <Route
+        path="/admin/*"
+        element={
+          <ProtectedRoute>
+            <AdminRoutes />
+          </ProtectedRoute>
+        }
+      />
+
     </Routes>
   );
 };
