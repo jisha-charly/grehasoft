@@ -2,10 +2,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from projects.models import Project
-from clients.models import Client
+
 from tasks.models import Task
-from accounts.models import User
+from accounts.models import User, Project, Client
 
 
 @api_view(["GET"])
