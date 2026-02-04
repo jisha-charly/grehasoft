@@ -1,6 +1,8 @@
 import Sidebar from "../../components/Sidebar";
 import Topbar from "../../components/Topbar";
 import { Outlet } from "react-router-dom";
+import "../../css/admin-modern.css";
+
 
 const AdminLayout = () => {
   return (

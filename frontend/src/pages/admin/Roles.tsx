@@ -110,23 +110,28 @@ const Roles = () => {
 
   /* ================= UI ================= */
   return (
-    <div className="container mt-4">
-      <h3 className="mb-3">User Roles</h3>
+  <div className="admin-page">
+    <div className="admin-card">
+      <h1 className="admin-title">User Roles</h1>
 
-      {/* 🔍 UNIVERSAL SEARCH */}
+      {/* 🔍 SEARCH */}
       <input
-        className="form-control mb-3"
+        className="admin-input"
         placeholder="Search by role name or description..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        style={{ marginBottom: 16 }}
       />
 
-      {/* ➕ CREATE FORM */}
-      <div className="card mb-3">
-        <div className="card-body row g-2">
-          <div className="col-md-4">
+      {/* ➕ CREATE ROLE */}
+      <div
+        className="admin-card"
+        style={{ boxShadow: "none", padding: 0, marginBottom: 24 }}
+      >
+        <div style={{ display: "flex", gap: 12 }}>
+          <div style={{ flex: 2 }}>
             <input
-              className={`form-control ${errors.name ? "is-invalid" : ""}`}
+              className="admin-input"
               placeholder="Role name"
               value={form.name}
               onChange={(e) => {
@@ -135,15 +140,13 @@ const Roles = () => {
               }}
             />
             {errors.name && (
-              <div className="invalid-feedback">{errors.name}</div>
+              <small style={{ color: "#ef4444" }}>{errors.name}</small>
             )}
           </div>
 
-          <div className="col-md-6">
+          <div style={{ flex: 3 }}>
             <input
-              className={`form-control ${
-                errors.description ? "is-invalid" : ""
-              }`}
+              className="admin-input"
               placeholder="Description"
               value={form.description}
               onChange={(e) => {
@@ -152,153 +155,191 @@ const Roles = () => {
               }}
             />
             {errors.description && (
-              <div className="invalid-feedback">{errors.description}</div>
+              <small style={{ color: "#ef4444" }}>{errors.description}</small>
             )}
           </div>
 
-          <div className="col-md-2">
-            <button className="btn btn-primary w-100" onClick={handleCreate}>
-              Create
-            </button>
-          </div>
+          <button className="btn-primary" onClick={handleCreate}>
+            Create
+          </button>
         </div>
       </div>
 
-      {/* 📋 TABLE */}
+      {/* 📋 ROLES TABLE */}
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <table className="table table-bordered table-hover">
-          <thead className="table-light">
-            <tr>
-              <th>Role</th>
-              <th>Description</th>
-              <th style={{ width: 180 }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRoles.length === 0 ? (
+        <div className="admin-card">
+          <table className="admin-table">
+            <thead>
               <tr>
-                <td colSpan={3} className="text-center">
-                  No roles found
-                </td>
+                <th>Role</th>
+                <th>Description</th>
+                <th style={{ width: 180 }}>Action</th>
               </tr>
-            ) : (
-              filteredRoles.map((role) => (
-                <tr key={role.id}>
-                  <td>{role.name}</td>
-                  <td>{role.description}</td>
-                  <td>
-                    {role.name === "ADMIN" ? (
-                      <>
-                        <button className="btn btn-warning btn-sm me-2" disabled>
-                          Edit
-                        </button>
-                        <button className="btn btn-danger btn-sm" disabled>
-                          Delete
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          className="btn btn-warning btn-sm me-2"
-                          onClick={() => openEdit(role)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={() => setDeleteRoleData(role)}
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
+            </thead>
+            <tbody>
+              {filteredRoles.length === 0 ? (
+                <tr>
+                  <td colSpan={3} style={{ textAlign: "center" }}>
+                    No roles found
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredRoles.map((role) => (
+                  <tr key={role.id}>
+                    <td>{role.name}</td>
+                    <td>{role.description}</td>
+                    <td>
+                      {role.name === "ADMIN" ? (
+                        <>
+                          <button className="btn-edit" disabled>
+                            Edit
+                          </button>
+                          <button
+                            className="btn-delete"
+                            disabled
+                            style={{ marginLeft: 8, opacity: 0.6 }}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            className="btn-edit"
+                            onClick={() => openEdit(role)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn-delete"
+                            style={{ marginLeft: 8 }}
+                            onClick={() => setDeleteRoleData(role)}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* ✏️ EDIT MODAL */}
-      {editing && (
-        <div className="modal show d-block bg-dark bg-opacity-50">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5>Edit Role</h5>
-              </div>
-              <div className="modal-body">
-                <input
-                  className={`form-control mb-2 ${
-                    errors.name ? "is-invalid" : ""
-                  }`}
-                  value={editing.name}
-                  onChange={(e) => {
-                    setEditing({ ...editing, name: e.target.value });
-                    setErrors({ ...errors, name: "" });
-                  }}
-                />
-                {errors.name && (
-                  <div className="invalid-feedback d-block">
-                    {errors.name}
-                  </div>
-                )}
+{editing && (
+  <div className="modal show d-block bg-dark bg-opacity-50">
+    <div className="modal-dialog modal-dialog-centered">
+      <div className="modal-content rounded-4 shadow">
+        
+        {/* HEADER */}
+        <div className="modal-header border-0">
+          <h5 className="modal-title">Edit Role</h5>
+          <button
+            type="button"
+            className="btn-close"
+            onClick={() => setEditing(null)}
+          />
+        </div>
 
-                <input
-                  className="form-control mt-2"
-                  value={editing.description || ""}
-                  onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      description: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="modal-footer">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setEditing(null)}
-                >
-                  Cancel
-                </button>
-                <button className="btn btn-success" onClick={handleUpdate}>
-                  Save
-                </button>
-              </div>
-            </div>
+        {/* BODY */}
+        <div className="modal-body">
+          {/* Role Name */}
+          <div className="mb-3">
+            <label className="form-label">Role Name</label>
+            <input
+              type="text"
+              className={`form-control ${
+                errors.name ? "is-invalid" : ""
+              }`}
+              value={editing.name}
+              onChange={(e) => {
+                setEditing({ ...editing, name: e.target.value });
+                setErrors({ ...errors, name: "" });
+              }}
+            />
+            {errors.name && (
+              <div className="invalid-feedback">{errors.name}</div>
+            )}
+          </div>
+
+          {/* Description */}
+          <div className="mb-3">
+            <label className="form-label">Description</label>
+            <input
+              type="text"
+              className="form-control"
+              value={editing.description || ""}
+              onChange={(e) =>
+                setEditing({
+                  ...editing,
+                  description: e.target.value,
+                })
+              }
+            />
           </div>
         </div>
-      )}
 
-      {/* 🗑 DELETE MODAL */}
-      {deleteRoleData && (
-        <div className="modal show d-block bg-dark bg-opacity-50">
-          <div className="modal-dialog modal-dialog-centered modal-sm">
-            <div className="modal-content">
-              <div className="modal-body">
-                Delete role <b>{deleteRoleData.name}</b>?
-              </div>
-              <div className="modal-footer">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setDeleteRoleData(null)}
-                >
-                  Cancel
-                </button>
-                <button className="btn btn-danger" onClick={handleDelete}>
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
+        {/* FOOTER */}
+        <div className="modal-footer border-0">
+          <button
+            type="button"   // ✅ IMPORTANT FIX
+            className="btn btn-outline-secondary"
+            onClick={() => setEditing(null)}
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleUpdate}
+          >
+            Save Changes
+          </button>
         </div>
-      )}
+
+      </div>
     </div>
-  );
+  </div>
+)}
+
+
+{deleteRoleData && (
+  <div className="modal show d-block bg-dark bg-opacity-50">
+    <div className="modal-dialog modal-dialog-centered modal-sm">
+      <div className="modal-content">
+        <div className="modal-body">
+          Delete role <b>{deleteRoleData.name}</b>?
+        </div>
+        <div className="modal-footer">
+          <button
+            type="button"
+            className="btn btn-outline-secondary"
+            onClick={() => setDeleteRoleData(null)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={handleDelete}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+    </div>
+  </div>
+);
+
 };
 
 export default Roles;
