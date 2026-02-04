@@ -46,7 +46,7 @@ const Sidebar = () => {
       style={{ width: 260, minHeight: "100vh" }}
     >
       {/* BRAND */}
-      <div className="px-3 py-3 border-bottom border-secondary">
+      <div className="px-3 py-3  border-secondary">
         <h5 className="mb-0 fw-bold">Grehasoft</h5>
         <small className="text-secondary">Admin Panel</small>
       </div>
@@ -73,7 +73,7 @@ const Sidebar = () => {
       </div>
 
       {/* LOGOUT */}
-      <div className="px-3 py-3 border-top border-secondary">
+      <div className="px-3 py-3  border-secondary">
         <button
           onClick={handleLogout}
           className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"

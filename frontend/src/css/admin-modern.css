@@ -87,3 +87,7 @@
 .admin-table tr:hover {
   background: #f9fafb;
 }
+.sidebar {
+  border: none;
+  box-shadow: none;
+}
