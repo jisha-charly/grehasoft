@@ -13,16 +13,16 @@ def dashboard_analytics(request):
         # Projects
         "total_projects": Project.objects.count(),
         "ongoing_projects": Project.objects.filter(
-            status__in=["ongoing", "in_progress"]
+            status__in=["not_started", "in_progress", "on_hold"]
         ).count(),
         "completed_projects": Project.objects.filter(
             status="completed"
         ).count(),
 
-        # Clients
+        # Clients (✅ FIXED)
         "total_clients": Client.objects.count(),
         "active_clients": Client.objects.filter(
-            project__status__in=["ongoing", "in_progress"]
+            projects__status__in=["not_started", "in_progress", "on_hold"]
         ).distinct().count(),
 
         # Users
