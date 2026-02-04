@@ -30,32 +30,34 @@ const AddTaskForm = ({ projectId, onCreated }: Props) => {
     loadTaskTypes();
   }, []);
 
-  const submit = async () => {
-    if (!title) return alert("Enter task title");
-    if (!taskTypeId) return alert("Select task type");
+const submit = async () => {
+  if (!title) return alert("Enter task title");
+  if (!taskTypeId) return alert("Select task type");
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      await createTask({
-        title,
-        status,
-        project_id: projectId, // ✅ VERY IMPORTANT
-        task_type_id: taskTypeId,
-      });
+  try {
+    await createTask(projectId, {
+      title,
+      status,
+      task_type_id: taskTypeId,
+     priority: "medium",   // ✅ REQUIRED
+      board_order: 0        // ✅ REQUIRED
+    });
 
-      setTitle("");
-      setStatus("todo");
-      setTaskTypeId("");
+    setTitle("");
+    setStatus("todo");
+    setTaskTypeId("");
 
-      onCreated();
-    } catch (err) {
-      console.error("Task create failed", err);
-      alert("Failed to create task");
-    } finally {
-      setLoading(false);
-    }
-  };
+    onCreated();
+  } catch (err) {
+    console.error("Task create failed", err);
+    alert("Failed to create task");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="card mb-3">
@@ -92,16 +94,17 @@ const AddTaskForm = ({ projectId, onCreated }: Props) => {
           </div>
 
           <div className="col-md-3">
-            <select
-              className="form-select"
-              value={status}
-              onChange={e => setStatus(e.target.value as TaskStatus)}
-            >
-              <option value="todo">To Do</option>
-              <option value="in_progress">In Progress</option>
-              <option value="done">Done</option>
-              <option value="blocked">Blocked</option>
-            </select>
+           <select
+  className="form-select"
+  value={status}
+  onChange={e => setStatus(e.target.value as TaskStatus)}
+>
+  <option value="todo">To Do</option>
+  <option value="in_progress">In Progress</option>
+  <option value="done">Done</option>
+  <option value="blocked">Blocked</option>
+</select>
+
           </div>
 
           <div className="col-md-2 d-grid">

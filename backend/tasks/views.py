@@ -10,6 +10,7 @@ from .serializers import (
     TaskTypeSerializer,
     TaskCreateUpdateSerializer,TaskAssignmentSerializer,
 )
+from accounts.models import  Project
 
 
 # =================================================
@@ -71,15 +72,29 @@ def list_tasks_by_project(request, project_id):
     return Response(serializer.data)
 
 
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
-def create_task(request):
-    serializer = TaskSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save(created_by=request.user)
-        return Response(serializer.data, status=201)
-    return Response(serializer.errors, status=400)
+def project_tasks(request, project_id):
 
+    if request.method == "GET":
+        tasks = Task.objects.filter(
+            project_id=project_id,
+            deleted_at__isnull=True
+        ).order_by("board_order")
+        return Response(TaskSerializer(tasks, many=True).data)
+
+    if request.method == "POST":
+        project = get_object_or_404(Project, id=project_id)
+
+        serializer = TaskSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(
+                project=project,              # ✅ FIX
+                created_by=request.user
+            )
+            return Response(serializer.data, status=201)
+
+        return Response(serializer.errors, status=400)
 
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
@@ -158,22 +173,3 @@ def update_task_order(request):
     return Response({"message": "Board updated"})
 
 
-@api_view(["GET", "POST"])
-@permission_classes([IsAuthenticated])
-def project_tasks(request, project_id):
-    if request.method == "GET":
-        tasks = Task.objects.filter(
-            project_id=project_id,
-            deleted_at__isnull=True
-        ).order_by("board_order")
-        return Response(TaskSerializer(tasks, many=True).data)
-
-    if request.method == "POST":
-        serializer = TaskSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(
-                project_id=project_id,
-                created_by=request.user
-            )
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)

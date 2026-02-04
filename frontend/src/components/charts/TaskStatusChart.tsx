@@ -8,13 +8,19 @@ import { Doughnut } from "react-chartjs-2";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const TaskStatusChart = () => {
-  // ✅ CHART DATA
+/* ================= TYPES ================= */
+interface Props {
+  todo: number;
+  inProgress: number;
+  done: number;
+}
+
+const TaskStatusChart = ({ todo, inProgress, done }: Props) => {
   const data = {
     labels: ["To Do", "In Progress", "Done"],
     datasets: [
       {
-        data: [12, 8, 22], // temporary values
+        data: [todo, inProgress, done],
         backgroundColor: [
           "#6366f1", // purple
           "#22c55e", // green
@@ -25,10 +31,9 @@ const TaskStatusChart = () => {
     ],
   };
 
-  // ✅ ADD OPTIONS HERE (THIS IS THE ANSWER)
   const options = {
     responsive: true,
-    maintainAspectRatio: false, // 🔑 THIS FIXES THE HUGE CHART
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "bottom" as const,
@@ -41,8 +46,10 @@ const TaskStatusChart = () => {
     <div className="chart-card">
       <h3>Task Status</h3>
 
-      {/* ✅ options passed HERE */}
-      <Doughnut data={data} options={options} />
+      {/* FIX SIZE */}
+      <div style={{ height: 280 }}>
+        <Doughnut data={data} options={options} />
+      </div>
     </div>
   );
 };

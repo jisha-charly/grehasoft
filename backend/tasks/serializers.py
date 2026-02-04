@@ -17,11 +17,6 @@ class TaskTypeSerializer(serializers.ModelSerializer):
 # TASK
 # =========================
 class TaskSerializer(serializers.ModelSerializer):
-    project_id = serializers.PrimaryKeyRelatedField(
-        queryset=Project.objects.all(),
-        source="project",
-        write_only=True
-    )
     task_type_id = serializers.PrimaryKeyRelatedField(
         queryset=TaskType.objects.all(),
         source="task_type",
@@ -40,7 +35,6 @@ class TaskSerializer(serializers.ModelSerializer):
             "status",
             "board_order",
             "due_date",
-            "project_id",
             "task_type_id",
             "project",
             "task_type",
@@ -48,11 +42,12 @@ class TaskSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = [
-            "created_by",
-            "created_at",
             "project",
             "task_type",
+            "created_by",
+            "created_at",
         ]
+
 
 
 class TaskCreateUpdateSerializer(serializers.ModelSerializer):

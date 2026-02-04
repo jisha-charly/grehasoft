@@ -1,23 +1,36 @@
 import api from "../axios";
 import type { Task } from "../../types/task";
+
+/* ===============================
+   GET TASKS BY PROJECT
+================================ */
 export const getTasksByProject = async (
   projectId: number
 ): Promise<Task[]> => {
-  const res = await api.get(`/tasks/?project_id=${projectId}`);
+  const res = await api.get(`/projects/${projectId}/tasks/`);
   return res.data;
 };
 
-export const createTask = async (data: {
+/* ===============================
+   CREATE TASK
+================================ */
+import type { TaskStatus } from "../../types/task";
+
+export interface CreateTaskPayload {
   title: string;
-  status: string;
-  project_id: number;
+  status: TaskStatus;
   task_type_id: number;
-  priority?: string;
+  priority?: "low" | "medium" | "high";
   board_order?: number;
-}) => {
-  return api.post("/tasks/", data);
-};
+}
 
+export const createTask = (
+  projectId: number,
+  payload: CreateTaskPayload
+) => api.post(`/projects/${projectId}/tasks/`, payload);
 
+/* ===============================
+   REORDER TASKS (KANBAN)
+================================ */
 export const reorderTasks = (payload: any[]) =>
-  api.post("/tasks/reorder/", payload);
+  api.post("/tasks/update-order/", payload);
