@@ -124,8 +124,7 @@ USE_TZ = True
 # --------------------------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-STATICFILES_DIRS = []  # Important: avoid missing-folder warning
+STATICFILES_DIRS = []
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
@@ -168,7 +167,7 @@ CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://jisha-charly-grehasoft-8119-git-jisha-jisha-charlys-projects.vercel.app",
+    "https://jisha-charly-grehasoft-819-git-jisha-jisha-charlys-projects.vercel.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -185,9 +184,9 @@ CORS_ALLOW_HEADERS = [
 
 
 # --------------------------------------------------
-# CSRF (REQUIRED FOR ADMIN + AUTH)
+# CSRF (REQUIRED FOR ADMIN)
 # --------------------------------------------------
 CSRF_TRUSTED_ORIGINS = [
     "https://grehasoft.onrender.com",
-    "https://jisha-charly-grehasoft-8119-git-jisha-jisha-charlys-projects.vercel.app",
+    "https://jisha-charly-grehasoft-819-git-jisha-jisha-charlys-projects.vercel.app",
 ]
