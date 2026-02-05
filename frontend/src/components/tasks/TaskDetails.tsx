@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { Task } from "../../types/task";
 import TaskFiles from "./TaskFiles";
 
@@ -9,13 +10,21 @@ interface Props {
 }
 
 const TaskDetails: React.FC<Props> = ({ task, onClose }) => {
-  return (
-    <div className="modal-backdrop show" style={{ zIndex: 1000 }}>
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const modal = (
+    <div className="modal-backdrop show task-details-backdrop" aria-hidden style={{ zIndex: 120000 }}>
       <div
-        className="modal d-block"
+        className="modal show d-block task-details-modal"
         tabIndex={-1}
         role="dialog"
-        style={{ zIndex: 1001 }}
+        aria-modal="true"
       >
         <div className="modal-dialog modal-lg" role="document">
           <div className="modal-content">
@@ -30,11 +39,13 @@ const TaskDetails: React.FC<Props> = ({ task, onClose }) => {
             </div>
             <div className="modal-body">
               <div className="mb-2">
-                <small className="text-muted me-3">Created: {task.created_at ? new Date(task.created_at).toLocaleString() : "-"}</small>
-                <small className="text-muted">Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : "-"}</small>
+                <small className="text-dark me-3">Created: {task.created_at ? new Date(task.created_at).toLocaleString() : "-"}</small>
+                <small className="text-dark">Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : "-"}</small>
               </div>
 
-              <p>{task.description || "No description"}</p>
+              <div className="bg-white p-2 rounded">
+                <p className="text-dark" style={{ whiteSpace: "pre-wrap", marginBottom: 0 }}>{task.description || "No description"}</p>
+              </div>
 
               <hr />
 
@@ -55,6 +66,8 @@ const TaskDetails: React.FC<Props> = ({ task, onClose }) => {
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 };
 
 export default TaskDetails;

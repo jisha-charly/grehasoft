@@ -2,6 +2,13 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import dj_database_url
+import mimetypes
+
+# Ensure correct MIME types for file previews
+mimetypes.add_type("application/pdf", ".pdf", True)
+mimetypes.add_type("image/png", ".png", True)
+mimetypes.add_type("image/jpeg", ".jpg", True)
+mimetypes.add_type("image/jpeg", ".jpeg", True)
 
 # --------------------------------------------------
 # BASE DIR
@@ -140,6 +147,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # --------------------------------------------------
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+DEBUG = True
 
 
 # --------------------------------------------------
@@ -192,3 +200,6 @@ CSRF_TRUSTED_ORIGINS = [
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
 CSRF_USE_SESSIONS = False
+
+# Allow iframe embedding (DEV ONLY)
+X_FRAME_OPTIONS = "ALLOWALL"

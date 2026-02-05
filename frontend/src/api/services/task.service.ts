@@ -18,6 +18,8 @@ export interface CreateTaskPayload {
   title: string;
   status: TaskStatus;
   task_type_id: number;
+  description?: string;
+  due_date?: string; // YYYY-MM-DD
   priority?: "low" | "medium" | "high";
   board_order?: number;
 }

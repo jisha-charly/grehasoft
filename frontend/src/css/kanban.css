@@ -17,9 +17,12 @@
 
 /* Modal helper */
 .modal-backdrop.show {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  position: fixed !important;
+  inset: 0 !important;
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  opacity: 1 !important;
+  backdrop-filter: blur(3px) !important;
+  z-index: 120000 !important;
 }
 .modal.d-block {
   position: fixed;
@@ -32,6 +35,112 @@
   max-height: 80vh;
   overflow: auto;
   border-radius: 8px;
+  /* make modal content fully opaque and prominent */
+  background-color: #ffffff !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  opacity: 1 !important;
+}
+/* Preview modal backdrop */
+.preview-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  backdrop-filter: blur(4px);
+  z-index: 130000 !important;
+}
+
+/* Preview modal container */
+.preview-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 130001 !important;
+}
+
+/* Ensure preview content is solid */
+.preview-modal .modal-content {
+  background-color: #ffffff !important;
+  opacity: 1 !important;
+  border-radius: 8px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+}
+
+/* PDF iframe fix */
+.preview-modal iframe {
+  width: 100%;
+  height: 70vh;
+  border: none;
+}
+
+/* Image preview fix */
+.preview-modal img {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+/* Text preview */
+.preview-modal pre {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  max-height: 70vh;
+  overflow: auto;
+}
+
+/* Dedicated TaskDetails modal/backdrop to force topmost, opaque view */
+.task-details-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background-color: rgba(3, 3, 3, 0.95) !important;
+  backdrop-filter: blur(6px);
+  pointer-events: auto !important;
+}
+
+.task-details-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 120001 !important;
+}
+
+.task-details-modal .modal-content {
+  z-index: 120002 !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35) !important;
+  opacity: 1 !important;
+}
+
+/* Ensure task files items are readable on white background */
+.task-files li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  background-color: #ffffff;
+}
+
+/* Preview modal styles */
+.preview-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 130000 !important;
+}
+
+.preview-modal .modal-content {
+  max-height: 90vh;
+  overflow: auto;
+  z-index: 130001 !important;
 }
 
 /* Task files list */

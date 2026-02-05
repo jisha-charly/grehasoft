@@ -1,9 +1,11 @@
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 from django.db.models import Max
+from django.http import FileResponse, Http404
+import os
 
 from .models import Task, TaskType, TaskAssignment, TaskFile
 from .serializers import (
@@ -184,7 +186,8 @@ def task_files(request, task_id):
 
     if request.method == "GET":
         files = TaskFile.objects.filter(task=task, deleted_at__isnull=True).order_by("uploaded_at")
-        return Response(TaskFileSerializer(files, many=True).data)
+        serializer = TaskFileSerializer(files, many=True, context={"request": request})
+        return Response(serializer.data)
 
     # POST - upload file (expect multipart/form-data with 'file_path')
     serializer = TaskFileSerializer(data=request.data)
@@ -199,8 +202,10 @@ def task_files(request, task_id):
         else:
             revision_no = 1
 
-        serializer.save(task=task, uploaded_by=request.user, revision_no=revision_no)
-        return Response(serializer.data, status=201)
+        instance = serializer.save(task=task, uploaded_by=request.user, revision_no=revision_no)
+        # return serializer with request context so file_url is absolute
+        out = TaskFileSerializer(instance, context={"request": request})
+        return Response(out.data, status=201)
 
     return Response(serializer.errors, status=400)
 
@@ -212,5 +217,24 @@ def delete_task_file(request, file_id):
     task_file.deleted_at = now()
     task_file.save()
     return Response({"message": "File deleted"})
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def serve_task_file(request, file_id):
+    """Serve the task file with inline disposition and permissive frame header for previewing."""
+    task_file = get_object_or_404(TaskFile, id=file_id, deleted_at__isnull=True)
+    file_path = task_file.file_path.path
+    if not os.path.exists(file_path):
+        raise Http404("File not found")
+    try:
+        resp = FileResponse(open(file_path, "rb"), as_attachment=False)
+        # Let browser attempt to display inline
+        resp["Content-Disposition"] = f'inline; filename="{os.path.basename(file_path)}"'
+        # Allow embedding in iframes from other origins (dev helper)
+        resp["X-Frame-Options"] = "ALLOWALL"
+        return resp
+    except FileNotFoundError:
+        raise Http404("File not found")
 
 

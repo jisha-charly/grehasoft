@@ -17,4 +17,5 @@ urlpatterns = [
     # TASK FILES
     path("tasks/<int:task_id>/files/", views.task_files),
     path("tasks/files/<int:file_id>/delete/", views.delete_task_file),
+    path("tasks/files/<int:file_id>/serve/", views.serve_task_file),
 ]

@@ -23,6 +23,12 @@ const TaskCard = ({ task, onClick }: Props) => {
       <div className="card-body p-2">
         <h6 className="mb-1">{task.title}</h6>
 
+        {task.due_date && (
+          <div>
+            <small className="text-muted">Due: {new Date(task.due_date).toLocaleDateString()}</small>
+          </div>
+        )}
+
         <div className="d-flex justify-content-between align-items-center">
           {task.task_type_name && (
             <span className="badge bg-info text-dark">

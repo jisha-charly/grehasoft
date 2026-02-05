@@ -97,11 +97,45 @@ class TaskProgressSerializer(serializers.ModelSerializer):
 # =========================
 # TASK FILES
 # =========================
+import os
+
 class TaskFileSerializer(serializers.ModelSerializer):
     uploaded_by_name = serializers.CharField(source="uploaded_by.username", read_only=True)
+    file_url = serializers.SerializerMethodField(read_only=True)
+    file_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = TaskFile
-        fields = ["id", "task", "uploaded_by", "uploaded_by_name", "file_path", "file_type", "revision_no", "uploaded_at", "deleted_at"]
-        read_only_fields = ["uploaded_by", "uploaded_at", "revision_no", "deleted_at"]
+        fields = [
+            "id",
+            "task",
+            "uploaded_by",
+            "uploaded_by_name",
+            "file_path",
+            "file_url",
+            "file_name",
+            "file_type",
+            "revision_no",
+            "uploaded_at",
+            "deleted_at",
+        ]
+        read_only_fields = ["uploaded_by", "uploaded_at", "revision_no", "deleted_at", "file_url", "file_name"]
         extra_kwargs = {"task": {"required": False}}
+
+    def get_file_url(self, obj):
+        request = self.context.get("request") if hasattr(self, "context") else None
+        try:
+            url = obj.file_path.url
+        except Exception:
+            url = None
+        if not url:
+            return None
+        if request:
+            return request.build_absolute_uri(url)
+        return url
+
+    def get_file_name(self, obj):
+        try:
+            return os.path.basename(obj.file_path.name)
+        except Exception:
+            return None
