@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import {
   getUsers,
   createUser,
@@ -59,10 +60,10 @@ const Users = () => {
   }, []);
 
   // ================= SEARCH =================
-  const filteredUsers = users.filter(u =>
+  const filteredUsers = users.filter((u) =>
     `${u.username} ${u.email} ${u.role_name ?? ""} ${u.department_name ?? ""}`
       .toLowerCase()
-      .includes(search.toLowerCase())
+      .includes(search.toLowerCase()),
   );
 
   // ================= CREATE VALIDATION =================
@@ -92,26 +93,26 @@ const Users = () => {
     };
 
     try {
-    await createUser(payload);
-    setForm(emptyForm);
-    setErrors({});
-    fetchAll();
-  } catch (err: any) {
-  let message = "Failed to create user";
+      await createUser(payload);
+      setForm(emptyForm);
+      setErrors({});
+      fetchAll();
+      toast.success("User created");
+    } catch (err: any) {
+      let message = "Failed to create user";
 
-  if (err?.response?.status === 401) {
-    message = "Session expired. Please login again.";
-  } else if (err?.response?.status === 403) {
-    message = "You are not allowed to create users.";
-  } else {
-    message =
-      err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      message;
-  }
+      if (err?.response?.status === 401) {
+        message = "Session expired. Please login again.";
+      } else if (err?.response?.status === 403) {
+        message = "You are not allowed to create users.";
+      } else {
+        message =
+          err?.response?.data?.error || err?.response?.data?.message || message;
+      }
 
-  setErrors({ api: message });
-  }
+      setErrors({ api: message });
+      toast.error(String(message));
+    }
   };
 
   // ================= EDIT =================
@@ -138,8 +139,9 @@ const Users = () => {
 
       closeEdit();
       fetchAll();
-    } catch {
-      alert("Failed to update user");
+    } catch (err: any) {
+      console.error("Update failed", err);
+      toast.error("Failed to update user");
     }
   };
 
@@ -152,10 +154,16 @@ const Users = () => {
   // ================= DELETE =================
   const confirmDelete = async () => {
     if (!deleteId) return;
-    await deleteUser(deleteId);
-    setDeleteId(null);
-    setShowDeleteModal(false);
-    fetchAll();
+    try {
+      await deleteUser(deleteId);
+      setDeleteId(null);
+      setShowDeleteModal(false);
+      fetchAll();
+      toast.success("User deleted");
+    } catch (err: any) {
+      console.error("Delete failed", err);
+      toast.error("Failed to delete user");
+    }
   };
 
   // ================= UI =================
@@ -167,7 +175,7 @@ const Users = () => {
         className="form-control mb-3"
         placeholder="Search users..."
         value={search}
-        onChange={e => setSearch(e.target.value)}
+        onChange={(e) => setSearch(e.target.value)}
       />
 
       {/* CREATE USER (ALWAYS CREATE ONLY) */}
@@ -181,7 +189,7 @@ const Users = () => {
               placeholder="Username"
               className={`form-control ${errors.username && "is-invalid"}`}
               value={form.username}
-              onChange={e => setForm({ ...form, username: e.target.value })}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
             />
             <small className="text-danger">{errors.username}</small>
           </div>
@@ -192,7 +200,7 @@ const Users = () => {
               placeholder="Email"
               className={`form-control ${errors.email && "is-invalid"}`}
               value={form.email}
-              onChange={e => setForm({ ...form, email: e.target.value })}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
             <small className="text-danger">{errors.email}</small>
           </div>
@@ -201,11 +209,13 @@ const Users = () => {
             <select
               className={`form-control ${errors.role && "is-invalid"}`}
               value={form.role}
-              onChange={e => setForm({ ...form, role: e.target.value })}
+              onChange={(e) => setForm({ ...form, role: e.target.value })}
             >
               <option value="">Select Role</option>
-              {roles.map(r => (
-                <option key={r.id} value={r.id}>{r.name}</option>
+              {roles.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
               ))}
             </select>
             <small className="text-danger">{errors.role}</small>
@@ -218,9 +228,9 @@ const Users = () => {
               placeholder="Password"
               className={`form-control ${errors.password && "is-invalid"}`}
               value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
             />
-            
+
             <small className="text-danger">{errors.password}</small>
           </div>
 
@@ -231,7 +241,7 @@ const Users = () => {
               placeholder="Confirm Password"
               className={`form-control ${errors.confirmPassword && "is-invalid"}`}
               value={form.confirmPassword}
-              onChange={e =>
+              onChange={(e) =>
                 setForm({ ...form, confirmPassword: e.target.value })
               }
             />
@@ -242,11 +252,13 @@ const Users = () => {
             <select
               className="form-control"
               value={form.department}
-              onChange={e => setForm({ ...form, department: e.target.value })}
+              onChange={(e) => setForm({ ...form, department: e.target.value })}
             >
               <option value="">Select Department</option>
-              {departments.map(d => (
-                <option key={d.id} value={d.id}>{d.name}</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
               ))}
             </select>
           </div>
@@ -255,11 +267,9 @@ const Users = () => {
         <button className="btn btn-primary mt-3" onClick={handleCreate}>
           Create User
         </button>
-       {errors.api && (
-  <small className="text-danger d-block mt-2">
-    {errors.api}
-  </small>
-)}
+        {errors.api && (
+          <small className="text-danger d-block mt-2">{errors.api}</small>
+        )}
       </div>
 
       {/* USERS TABLE */}
@@ -274,7 +284,7 @@ const Users = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredUsers.map(u => (
+          {filteredUsers.map((u) => (
             <tr key={u.id}>
               <td>{u.username}</td>
               <td>{u.email}</td>
@@ -310,40 +320,55 @@ const Users = () => {
 
       {/* EDIT MODAL */}
       {showEditModal && (
-        <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
+        <div
+          className="modal show d-block"
+          style={{ background: "rgba(0,0,0,0.5)" }}
+        >
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content p-4">
               <h5>Edit User</h5>
 
-              <input className="form-control mb-3" value={editingUser?.username} disabled />
+              <input
+                className="form-control mb-3"
+                value={editingUser?.username}
+                disabled
+              />
 
               <input
                 className="form-control mb-3"
                 value={editForm.email}
-                onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, email: e.target.value })
+                }
               />
 
               <select
                 className="form-control mb-3"
                 value={editForm.role}
-                onChange={e => setEditForm({ ...editForm, role: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, role: e.target.value })
+                }
               >
                 <option value="">Select Role</option>
-                {roles.map(r => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
+                {roles.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
                 ))}
               </select>
 
               <select
                 className="form-control mb-3"
                 value={editForm.department}
-                onChange={e =>
+                onChange={(e) =>
                   setEditForm({ ...editForm, department: e.target.value })
                 }
               >
                 <option value="">Select Department</option>
-                {departments.map(d => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
                 ))}
               </select>
 
@@ -362,7 +387,10 @@ const Users = () => {
 
       {/* DELETE MODAL */}
       {showDeleteModal && (
-        <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
+        <div
+          className="modal show d-block"
+          style={{ background: "rgba(0,0,0,0.5)" }}
+        >
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content p-4">
               <h5>Delete user?</h5>

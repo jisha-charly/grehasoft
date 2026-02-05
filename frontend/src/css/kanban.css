@@ -5,10 +5,60 @@
 
 .task-card {
   cursor: grab;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .task-card:hover {
   transform: scale(1.02);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* Modal helper */
+.modal-backdrop.show {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+.modal.d-block {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal .modal-content {
+  max-height: 80vh;
+  overflow: auto;
+  border-radius: 8px;
+}
+
+/* Task files list */
+.task-files ul {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0 0;
+}
+
+.task-files li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+}
+
+.task-files li a {
+  color: #0d6efd;
+  text-decoration: none;
+}
+
+.task-files li button {
+  margin-left: auto;
+}
+
+.task-files h4 {
+  margin-bottom: 8px;
 }

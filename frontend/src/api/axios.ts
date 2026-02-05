@@ -9,11 +9,15 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access");
 
   if (token) {
-    // ✅ Axios v1 safe way
-    config.headers?.set("Authorization", `Bearer ${token}`);
+    // Set header safely on Axios config
+    config.headers = config.headers || {};
+    (config.headers as Record<string, string>)["Authorization"] =
+      `Bearer ${token}`;
   }
 
   return config;
 });
+
+console.log("API_BASE_URL =", API_BASE_URL);
 
 export default api;

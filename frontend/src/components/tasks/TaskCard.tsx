@@ -2,6 +2,7 @@ import type { Task } from "../../types/task";
 
 interface Props {
   task: Task;
+  onClick?: (task: Task) => void;
 }
 
 const statusColor: any = {
@@ -11,9 +12,14 @@ const statusColor: any = {
   blocked: "danger",
 };
 
-const TaskCard = ({ task }: Props) => {
+const TaskCard = ({ task, onClick }: Props) => {
   return (
-    <div className="card mb-2 shadow-sm task-card">
+    <div
+      className="card mb-2 shadow-sm task-card"
+      role="button"
+      onClick={() => onClick && onClick(task)}
+      style={{ cursor: "pointer" }}
+    >
       <div className="card-body p-2">
         <h6 className="mb-1">{task.title}</h6>
 

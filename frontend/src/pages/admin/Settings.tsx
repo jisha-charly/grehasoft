@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { updateProfile, changePassword } from "../../api/services/profile.service";
+import {
+  updateProfile,
+  changePassword,
+} from "../../api/services/profile.service";
 
 const Settings = () => {
   const navigate = useNavigate();
 
   // INITIAL DATA
   const [username, setUsername] = useState(
-    localStorage.getItem("username") || ""
+    localStorage.getItem("username") || "",
   );
   const [email, setEmail] = useState("");
 
@@ -33,10 +36,10 @@ const Settings = () => {
 
     try {
       setLoading(true);
-     await updateProfile({
-  username,
-  ...(email ? { email } : {}),
-});
+      await updateProfile({
+        username,
+        ...(email ? { email } : {}),
+      });
 
       localStorage.setItem("username", username);
       setSuccess("Profile updated successfully");
@@ -69,7 +72,6 @@ const Settings = () => {
       // SECURITY: force logout
       localStorage.clear();
       navigate("/");
-
     } catch (err: any) {
       setError(err.response?.data?.error || "Password change failed");
     } finally {
@@ -123,6 +125,7 @@ const Settings = () => {
             type="password"
             className="form-control mb-2"
             placeholder="Current Password"
+            autoComplete="current-password"
             value={oldPassword}
             onChange={(e) => setOldPassword(e.target.value)}
           />
@@ -131,6 +134,7 @@ const Settings = () => {
             type="password"
             className="form-control mb-3"
             placeholder="New Password"
+            autoComplete="new-password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />

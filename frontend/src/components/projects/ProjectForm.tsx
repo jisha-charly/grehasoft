@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { createProject } from "../../api/services/project.service";
 import { getClients } from "../../api/services/clients";
 import { getDepartments } from "../../api/services/department.service";
@@ -27,6 +28,8 @@ const ProjectForm = ({ onSuccess }: Props) => {
     end_date: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     getClients().then(setClients);
     getDepartments().then(setDepartments);
@@ -34,14 +37,15 @@ const ProjectForm = ({ onSuccess }: Props) => {
   }, []);
 
   const submit = async () => {
-    if (!form.name || !form.client_id) return;
+    if (!form.name || !form.client_id) {
+      toast.error("Please add a project name and select a client");
+      return;
+    }
 
     const payload: CreateProjectPayload = {
       name: form.name,
       client: Number(form.client_id),
-      department: form.department_id
-        ? Number(form.department_id)
-        : null,
+      department: form.department_id ? Number(form.department_id) : null,
       project_manager: form.project_manager_id
         ? Number(form.project_manager_id)
         : null,
@@ -49,32 +53,50 @@ const ProjectForm = ({ onSuccess }: Props) => {
       end_date: form.end_date || null,
     };
 
-    await createProject(payload);
+    setLoading(true);
 
-    setForm({
-      name: "",
-      client_id: "",
-      department_id: "",
-      project_manager_id: "",
-      start_date: "",
-      end_date: "",
-    });
+    try {
+      // helpful debug info
+      console.debug("Creating project with payload", payload);
 
-    onSuccess();
+      const res = await createProject(payload);
+      // if the API returns created data, use it; otherwise assume success on 2xx
+      // res may be undefined in current wrapper, so check status via axios response
+      // createProject returns nothing currently; assume success if no exception
+
+      setForm({
+        name: "",
+        client_id: "",
+        department_id: "",
+        project_manager_id: "",
+        start_date: "",
+        end_date: "",
+      });
+
+      onSuccess();
+      toast.success("Project created");
+    } catch (err: any) {
+      console.error("Project creation failed", err);
+      const message =
+        err?.response?.data?.error ||
+        err?.response?.data ||
+        err?.message ||
+        "Failed to create project";
+      toast.error(String(message));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="card mb-3">
       <div className="card-body row g-2">
-
         <div className="col-md-4">
           <input
             className="form-control"
             placeholder="Project Name"
             value={form.name}
-            onChange={(e) =>
-              setForm({ ...form, name: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
 
@@ -82,9 +104,7 @@ const ProjectForm = ({ onSuccess }: Props) => {
           <select
             className="form-select"
             value={form.client_id}
-            onChange={(e) =>
-              setForm({ ...form, client_id: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, client_id: e.target.value })}
           >
             <option value="">Select Client</option>
             {clients.map((c) => (
@@ -137,9 +157,7 @@ const ProjectForm = ({ onSuccess }: Props) => {
             type="date"
             className="form-control"
             value={form.start_date}
-            onChange={(e) =>
-              setForm({ ...form, start_date: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, start_date: e.target.value })}
           />
         </div>
 
@@ -148,9 +166,7 @@ const ProjectForm = ({ onSuccess }: Props) => {
             type="date"
             className="form-control"
             value={form.end_date}
-            onChange={(e) =>
-              setForm({ ...form, end_date: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, end_date: e.target.value })}
           />
         </div>
 
@@ -159,7 +175,6 @@ const ProjectForm = ({ onSuccess }: Props) => {
             Create Project
           </button>
         </div>
-
       </div>
     </div>
   );

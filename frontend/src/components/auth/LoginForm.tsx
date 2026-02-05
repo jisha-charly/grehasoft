@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import api from "../../api/axios";
+import { isAuthenticated } from "../../utils/auth";
 
 const LoginForm = () => {
   const [username, setUsername] = useState("");
@@ -10,6 +12,17 @@ const LoginForm = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  // Clear any lingering toasts/alerts when showing login so previous messages
+  // (eg. 'Password changed') do not appear on the login screen.
+  useEffect(() => {
+    toast.dismiss();
+    // If already authenticated, redirect to dashboard and replace history so
+    // back button doesn't go back to login
+    if (isAuthenticated()) {
+      navigate("/admin/dashboard", { replace: true });
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +50,8 @@ const LoginForm = () => {
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
 
-      navigate("/admin/dashboard");
+      // Replace history entry so user cannot navigate back to login with back button
+      navigate("/admin/dashboard", { replace: true });
     } catch (err: any) {
       if (err.response?.status === 401) {
         setError("Invalid username or password");
@@ -72,7 +86,7 @@ const LoginForm = () => {
             type={showPassword ? "text" : "password"}
             className="form-control"
             value={password}
-            autoComplete="new-password"
+            autoComplete="current-password"
             onChange={(e) => setPassword(e.target.value)}
           />
 

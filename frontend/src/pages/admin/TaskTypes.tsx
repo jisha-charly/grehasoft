@@ -128,7 +128,7 @@ const TaskTypes = () => {
             <tr key={t.id}>
               <td>{t.name}</td>
               <td>{t.description || "-"}</td>
-              <td>{new Date(t.created_at).toLocaleDateString()}</td>
+              <td>{t.created_at ? new Date(t.created_at).toLocaleDateString() : "-"}</td>
               <td>
                 <button
                   className="btn btn-sm btn-warning me-2"
