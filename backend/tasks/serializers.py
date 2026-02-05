@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Task, TaskType, TaskAssignment, TaskProgress
+from .models import Task, TaskType, TaskAssignment, TaskProgress, TaskFile
 from accounts.models import Project
  # adjust import if needed
 
@@ -10,7 +10,8 @@ from accounts.models import Project
 class TaskTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskType
-        fields = ["id", "name"]
+        fields = ["id", "name", "description", "created_at"]
+        read_only_fields = ["created_at"]
 
 
 # =========================
@@ -91,3 +92,16 @@ class TaskProgressSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskProgress
         fields = "__all__"
+
+
+# =========================
+# TASK FILES
+# =========================
+class TaskFileSerializer(serializers.ModelSerializer):
+    uploaded_by_name = serializers.CharField(source="uploaded_by.username", read_only=True)
+
+    class Meta:
+        model = TaskFile
+        fields = ["id", "task", "uploaded_by", "uploaded_by_name", "file_path", "file_type", "revision_no", "uploaded_at", "deleted_at"]
+        read_only_fields = ["uploaded_by", "uploaded_at", "revision_no", "deleted_at"]
+        extra_kwargs = {"task": {"required": False}}

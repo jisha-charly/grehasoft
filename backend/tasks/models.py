@@ -138,3 +138,31 @@ class TaskProgress(models.Model):
 
     def __str__(self):
         return f"{self.task} - {self.status}"
+
+
+# =================================================
+# TASK FILES
+# =================================================
+class TaskFile(models.Model):
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name="files",
+    )
+    uploaded_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="uploaded_files",
+    )
+    file_path = models.FileField(upload_to="task_files/", max_length=255)
+    file_type = models.CharField(max_length=50, blank=True)
+    revision_no = models.IntegerField(default=1)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+
+    def __str__(self):
+        return f"{self.file_path.name} ({self.task})"

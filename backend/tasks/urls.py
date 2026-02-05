@@ -13,4 +13,8 @@ urlpatterns = [
     path("tasks/assign/", views.assign_task_user),
     path("tasks/unassign/", views.unassign_task_user),
     path("tasks/update-order/", views.update_task_order),
+
+    # TASK FILES
+    path("tasks/<int:task_id>/files/", views.task_files),
+    path("tasks/files/<int:file_id>/delete/", views.delete_task_file),
 ]

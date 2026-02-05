@@ -3,12 +3,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
+from django.db.models import Max
 
-from .models import Task, TaskType,TaskAssignment
+from .models import Task, TaskType, TaskAssignment, TaskFile
 from .serializers import (
     TaskSerializer,
     TaskTypeSerializer,
-    TaskCreateUpdateSerializer,TaskAssignmentSerializer,
+    TaskCreateUpdateSerializer,TaskAssignmentSerializer, TaskFileSerializer,
 )
 from accounts.models import  Project
 
@@ -171,5 +172,45 @@ def update_task_order(request):
         )
 
     return Response({"message": "Board updated"})
+
+
+# =================================================
+# TASK FILES
+# =================================================
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def task_files(request, task_id):
+    task = get_object_or_404(Task, id=task_id, deleted_at__isnull=True)
+
+    if request.method == "GET":
+        files = TaskFile.objects.filter(task=task, deleted_at__isnull=True).order_by("uploaded_at")
+        return Response(TaskFileSerializer(files, many=True).data)
+
+    # POST - upload file (expect multipart/form-data with 'file_path')
+    serializer = TaskFileSerializer(data=request.data)
+    if serializer.is_valid():
+        # determine revision_no by filename (basic approach)
+        filename = None
+        if "file_path" in request.FILES:
+            filename = request.FILES["file_path"].name
+        if filename:
+            last_rev = TaskFile.objects.filter(task=task, file_path__icontains=filename).aggregate(Max("revision_no"))["revision_no__max"] or 0
+            revision_no = last_rev + 1
+        else:
+            revision_no = 1
+
+        serializer.save(task=task, uploaded_by=request.user, revision_no=revision_no)
+        return Response(serializer.data, status=201)
+
+    return Response(serializer.errors, status=400)
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_task_file(request, file_id):
+    task_file = get_object_or_404(TaskFile, id=file_id)
+    task_file.deleted_at = now()
+    task_file.save()
+    return Response({"message": "File deleted"})
 
 
