@@ -31,7 +31,7 @@ const AdminRoutes = () => {
         <Route path="projects" element={<Projects />} />
         <Route path="projects/:id" element={<ProjectDetails />} />
         <Route path="settings" element={<Settings />} />
-
+       
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

@@ -36,38 +36,42 @@ class DepartmentAdmin(admin.ModelAdmin):
 # ---------------------------
 # USER (Custom User)
 # ---------------------------
+
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "username",
         "email",
         "role",
         "department",
-        "status",
         "is_staff",
         "is_active",
     )
-    list_filter = ("role", "department", "status", "is_staff")
-    search_fields = ("username", "email")
-    ordering = ("username",)
 
-    fieldsets = BaseUserAdmin.fieldsets + (
-        (
-            "Organization Info",
-            {
-                "fields": (
-                    "role",
-                    "department",
-                    "status",
-                )
-            },
-        ),
+    # ✅ THIS IS THE KEY FIX
+    list_display_links = ("username", "email")
+
+    list_filter = (
+        "role",
+        "department",
+        "is_staff",
+        "is_active",
     )
 
+    search_fields = ("username", "email")
 
-
-
+    fieldsets = (
+        ("Basic Info", {
+            "fields": ("username", "email", "password")
+        }),
+        ("Role & Department", {
+            "fields": ("role", "department")
+        }),
+        ("Permissions", {
+            "fields": ("is_staff", "is_active", "is_superuser")
+        }),
+    )
 # ---------------------------
 # CLIENT
 # ---------------------------

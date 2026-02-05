@@ -6,6 +6,9 @@ from .models import Client
 from .models import Project, ProjectMilestone, ProjectMember
 from .models import Department
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -247,5 +250,27 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Email already exists")
         return value
     
-
+# ================= login =================
     
+class LoginSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        user = self.user
+
+        data["user"] = {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": {
+                "id": user.role.id if user.role else None,
+                "name": user.role.name if user.role else None,
+            },
+        }
+
+        return data

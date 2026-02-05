@@ -2,12 +2,12 @@ from django.db import IntegrityError
 from django.contrib.auth import authenticate, get_user_model
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-
+from .serializers import LoginSerializer
 from accounts.models import Department, Role
 from .models import  Client, Project, ProjectMilestone, ProjectMember
 from .serializers import (
@@ -22,6 +22,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from .serializers import ProfileUpdateSerializer, ChangePasswordSerializer,UserSerializer
 User = get_user_model()
+
 
 
 # =================================================
@@ -580,4 +581,8 @@ def remove_project_member(request, id):
     member.deleted_at = timezone.now()
     member.save()
     return Response(status=204)
-
+# ==========================
+# login
+# ==========================
+class LoginView(TokenObtainPairView):
+    serializer_class = LoginSerializer

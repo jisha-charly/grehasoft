@@ -15,7 +15,6 @@ const LoginForm = () => {
     e.preventDefault();
     setError(null);
 
-    /* ================= CUSTOM VALIDATION ================= */
     if (!username.trim()) {
       setError("Please enter your username");
       return;
@@ -29,15 +28,27 @@ const LoginForm = () => {
     setLoading(true);
 
     try {
-      const res = await api.post("/token/", {
+      // ✅ CORRECT ENDPOINT
+      const res = await api.post("/login/", {
         username,
         password,
       });
 
-      localStorage.setItem("access", res.data.access);
-      localStorage.setItem("refresh", res.data.refresh);
+      const { access, refresh, user } = res.data;
 
-      navigate("/admin/dashboard");
+      // ✅ STORE TOKENS
+      localStorage.setItem("access", access);
+      localStorage.setItem("refresh", refresh);
+
+      // ✅ STORE USER SAFELY
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      } else {
+        localStorage.removeItem("user");
+      }
+
+      // ✅ REDIRECT
+      navigate("/admin/dashboard", { replace: true });
     } catch (err: any) {
       if (err.response?.status === 401) {
         setError("Invalid username or password");
@@ -51,7 +62,6 @@ const LoginForm = () => {
 
   return (
     <>
-      {/* 🔴 CUSTOM ERROR MESSAGE */}
       {error && <div className="alert alert-danger py-2">{error}</div>}
 
       <form onSubmit={handleLogin} noValidate>
@@ -72,7 +82,7 @@ const LoginForm = () => {
             type={showPassword ? "text" : "password"}
             className="form-control"
             value={password}
-            autoComplete="new-password"
+            autoComplete="current-password"
             onChange={(e) => setPassword(e.target.value)}
           />
 
