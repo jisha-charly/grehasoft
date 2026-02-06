@@ -159,15 +159,133 @@
   border-radius: 6px;
 }
 
-.task-files li a {
-  color: #0d6efd;
-  text-decoration: none;
-}
-
 .task-files li button {
   margin-left: auto;
 }
 
 .task-files h4 {
   margin-bottom: 8px;
+}
+/* =========================
+   FILE BUTTON BEAUTIFICATION
+========================= */
+
+/* File name button – remove link look */
+.task-files button.btn-link {
+  all: unset;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #212529;
+}
+
+.task-files button.btn-link:hover {
+  color: #0d6efd;
+  text-decoration: underline;
+}
+
+/* File row hover polish */
+.task-files li:hover {
+  background-color: #f8f9fa;
+}
+
+/* Align delete button to right cleanly */
+.task-files li {
+  justify-content: space-between;
+}
+
+/* Upload button */
+.task-files button:not(.btn-link):not(.btn-close) {
+  background-color: #0d6efd;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.task-files button:not(.btn-link):not(.btn-close):hover {
+  background-color: #0b5ed7;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
+}
+
+/* Disabled upload button */
+.task-files button:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Delete button – outline danger style */
+.task-files li button:last-child {
+  background-color: transparent;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  transition: all 0.15s ease;
+}
+
+.task-files li button:last-child:hover {
+  background-color: #dc3545;
+  color: #ffffff;
+}
+/* Make entire file row clickable */
+.task-files li {
+  cursor: pointer;
+  position: relative;
+}
+
+/* Ensure delete button stays clickable */
+.task-files li button:last-child {
+  z-index: 2;
+  position: relative;
+}
+
+/* Make filename button stretch */
+.task-files button.btn-link {
+  display: block;
+  width: 100%;
+}
+/* Make task file rows a 3-column layout */
+.task-files li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Center the uploaded-by text */
+.task-files li .uploaded-by {
+  justify-self: center;
+  font-size: 0.85rem;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+/* Keep delete button aligned right */
+.task-files li button:last-child {
+  justify-self: end;
+}
+/* =========================
+   PDF PREVIEW FIX
+========================= */
+
+/* Ensure modal body uses full height */
+.preview-modal .modal-body {
+  height: 75vh;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Full-size PDF viewer */
+.pdf-preview-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
 }
