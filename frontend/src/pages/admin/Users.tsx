@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import {
   getUsers,
   createUser,
@@ -19,6 +20,11 @@ const emptyForm = {
 };
 
 const Users = () => {
+  const location = useLocation();
+  const highlightUserId = location.state?.highlightUserId;
+
+  const highlightedRowRef = useRef<HTMLTableRowElement | null>(null);
+
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
@@ -26,11 +32,9 @@ const Users = () => {
   const [search, setSearch] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // 🔹 Create form state (ONLY for create)
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState<any>({});
 
-  // 🔹 Edit modal state (SEPARATE)
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState({
     email: "",
@@ -57,6 +61,16 @@ const Users = () => {
   useEffect(() => {
     fetchAll();
   }, []);
+
+  // ================= AUTO SCROLL TO HIGHLIGHT =================
+  useEffect(() => {
+    if (highlightedRowRef.current) {
+      highlightedRowRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [highlightUserId, users]);
 
   // ================= SEARCH =================
   const filteredUsers = users.filter(u =>
@@ -92,26 +106,18 @@ const Users = () => {
     };
 
     try {
-    await createUser(payload);
-    setForm(emptyForm);
-    setErrors({});
-    fetchAll();
-  } catch (err: any) {
-  let message = "Failed to create user";
-
-  if (err?.response?.status === 401) {
-    message = "Session expired. Please login again.";
-  } else if (err?.response?.status === 403) {
-    message = "You are not allowed to create users.";
-  } else {
-    message =
-      err?.response?.data?.error ||
-      err?.response?.data?.message ||
-      message;
-  }
-
-  setErrors({ api: message });
-  }
+      await createUser(payload);
+      setForm(emptyForm);
+      setErrors({});
+      fetchAll();
+    } catch (err: any) {
+      setErrors({
+        api:
+          err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          "Failed to create user",
+      });
+    }
   };
 
   // ================= EDIT =================
@@ -170,14 +176,13 @@ const Users = () => {
         onChange={e => setSearch(e.target.value)}
       />
 
-      {/* CREATE USER (ALWAYS CREATE ONLY) */}
+      {/* CREATE USER */}
       <div className="card p-3 mb-4">
         <h5>Create User</h5>
 
         <div className="row g-3">
           <div className="col-md-4">
             <input
-              autoComplete="off"
               placeholder="Username"
               className={`form-control ${errors.username && "is-invalid"}`}
               value={form.username}
@@ -188,7 +193,6 @@ const Users = () => {
 
           <div className="col-md-4">
             <input
-              autoComplete="off"
               placeholder="Email"
               className={`form-control ${errors.email && "is-invalid"}`}
               value={form.email}
@@ -214,20 +218,17 @@ const Users = () => {
           <div className="col-md-4">
             <input
               type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
               placeholder="Password"
               className={`form-control ${errors.password && "is-invalid"}`}
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
             />
-            
             <small className="text-danger">{errors.password}</small>
           </div>
 
           <div className="col-md-4">
             <input
               type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
               placeholder="Confirm Password"
               className={`form-control ${errors.confirmPassword && "is-invalid"}`}
               value={form.confirmPassword}
@@ -255,11 +256,10 @@ const Users = () => {
         <button className="btn btn-primary mt-3" onClick={handleCreate}>
           Create User
         </button>
-       {errors.api && (
-  <small className="text-danger d-block mt-2">
-    {errors.api}
-  </small>
-)}
+
+        {errors.api && (
+          <small className="text-danger d-block mt-2">{errors.api}</small>
+        )}
       </div>
 
       {/* USERS TABLE */}
@@ -274,37 +274,45 @@ const Users = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredUsers.map(u => (
-            <tr key={u.id}>
-              <td>{u.username}</td>
-              <td>{u.email}</td>
-              <td>{u.role_name ?? "-"}</td>
-              <td>{u.department_name ?? "-"}</td>
-              <td>
-                {u.username === "admin" ? (
-                  "Protected"
-                ) : (
-                  <>
-                    <button
-                      className="btn btn-warning btn-sm me-2"
-                      onClick={() => startEdit(u)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => {
-                        setDeleteId(u.id);
-                        setShowDeleteModal(true);
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
+          {filteredUsers.map(u => {
+            const isHighlighted = u.id === highlightUserId;
+
+            return (
+              <tr
+                key={u.id}
+                ref={isHighlighted ? highlightedRowRef : null}
+                className={isHighlighted ? "table-primary" : ""}
+              >
+                <td>{u.username}</td>
+                <td>{u.email}</td>
+                <td>{u.role_name ?? "-"}</td>
+                <td>{u.department_name ?? "-"}</td>
+                <td>
+                  {u.username === "admin" ? (
+                    "Protected"
+                  ) : (
+                    <>
+                      <button
+                        className="btn btn-warning btn-sm me-2"
+                        onClick={() => startEdit(u)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => {
+                          setDeleteId(u.id);
+                          setShowDeleteModal(true);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
@@ -315,7 +323,11 @@ const Users = () => {
             <div className="modal-content p-4">
               <h5>Edit User</h5>
 
-              <input className="form-control mb-3" value={editingUser?.username} disabled />
+              <input
+                className="form-control mb-3"
+                value={editingUser?.username}
+                disabled
+              />
 
               <input
                 className="form-control mb-3"

@@ -9,7 +9,7 @@ import type { Role } from "../../types/role";
 
 /* ================= VALIDATORS ================= */
 const roleValidators = {
-  name: /^[A-Za-z ]{3,}$/,
+  name: /^[A-Za-z_ ]{3,}$/,
 };
 
 const Roles = () => {

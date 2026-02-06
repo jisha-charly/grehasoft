@@ -31,5 +31,6 @@ urlpatterns = [
     path("api/", include("accounts.urls")),
   path("api/", include("tasks.urls")),   # 👈 REQUIRED
   path("api/dashboard/", include("dashboard.urls")),
+   path("api/search/", include("search.urls")),
 
 ]

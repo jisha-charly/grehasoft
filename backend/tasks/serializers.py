@@ -10,7 +10,12 @@ from accounts.models import Project
 class TaskTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskType
-        fields = ["id", "name"]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "created_at",
+        ]
 
 
 # =========================

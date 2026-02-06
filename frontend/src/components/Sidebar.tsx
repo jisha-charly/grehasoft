@@ -52,7 +52,7 @@ const Sidebar = () => {
       { label: "Projects", path: "/admin/projects", icon: <MdWork /> },
       { label: "Clients", path: "/admin/clients", icon: <MdBusiness /> },
       { label: "Task Types", path: "/admin/task-types", icon: <MdTask /> },
-      { label: "Kanban Board", path: "/admin/kanban", icon: <MdViewKanban /> },
+      { label: "All Task Board", path: "/admin/kanban", icon: <MdViewKanban /> },
       { label: "Reports", path: "/admin/reports", icon: <MdAssessment /> },
       { label: "Users", path: "/admin/users", icon: <MdGroups /> },
       { label: "Roles", path: "/admin/roles", icon: <MdPeople /> },
@@ -65,14 +65,14 @@ const Sidebar = () => {
       { label: "Dashboard", path: "/manager/dashboard", icon: <MdDashboard /> },
       { label: "My Projects", path: "/manager/projects", icon: <MdWork /> },
       { label: "Tasks", path: "/manager/tasks", icon: <MdTask /> },
-      { label: "Kanban Board", path: "/manager/kanban", icon: <MdViewKanban /> },
+     
       { label: "Team", path: "/manager/team", icon: <MdGroups /> },
       { label: "Reports", path: "/manager/reports", icon: <MdAssessment /> },
     ],
 
     EMPLOYEE: [
       { label: "My Tasks", path: "/tasks/my", icon: <MdTask /> },
-      { label: "Kanban Board", path: "/kanban", icon: <MdViewKanban /> },
+     
       { label: "My Projects", path: "/projects/my", icon: <MdWork /> },
       { label: "Work Uploads", path: "/uploads", icon: <MdFolderShared /> },
     ],
