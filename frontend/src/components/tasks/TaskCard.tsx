@@ -1,35 +1,48 @@
+import { Draggable } from "@hello-pangea/dnd";
 import type { Task } from "../../types/task";
+import "../../css/kanban.css";
 
 interface Props {
   task: Task;
+  index: number;
 }
 
-const statusColor: any = {
-  todo: "secondary",
-  in_progress: "primary",
-  done: "success",
-  blocked: "danger",
+/* Badge color mapping */
+const statusClass: Record<Task["status"], string> = {
+  todo: "status-todo",
+  in_progress: "status-in_progress",
+  done: "status-done",
+  blocked: "status-blocked",
 };
 
-const TaskCard = ({ task }: Props) => {
+const TaskCard = ({ task, index }: Props) => {
   return (
-    <div className="card mb-2 shadow-sm task-card">
-      <div className="card-body p-2">
-        <h6 className="mb-1">{task.title}</h6>
+    <Draggable draggableId={String(task.id)} index={index}>
+      {(provided) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className="kanban-task-card"
+        >
+          {/* TITLE */}
+          <h6 className="kanban-task-title">{task.title}</h6>
 
-        <div className="d-flex justify-content-between align-items-center">
-          {task.task_type_name && (
-            <span className="badge bg-info text-dark">
-              {task.task_type_name}
+          {/* FOOTER */}
+          <div className="kanban-task-footer">
+            {task.task_type_name && (
+              <span className="kanban-tag">
+                {task.task_type_name}
+              </span>
+            )}
+
+            <span className={`kanban-status ${statusClass[task.status]}`}>
+              {task.status.replace("_", " ")}
             </span>
-          )}
-
-          <span className={`badge bg-${statusColor[task.status]}`}>
-            {task.status.replace("_", " ")}
-          </span>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </Draggable>
   );
 };
 

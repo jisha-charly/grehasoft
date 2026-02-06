@@ -3,15 +3,13 @@
 export interface DashboardStats {
   // Projects
   total_projects: number;
-  ongoing_projects: number;
-  completed_projects: number;
-  not_started: number
+  projects_not_started: number;
+  projects_in_progress: number;
+  projects_completed: number;
+
   // Clients
   total_clients: number;
   active_clients: number;
-
-  // Users
-  total_users: number;
 
   // Tasks
   total_tasks: number;

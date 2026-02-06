@@ -1,5 +1,7 @@
+import { Droppable } from "@hello-pangea/dnd";
 import TaskCard from "./TaskCard";
 import type { Task } from "../../types/task";
+import "../../css/kanban.css";
 
 interface Props {
   title: string;
@@ -8,29 +10,41 @@ interface Props {
 }
 
 const KanbanColumn = ({ title, status, tasks }: Props) => {
-  const filtered = tasks.filter(t => t.status === status);
+  const filtered = tasks.filter((t) => t.status === status);
 
   return (
-    <div className="col-md-3">
-      <div className="card shadow-sm h-100">
-        <div className="card-header bg-light fw-semibold d-flex justify-content-between">
+    <div className="col-md-3 kanban-column-wrapper">
+      <div className="kanban-column-card">
+        {/* COLUMN HEADER */}
+        <div className="kanban-column-header">
           <span>{title}</span>
-          <span className="badge bg-secondary">
-            {filtered.length}
-          </span>
+          <span className="kanban-count">{filtered.length}</span>
         </div>
 
-        <div className="card-body kanban-column">
-          {filtered.length === 0 && (
-            <p className="text-muted small text-center mt-3">
-              No tasks
-            </p>
+        {/* DROPPABLE AREA */}
+        <Droppable droppableId={status}>
+          {(provided) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className="kanban-column"
+            >
+              {filtered.length === 0 && (
+                <p className="kanban-empty">No tasks</p>
+              )}
+
+              {filtered.map((task, index) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  index={index}
+                />
+              ))}
+
+              {provided.placeholder}
+            </div>
           )}
-
-          {filtered.map(task => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </div>
+        </Droppable>
       </div>
     </div>
   );

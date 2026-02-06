@@ -1,32 +1,46 @@
-import { isRouteErrorResponse, useRouteError, useNavigate } from "react-router-dom";
+import { Component, ReactNode } from "react";
 
-const ErrorBoundary = () => {
-  const error = useRouteError();
-  const navigate = useNavigate();
+interface Props {
+  children: ReactNode;
+}
 
-  let message = "Something went wrong";
+interface State {
+  hasError: boolean;
+}
 
-  if (isRouteErrorResponse(error)) {
-    if (error.status === 404) {
-      message = "This page does not exist";
-    }
+class ErrorBoundary extends Component<Props, State> {
+  state: State = {
+    hasError: false,
+  };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
   }
 
-  return (
-    <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
-      <div className="text-center p-5 bg-white rounded shadow-sm" style={{ maxWidth: 420 }}>
-        <h1 className="display-6 fw-bold text-danger">Oops!</h1>
-        <h5 className="mt-3">{message}</h5>
+  componentDidCatch(error: Error, info: any) {
+    console.error("ErrorBoundary caught an error:", error, info);
+  }
 
-        <button
-          className="btn btn-primary mt-3"
-          onClick={() => navigate("/admin/dashboard")}
-        >
-          Back to Dashboard
-        </button>
-      </div>
-    </div>
-  );
-};
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="d-flex justify-content-center align-items-center vh-100">
+          <div className="text-center">
+            <h1 className="text-danger">Something went wrong</h1>
+            <p>Please try refreshing the page.</p>
+            <button
+              className="btn btn-primary"
+              onClick={() => window.location.reload()}
+            >
+              Reload
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 export default ErrorBoundary;

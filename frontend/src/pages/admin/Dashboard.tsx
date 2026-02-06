@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import "../../css/Dashboard.css";
+
 import TaskStatusChart from "../../components/charts/TaskStatusChart";
 import ProjectStatusChart from "../../components/charts/ProjectStatusChart";
+
 import { getDashboardAnalytics } from "../../api/services/dashboardService";
-
-
 import type { DashboardStats } from "../../types/dashboard";
-
 
 const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -17,8 +16,8 @@ const Dashboard = () => {
       try {
         const data = await getDashboardAnalytics();
         setStats(data);
-      } catch (err) {
-        console.error("Dashboard API error", err);
+      } catch (error) {
+        console.error("Dashboard API error:", error);
       } finally {
         setLoading(false);
       }
@@ -30,17 +29,11 @@ const Dashboard = () => {
   if (loading) return <p>Loading dashboard...</p>;
   if (!stats) return <p>Failed to load dashboard</p>;
 
-  /* ================= DERIVED VALUES ================= */
-  const notStartedProjects =
-    stats.total_projects -
-    stats.ongoing_projects -
-    stats.completed_projects;
-
   return (
     <div className="dashboard">
       <h1 className="dashboard-title">Dashboard</h1>
 
-      {/* STATS CARDS */}
+      {/* ===== STATS CARDS ===== */}
       <div className="stats-grid">
         <div className="stat-card purple">
           <p>Total Projects</p>
@@ -49,7 +42,7 @@ const Dashboard = () => {
 
         <div className="stat-card blue">
           <p>Ongoing Projects</p>
-          <h2>{stats.ongoing_projects}</h2>
+          <h2>{stats.projects_in_progress}</h2>
         </div>
 
         <div className="stat-card pink">
@@ -63,7 +56,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* CHARTS */}
+      {/* ===== CHARTS ===== */}
       <div className="charts-grid">
         <TaskStatusChart
           todo={stats.tasks_todo}
@@ -72,11 +65,10 @@ const Dashboard = () => {
         />
 
         <ProjectStatusChart
-  notStarted={stats.not_started}
-  inProgress={stats.ongoing_projects}
-  completed={stats.completed_projects}
-/>
-
+          notStarted={stats.projects_not_started}
+          inProgress={stats.projects_in_progress}
+          completed={stats.projects_completed}
+        />
       </div>
     </div>
   );

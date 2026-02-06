@@ -5,6 +5,9 @@ from rest_framework import serializers
 from .models import Client
 from .models import Project, ProjectMilestone, ProjectMember
 from .models import Department
+from tasks.utils import derive_project_status
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
@@ -108,6 +111,7 @@ class ClientSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 class ProjectSerializer(serializers.ModelSerializer):
+    derived_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Project
@@ -119,8 +123,9 @@ class ProjectSerializer(serializers.ModelSerializer):
             "project_manager",
             "start_date",
             "end_date",
-            "status",
+            "status",              # optional (can remove later)
             "progress_percentage",
+            "derived_status",      # 👈 THIS was missing
         ]
         read_only_fields = ["id"]
 
@@ -133,6 +138,8 @@ class ProjectSerializer(serializers.ModelSerializer):
             )
         return data
 
+    def get_derived_status(self, obj):
+        return derive_project_status(obj)
     
     
 class ProjectMilestoneSerializer(serializers.ModelSerializer):
@@ -247,5 +254,27 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Email already exists")
         return value
     
-
+# ================= login =================
     
+class LoginSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        user = self.user
+
+        data["user"] = {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": {
+                "id": user.role.id if user.role else None,
+                "name": user.role.name if user.role else None,
+            },
+        }
+
+        return data
