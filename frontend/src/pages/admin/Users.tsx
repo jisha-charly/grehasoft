@@ -62,7 +62,7 @@ const Users = () => {
     fetchAll();
   }, []);
 
-  // ================= AUTO SCROLL TO HIGHLIGHT =================
+  // ================= AUTO SCROLL =================
   useEffect(() => {
     if (highlightedRowRef.current) {
       highlightedRowRef.current.scrollIntoView({
@@ -79,7 +79,7 @@ const Users = () => {
       .includes(search.toLowerCase())
   );
 
-  // ================= CREATE VALIDATION =================
+  // ================= VALIDATION =================
   const validateCreate = () => {
     const e: any = {};
     if (!form.username.trim()) e.username = "Username required";
@@ -134,19 +134,15 @@ const Users = () => {
   const handleUpdate = async () => {
     if (!editingUser) return;
 
-    try {
-      await updateUser(editingUser.id, {
-        email: editForm.email,
-        role: Number(editForm.role),
-        department: editForm.department ? Number(editForm.department) : null,
-        is_active: editingUser.is_active,
-      });
+    await updateUser(editingUser.id, {
+      email: editForm.email,
+      role: Number(editForm.role),
+      department: editForm.department ? Number(editForm.department) : null,
+      is_active: editingUser.is_active,
+    });
 
-      closeEdit();
-      fetchAll();
-    } catch {
-      alert("Failed to update user");
-    }
+    closeEdit();
+    fetchAll();
   };
 
   const closeEdit = () => {
@@ -176,93 +172,112 @@ const Users = () => {
         onChange={e => setSearch(e.target.value)}
       />
 
-      {/* CREATE USER */}
-      <div className="card p-3 mb-4">
-        <h5>Create User</h5>
+      {/* ================= CREATE USER ================= */}
+      <form autoComplete="off">
+        {/* Chrome autofill killer */}
+        <input type="text" name="fakeusernameremembered" style={{ display: "none" }} />
+        <input type="password" name="fakepasswordremembered" style={{ display: "none" }} />
 
-        <div className="row g-3">
-          <div className="col-md-4">
-            <input
-              placeholder="Username"
-              className={`form-control ${errors.username && "is-invalid"}`}
-              value={form.username}
-              onChange={e => setForm({ ...form, username: e.target.value })}
-            />
-            <small className="text-danger">{errors.username}</small>
+        <div className="card p-3 mb-4">
+          <h5>Create User</h5>
+
+          <div className="row g-3">
+            <div className="col-md-4">
+              <input
+                name="new-username"
+                autoComplete="off"
+                placeholder="Username"
+                className={`form-control ${errors.username && "is-invalid"}`}
+                value={form.username}
+                onChange={e => setForm({ ...form, username: e.target.value })}
+              />
+              <small className="text-danger">{errors.username}</small>
+            </div>
+
+            <div className="col-md-4">
+              <input
+                name="new-email"
+                type="email"
+                autoComplete="off"
+                placeholder="Email"
+                className={`form-control ${errors.email && "is-invalid"}`}
+                value={form.email}
+                onChange={e => setForm({ ...form, email: e.target.value })}
+              />
+              <small className="text-danger">{errors.email}</small>
+            </div>
+
+            <div className="col-md-4">
+              <select
+                className={`form-control ${errors.role && "is-invalid"}`}
+                value={form.role}
+                onChange={e => setForm({ ...form, role: e.target.value })}
+              >
+                <option value="">Select Role</option>
+                {roles.map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+              <small className="text-danger">{errors.role}</small>
+            </div>
+
+            <div className="col-md-4">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="new-password"
+                autoComplete="new-password"
+                placeholder="Password"
+                className={`form-control ${errors.password && "is-invalid"}`}
+                value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
+              />
+              <small className="text-danger">{errors.password}</small>
+            </div>
+
+            <div className="col-md-4">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="confirm-new-password"
+                autoComplete="new-password"
+                placeholder="Confirm Password"
+                className={`form-control ${errors.confirmPassword && "is-invalid"}`}
+                value={form.confirmPassword}
+                onChange={e =>
+                  setForm({ ...form, confirmPassword: e.target.value })
+                }
+              />
+              <small className="text-danger">{errors.confirmPassword}</small>
+            </div>
+
+            <div className="col-md-4">
+              <select
+                className="form-control"
+                value={form.department}
+                onChange={e => setForm({ ...form, department: e.target.value })}
+              >
+                <option value="">Select Department</option>
+                {departments.map(d => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="col-md-4">
-            <input
-              placeholder="Email"
-              className={`form-control ${errors.email && "is-invalid"}`}
-              value={form.email}
-              onChange={e => setForm({ ...form, email: e.target.value })}
-            />
-            <small className="text-danger">{errors.email}</small>
-          </div>
+          <button
+            type="button"
+            className="btn btn-primary mt-3"
+            onClick={handleCreate}
+          >
+            Create User
+          </button>
 
-          <div className="col-md-4">
-            <select
-              className={`form-control ${errors.role && "is-invalid"}`}
-              value={form.role}
-              onChange={e => setForm({ ...form, role: e.target.value })}
-            >
-              <option value="">Select Role</option>
-              {roles.map(r => (
-                <option key={r.id} value={r.id}>{r.name}</option>
-              ))}
-            </select>
-            <small className="text-danger">{errors.role}</small>
-          </div>
-
-          <div className="col-md-4">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              className={`form-control ${errors.password && "is-invalid"}`}
-              value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })}
-            />
-            <small className="text-danger">{errors.password}</small>
-          </div>
-
-          <div className="col-md-4">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Confirm Password"
-              className={`form-control ${errors.confirmPassword && "is-invalid"}`}
-              value={form.confirmPassword}
-              onChange={e =>
-                setForm({ ...form, confirmPassword: e.target.value })
-              }
-            />
-            <small className="text-danger">{errors.confirmPassword}</small>
-          </div>
-
-          <div className="col-md-4">
-            <select
-              className="form-control"
-              value={form.department}
-              onChange={e => setForm({ ...form, department: e.target.value })}
-            >
-              <option value="">Select Department</option>
-              {departments.map(d => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
-            </select>
-          </div>
+          {errors.api && (
+            <small className="text-danger d-block mt-2">{errors.api}</small>
+          )}
         </div>
+      </form>
 
-        <button className="btn btn-primary mt-3" onClick={handleCreate}>
-          Create User
-        </button>
-
-        {errors.api && (
-          <small className="text-danger d-block mt-2">{errors.api}</small>
-        )}
-      </div>
-
-      {/* USERS TABLE */}
+      {/* ================= USERS TABLE ================= */}
       <table className="table table-bordered">
         <thead>
           <tr>
@@ -274,125 +289,42 @@ const Users = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredUsers.map(u => {
-            const isHighlighted = u.id === highlightUserId;
-
-            return (
-              <tr
-                key={u.id}
-                ref={isHighlighted ? highlightedRowRef : null}
-                className={isHighlighted ? "table-primary" : ""}
-              >
-                <td>{u.username}</td>
-                <td>{u.email}</td>
-                <td>{u.role_name ?? "-"}</td>
-                <td>{u.department_name ?? "-"}</td>
-                <td>
-                  {u.username === "admin" ? (
-                    "Protected"
-                  ) : (
-                    <>
-                      <button
-                        className="btn btn-warning btn-sm me-2"
-                        onClick={() => startEdit(u)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => {
-                          setDeleteId(u.id);
-                          setShowDeleteModal(true);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
+          {filteredUsers.map(u => (
+            <tr
+              key={u.id}
+              ref={u.id === highlightUserId ? highlightedRowRef : null}
+            >
+              <td>{u.username}</td>
+              <td>{u.email}</td>
+              <td>{u.role_name ?? "-"}</td>
+              <td>{u.department_name ?? "-"}</td>
+              <td>
+                {u.username === "admin" ? (
+                  "Protected"
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-warning btn-sm me-2"
+                      onClick={() => startEdit(u)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => {
+                        setDeleteId(u.id);
+                        setShowDeleteModal(true);
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
-
-      {/* EDIT MODAL */}
-      {showEditModal && (
-        <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content p-4">
-              <h5>Edit User</h5>
-
-              <input
-                className="form-control mb-3"
-                value={editingUser?.username}
-                disabled
-              />
-
-              <input
-                className="form-control mb-3"
-                value={editForm.email}
-                onChange={e => setEditForm({ ...editForm, email: e.target.value })}
-              />
-
-              <select
-                className="form-control mb-3"
-                value={editForm.role}
-                onChange={e => setEditForm({ ...editForm, role: e.target.value })}
-              >
-                <option value="">Select Role</option>
-                {roles.map(r => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
-                ))}
-              </select>
-
-              <select
-                className="form-control mb-3"
-                value={editForm.department}
-                onChange={e =>
-                  setEditForm({ ...editForm, department: e.target.value })
-                }
-              >
-                <option value="">Select Department</option>
-                {departments.map(d => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
-
-              <div className="text-end">
-                <button className="btn btn-secondary me-2" onClick={closeEdit}>
-                  Cancel
-                </button>
-                <button className="btn btn-success" onClick={handleUpdate}>
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* DELETE MODAL */}
-      {showDeleteModal && (
-        <div className="modal show d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content p-4">
-              <h5>Delete user?</h5>
-              <div className="text-end mt-3">
-                <button
-                  className="btn btn-secondary me-2"
-                  onClick={() => setShowDeleteModal(false)}
-                >
-                  Cancel
-                </button>
-                <button className="btn btn-danger" onClick={confirmDelete}>
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
