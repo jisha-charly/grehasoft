@@ -34,3 +34,7 @@ export const createTask = (
 ================================ */
 export const reorderTasks = (payload: any[]) =>
   api.post("/tasks/update-order/", payload);
+
+export const updateTaskStatus = (id: number, status: string) => {
+  return api.patch(`/tasks/${id}/status/`, { status });
+};

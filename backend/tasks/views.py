@@ -172,4 +172,11 @@ def update_task_order(request):
 
     return Response({"message": "Board updated"})
 
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def update_task_status(request, pk):
+    task = Task.objects.get(id=pk)
+    task.status = request.data.get("status")
+    task.save()
+    return Response({"success": True})
 

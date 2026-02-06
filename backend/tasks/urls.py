@@ -13,4 +13,6 @@ urlpatterns = [
     path("tasks/assign/", views.assign_task_user),
     path("tasks/unassign/", views.unassign_task_user),
     path("tasks/update-order/", views.update_task_order),
+    path("tasks/<int:pk>/status/", views.update_task_status),
+
 ]
