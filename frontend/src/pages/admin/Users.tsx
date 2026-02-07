@@ -48,9 +48,6 @@ const Users = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // ================= PAGINATION =================
-  const [currentPage, setCurrentPage] = useState(1);
-
   // ================= FETCH =================
   const fetchAll = async () => {
     const [u, r, d] = await Promise.all([
@@ -84,11 +81,13 @@ const Users = () => {
       .includes(search.toLowerCase())
   );
 
+  // ================= PAGINATION =================
+  const [currentPage, setCurrentPage] = useState(1);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [search]);
 
-  // ================= PAGINATED DATA =================
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
 
   const paginatedUsers = filteredUsers.slice(
@@ -137,46 +136,6 @@ const Users = () => {
     }
   };
 
-  // ================= EDIT =================
-  const startEdit = (u: User) => {
-    setEditingUser(u);
-    setEditForm({
-      email: u.email,
-      role: String(u.role_id),
-      department: u.department_id ? String(u.department_id) : "",
-    });
-    setShowEditModal(true);
-  };
-
-  const handleUpdate = async () => {
-    if (!editingUser) return;
-
-    await updateUser(editingUser.id, {
-      email: editForm.email,
-      role: Number(editForm.role),
-      department: editForm.department ? Number(editForm.department) : null,
-      is_active: editingUser.is_active,
-    });
-
-    closeEdit();
-    fetchAll();
-  };
-
-  const closeEdit = () => {
-    setShowEditModal(false);
-    setEditingUser(null);
-    setEditForm({ email: "", role: "", department: "" });
-  };
-
-  // ================= DELETE =================
-  const confirmDelete = async () => {
-    if (!deleteId) return;
-    await deleteUser(deleteId);
-    setDeleteId(null);
-    setShowDeleteModal(false);
-    fetchAll();
-  };
-
   // ================= UI =================
   return (
     <div className="container-fluid">
@@ -191,8 +150,19 @@ const Users = () => {
 
       {/* ================= CREATE USER ================= */}
       <form autoComplete="off">
-        <input type="text" name="fakeuser" style={{ display: "none" }} />
-        <input type="password" name="fakepass" style={{ display: "none" }} />
+        {/* Autofill trap inputs */}
+        <input
+          type="text"
+          name="fake_username"
+          autoComplete="username"
+          style={{ display: "none" }}
+        />
+        <input
+          type="password"
+          name="fake_password"
+          autoComplete="current-password"
+          style={{ display: "none" }}
+        />
 
         <div className="card p-3 mb-4">
           <h5>Create User</h5>
@@ -200,6 +170,9 @@ const Users = () => {
           <div className="row g-3">
             <div className="col-md-4">
               <input
+                type="text"
+                name="create_user_username"
+                autoComplete="new-username"
                 placeholder="Username"
                 className={`form-control ${errors.username && "is-invalid"}`}
                 value={form.username}
@@ -213,19 +186,27 @@ const Users = () => {
             <div className="col-md-4">
               <input
                 type="email"
+                name="create_user_email"
+                autoComplete="off"
                 placeholder="Email"
                 className={`form-control ${errors.email && "is-invalid"}`}
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, email: e.target.value })
+                }
               />
               <small className="text-danger">{errors.email}</small>
             </div>
 
             <div className="col-md-4">
               <select
+                name="create_user_role"
+                autoComplete="off"
                 className={`form-control ${errors.role && "is-invalid"}`}
                 value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, role: e.target.value })
+                }
               >
                 <option value="">Select Role</option>
                 {roles.map((r) => (
@@ -240,6 +221,8 @@ const Users = () => {
             <div className="col-md-4">
               <input
                 type={showPassword ? "text" : "password"}
+                name="create_user_password"
+                autoComplete="new-password"
                 placeholder="Password"
                 className={`form-control ${errors.password && "is-invalid"}`}
                 value={form.password}
@@ -252,6 +235,8 @@ const Users = () => {
             <div className="col-md-4">
               <input
                 type={showPassword ? "text" : "password"}
+                name="create_user_confirm_password"
+                autoComplete="new-password"
                 placeholder="Confirm Password"
                 className={`form-control ${
                   errors.confirmPassword && "is-invalid"
@@ -265,6 +250,8 @@ const Users = () => {
 
             <div className="col-md-4">
               <select
+                name="create_user_department"
+                autoComplete="off"
                 className="form-control"
                 value={form.department}
                 onChange={(e) =>
@@ -321,19 +308,10 @@ const Users = () => {
                   "Protected"
                 ) : (
                   <>
-                    <button
-                      className="btn btn-warning btn-sm me-2"
-                      onClick={() => startEdit(u)}
-                    >
+                    <button className="btn btn-warning btn-sm me-2">
                       Edit
                     </button>
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => {
-                        setDeleteId(u.id);
-                        setShowDeleteModal(true);
-                      }}
-                    >
+                    <button className="btn btn-danger btn-sm">
                       Delete
                     </button>
                   </>
