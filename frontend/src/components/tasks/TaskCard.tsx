@@ -5,6 +5,7 @@ import "../../css/kanban.css";
 interface Props {
   task: Task;
   index: number;
+  onClick?: (task: Task) => void;
 }
 
 /* Badge color mapping */
@@ -15,7 +16,7 @@ const statusClass: Record<Task["status"], string> = {
   blocked: "status-blocked",
 };
 
-const TaskCard = ({ task, index }: Props) => {
+const TaskCard = ({ task, index, onClick }: Props) => {
   return (
     <Draggable draggableId={String(task.id)} index={index}>
       {(provided) => (
@@ -24,6 +25,11 @@ const TaskCard = ({ task, index }: Props) => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           className="kanban-task-card"
+          style={{ cursor: "pointer" }}
+          onClick={() => {
+            console.log("Clicked task:", task);
+            onClick?.(task);
+          }}
         >
           {/* TITLE */}
           <h6 className="kanban-task-title">{task.title}</h6>

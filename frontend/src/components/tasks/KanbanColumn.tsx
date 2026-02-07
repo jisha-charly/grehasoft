@@ -7,9 +7,10 @@ interface Props {
   title: string;
   status: Task["status"];
   tasks: Task[];
+  onTaskClick?: (task: Task) => void;
 }
 
-const KanbanColumn = ({ title, status, tasks }: Props) => {
+const KanbanColumn = ({ title, status, tasks, onTaskClick }: Props) => {
   const filtered = tasks.filter((t) => t.status === status);
 
   return (
@@ -38,6 +39,7 @@ const KanbanColumn = ({ title, status, tasks }: Props) => {
                   key={task.id}
                   task={task}
                   index={index}
+                  onClick={onTaskClick}
                 />
               ))}
 

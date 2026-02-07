@@ -38,3 +38,13 @@ export const reorderTasks = (payload: any[]) =>
 export const updateTaskStatus = (id: number, status: string) => {
   return api.patch(`/tasks/${id}/status/`, { status });
 };
+
+export const assignTask = async (
+  taskId: number,
+  employeeId: number | null
+) => {
+  const res = await api.post(`/tasks/${taskId}/assign/`, {
+    employee: employeeId,
+  });
+  return res.data;
+};

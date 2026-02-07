@@ -22,12 +22,19 @@ class TaskTypeSerializer(serializers.ModelSerializer):
 # TASK
 # =========================
 class TaskSerializer(serializers.ModelSerializer):
+    # 🔹 For creating/updating task type
     task_type_id = serializers.PrimaryKeyRelatedField(
         queryset=TaskType.objects.all(),
         source="task_type",
         write_only=True,
         required=False,
-        allow_null=True
+        allow_null=True,
+    )
+
+    # ✅ ADD THIS (frontend needs it)
+    project_id = serializers.IntegerField(
+        source="project.id",
+        read_only=True
     )
 
     class Meta:
@@ -40,18 +47,26 @@ class TaskSerializer(serializers.ModelSerializer):
             "status",
             "board_order",
             "due_date",
+
+            # write-only
             "task_type_id",
+
+            # read-only
             "project",
+            "project_id",   # ✅ IMPORTANT
             "task_type",
             "created_by",
             "created_at",
         ]
+
         read_only_fields = [
             "project",
+            "project_id",
             "task_type",
             "created_by",
             "created_at",
         ]
+
 
 
 
@@ -72,27 +87,50 @@ class TaskCreateUpdateSerializer(serializers.ModelSerializer):
 # =========================
 # TASK ASSIGNMENT
 # =========================
+
+
+
+class TaskAssignSerializer(serializers.Serializer):
+    employee = serializers.IntegerField(
+        required=False,
+        allow_null=True
+    )
+
 class TaskAssignmentSerializer(serializers.ModelSerializer):
     employee_name = serializers.CharField(
-        source="employee.username", read_only=True
+        source="employee.username",
+        read_only=True
     )
 
     class Meta:
         model = TaskAssignment
         fields = [
             "id",
-            "task",
             "employee",
             "employee_name",
             "assigned_at",
             "unassigned_at",
         ]
 
-
 # =========================
 # TASK PROGRESS
 # =========================
+# tasks/serializers.py
 class TaskProgressSerializer(serializers.ModelSerializer):
+    updated_by_name = serializers.CharField(
+        source="updated_by.username",
+        read_only=True
+    )
+
     class Meta:
         model = TaskProgress
-        fields = "__all__"
+        fields = [
+            "id",
+            "task",
+            "note",
+            "percentage",
+            "updated_by",
+            "updated_by_name",
+            "created_at",
+        ]
+        read_only_fields = ["updated_by", "created_at"]

@@ -10,9 +10,11 @@ urlpatterns = [
 
     # TASKS
     path("projects/<int:project_id>/tasks/", views.project_tasks),
-    path("tasks/assign/", views.assign_task_user),
-    path("tasks/unassign/", views.unassign_task_user),
+   path("tasks/<int:pk>/assign/", views.assign_task, name="assign-task"),
+ path("tasks/<int:pk>/progress/", views.get_task_progress),
+    path("tasks/<int:pk>/progress/add/", views.add_task_progress),
+   
     path("tasks/update-order/", views.update_task_order),
     path("tasks/<int:pk>/status/", views.update_task_status),
-
+ 
 ]

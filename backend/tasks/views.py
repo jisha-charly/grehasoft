@@ -3,14 +3,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
-
-from .models import Task, TaskType,TaskAssignment
+from django.utils import timezone
+from .models import Task, TaskType,TaskAssignment,TaskProgress
 from .serializers import (
     TaskSerializer,
     TaskTypeSerializer,
-    TaskCreateUpdateSerializer,TaskAssignmentSerializer,
+    TaskCreateUpdateSerializer,TaskAssignmentSerializer,TaskProgressSerializer
 )
 from accounts.models import  Project
+from rest_framework import status
 
 
 # =================================================
@@ -120,40 +121,58 @@ def delete_task(request, task_id):
     return Response({"message": "Task deleted"})
 
 
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def assign_task_user(request):
-    task_id = request.data.get("task")
+def assign_task(request, pk):
+    """
+    Assign / Unassign a task to an employee
+    payload: { employee: user_id | null }
+    """
+
+    # 1️⃣ Get task
+    try:
+        task = Task.objects.get(pk=pk)
+    except Task.DoesNotExist:
+        return Response(
+            {"detail": "Task not found"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
     employee_id = request.data.get("employee")
 
-    assignment, created = TaskAssignment.objects.get_or_create(
-        task_id=task_id,
+    # 2️⃣ UNASSIGN
+    if employee_id is None:
+        TaskAssignment.objects.filter(
+            task=task,
+            unassigned_at__isnull=True,
+        ).update(unassigned_at=timezone.now())
+
+        data = TaskSerializer(task).data
+        data["assignment"] = None
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    # 3️⃣ ASSIGN
+    # Close existing assignment
+    TaskAssignment.objects.filter(
+        task=task,
+        unassigned_at__isnull=True,
+    ).update(unassigned_at=timezone.now())
+
+    # Create new assignment
+    assignment = TaskAssignment.objects.create(
+        task=task,
         employee_id=employee_id,
-        defaults={"assigned_by": request.user}
+        assigned_by=request.user,
     )
 
-    return Response(TaskAssignmentSerializer(assignment).data, status=201)
+    # 4️⃣ Response
+    data = TaskSerializer(task).data
+    data["assignment"] = TaskAssignmentSerializer(assignment).data
 
-
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def unassign_task_user(request):
-    task_id = request.data.get("task")
-    employee_id = request.data.get("employee")
-
-    try:
-        assignment = TaskAssignment.objects.get(
-            task_id=task_id,
-            employee_id=employee_id,
-            unassigned_at__isnull=True
-        )
-        assignment.unassigned_at = now()
-        assignment.save()
-        return Response({"message": "User unassigned"})
-    except TaskAssignment.DoesNotExist:
-        return Response({"error": "Assignment not found"}, status=404)
-
-
+    return Response(data, status=status.HTTP_200_OK)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def update_task_order(request):
@@ -180,3 +199,28 @@ def update_task_status(request, pk):
     task.save()
     return Response({"success": True})
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def add_task_progress(request, pk):
+    try:
+        task = Task.objects.get(pk=pk)
+    except Task.DoesNotExist:
+        return Response({"detail": "Task not found"}, status=404)
+
+    serializer = TaskProgressSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(
+            task=task,
+            updated_by=request.user
+        )
+        return Response(serializer.data, status=201)
+
+    return Response(serializer.errors, status=400)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_task_progress(request, pk):
+    progress = TaskProgress.objects.filter(task_id=pk).order_by("-created_at")
+    serializer = TaskProgressSerializer(progress, many=True)
+    return Response(serializer.data)
