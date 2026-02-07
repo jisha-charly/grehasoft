@@ -19,6 +19,8 @@ const emptyForm = {
   department: "",
 };
 
+const ITEMS_PER_PAGE = 5;
+
 const Users = () => {
   const location = useLocation();
   const highlightUserId = location.state?.highlightUserId;
@@ -45,6 +47,9 @@ const Users = () => {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // ================= PAGINATION =================
+  const [currentPage, setCurrentPage] = useState(1);
 
   // ================= FETCH =================
   const fetchAll = async () => {
@@ -73,10 +78,22 @@ const Users = () => {
   }, [highlightUserId, users]);
 
   // ================= SEARCH =================
-  const filteredUsers = users.filter(u =>
+  const filteredUsers = users.filter((u) =>
     `${u.username} ${u.email} ${u.role_name ?? ""} ${u.department_name ?? ""}`
       .toLowerCase()
       .includes(search.toLowerCase())
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  // ================= PAGINATED DATA =================
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
   );
 
   // ================= VALIDATION =================
@@ -169,14 +186,13 @@ const Users = () => {
         className="form-control mb-3"
         placeholder="Search users..."
         value={search}
-        onChange={e => setSearch(e.target.value)}
+        onChange={(e) => setSearch(e.target.value)}
       />
 
       {/* ================= CREATE USER ================= */}
       <form autoComplete="off">
-        {/* Chrome autofill killer */}
-        <input type="text" name="fakeusernameremembered" style={{ display: "none" }} />
-        <input type="password" name="fakepasswordremembered" style={{ display: "none" }} />
+        <input type="text" name="fakeuser" style={{ display: "none" }} />
+        <input type="password" name="fakepass" style={{ display: "none" }} />
 
         <div className="card p-3 mb-4">
           <h5>Create User</h5>
@@ -184,25 +200,23 @@ const Users = () => {
           <div className="row g-3">
             <div className="col-md-4">
               <input
-                name="new-username"
-                autoComplete="off"
                 placeholder="Username"
                 className={`form-control ${errors.username && "is-invalid"}`}
                 value={form.username}
-                onChange={e => setForm({ ...form, username: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, username: e.target.value })
+                }
               />
               <small className="text-danger">{errors.username}</small>
             </div>
 
             <div className="col-md-4">
               <input
-                name="new-email"
                 type="email"
-                autoComplete="off"
                 placeholder="Email"
                 className={`form-control ${errors.email && "is-invalid"}`}
                 value={form.email}
-                onChange={e => setForm({ ...form, email: e.target.value })}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
               />
               <small className="text-danger">{errors.email}</small>
             </div>
@@ -211,11 +225,13 @@ const Users = () => {
               <select
                 className={`form-control ${errors.role && "is-invalid"}`}
                 value={form.role}
-                onChange={e => setForm({ ...form, role: e.target.value })}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
               >
                 <option value="">Select Role</option>
-                {roles.map(r => (
-                  <option key={r.id} value={r.id}>{r.name}</option>
+                {roles.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
                 ))}
               </select>
               <small className="text-danger">{errors.role}</small>
@@ -224,40 +240,42 @@ const Users = () => {
             <div className="col-md-4">
               <input
                 type={showPassword ? "text" : "password"}
-                name="new-password"
-                autoComplete="new-password"
                 placeholder="Password"
                 className={`form-control ${errors.password && "is-invalid"}`}
                 value={form.password}
-                onChange={e => setForm({ ...form, password: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, password: e.target.value })
+                }
               />
-              <small className="text-danger">{errors.password}</small>
             </div>
 
             <div className="col-md-4">
               <input
                 type={showPassword ? "text" : "password"}
-                name="confirm-new-password"
-                autoComplete="new-password"
                 placeholder="Confirm Password"
-                className={`form-control ${errors.confirmPassword && "is-invalid"}`}
+                className={`form-control ${
+                  errors.confirmPassword && "is-invalid"
+                }`}
                 value={form.confirmPassword}
-                onChange={e =>
+                onChange={(e) =>
                   setForm({ ...form, confirmPassword: e.target.value })
                 }
               />
-              <small className="text-danger">{errors.confirmPassword}</small>
             </div>
 
             <div className="col-md-4">
               <select
                 className="form-control"
                 value={form.department}
-                onChange={e => setForm({ ...form, department: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, department: e.target.value })
+                }
               >
                 <option value="">Select Department</option>
-                {departments.map(d => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
+                {departments.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -289,7 +307,7 @@ const Users = () => {
           </tr>
         </thead>
         <tbody>
-          {filteredUsers.map(u => (
+          {paginatedUsers.map((u) => (
             <tr
               key={u.id}
               ref={u.id === highlightUserId ? highlightedRowRef : null}
@@ -325,6 +343,31 @@ const Users = () => {
           ))}
         </tbody>
       </table>
+
+      {/* ================= PAGINATION ================= */}
+      {totalPages > 1 && (
+        <div className="d-flex justify-content-between align-items-center mt-3">
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+          <div>
+            <button
+              className="btn btn-outline-secondary btn-sm me-2"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+            >
+              Previous
+            </button>
+            <button
+              className="btn btn-outline-secondary btn-sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

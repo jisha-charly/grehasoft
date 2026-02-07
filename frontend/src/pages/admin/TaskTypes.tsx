@@ -5,7 +5,6 @@ import {
   updateTaskType,
   deleteTaskType,
 } from "../../api/services/taskType.service";
-
 import type { TaskType } from "../../types/tasktypes";
 
 const ITEMS_PER_PAGE = 5;
@@ -20,6 +19,7 @@ const TaskTypes = () => {
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [error, setError] = useState("");
 
   /* ---------- LOAD ---------- */
   const loadTaskTypes = async () => {
@@ -33,25 +33,46 @@ const TaskTypes = () => {
 
   /* ---------- CREATE ---------- */
   const handleCreate = async () => {
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      setError("Task type name is required");
+      return;
+    }
 
-    await createTaskType({ name, description });
-    setName("");
-    setDescription("");
-    loadTaskTypes();
+    try {
+      await createTaskType({
+        name: name.trim(),
+        description: description.trim(),
+      });
+
+      setName("");
+      setDescription("");
+      setError("");
+      setPage(1); // ✅ reset pagination
+      loadTaskTypes();
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.message ||
+          "Task type already exists"
+      );
+    }
   };
 
   /* ---------- UPDATE ---------- */
   const handleUpdate = async () => {
     if (!editing) return;
 
-    await updateTaskType(editing.id, {
-      name: editing.name,
-      description: editing.description,
-    });
+    try {
+      await updateTaskType(editing.id, {
+        name: editing.name.trim(),
+        description: editing.description?.trim(),
+      });
 
-    setEditing(null);
-    loadTaskTypes();
+      setEditing(null);
+      setPage(1);
+      loadTaskTypes();
+    } catch {
+      alert("Failed to update task type");
+    }
   };
 
   /* ---------- DELETE ---------- */
@@ -60,6 +81,7 @@ const TaskTypes = () => {
 
     await deleteTaskType(deleteId);
     setDeleteId(null);
+    setPage(1); // ✅ reset pagination
     loadTaskTypes();
   };
 
@@ -100,6 +122,12 @@ const TaskTypes = () => {
             Add
           </button>
         </div>
+
+        {error && (
+          <div className="text-danger px-3 pb-2">
+            {error}
+          </div>
+        )}
       </div>
 
       {/* SEARCH */}
@@ -128,7 +156,9 @@ const TaskTypes = () => {
             <tr key={t.id}>
               <td>{t.name}</td>
               <td>{t.description || "-"}</td>
-              <td>{new Date(t.created_at).toLocaleDateString()}</td>
+              <td>
+                {new Date(t.created_at).toLocaleDateString()}
+              </td>
               <td>
                 <button
                   className="btn btn-sm btn-warning me-2"
@@ -156,6 +186,31 @@ const TaskTypes = () => {
         </tbody>
       </table>
 
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <div className="d-flex justify-content-between mt-3">
+          <span>
+            Page {page} of {totalPages}
+          </span>
+          <div>
+            <button
+              className="btn btn-outline-secondary btn-sm me-2"
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+            >
+              Previous
+            </button>
+            <button
+              className="btn btn-outline-secondary btn-sm"
+              disabled={page === totalPages}
+              onClick={() => setPage(page + 1)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* EDIT MODAL */}
       {editing && (
         <div className="modal show d-block bg-dark bg-opacity-50">
@@ -174,7 +229,7 @@ const TaskTypes = () => {
                 />
                 <input
                   className="form-control"
-                  value={editing.description}
+                  value={editing.description || ""}
                   onChange={(e) =>
                     setEditing({
                       ...editing,
@@ -190,7 +245,10 @@ const TaskTypes = () => {
                 >
                   Cancel
                 </button>
-                <button className="btn btn-success" onClick={handleUpdate}>
+                <button
+                  className="btn btn-success"
+                  onClick={handleUpdate}
+                >
                   Save
                 </button>
               </div>
@@ -214,7 +272,10 @@ const TaskTypes = () => {
                 >
                   Cancel
                 </button>
-                <button className="btn btn-danger" onClick={handleDelete}>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleDelete}
+                >
                   Delete
                 </button>
               </div>
