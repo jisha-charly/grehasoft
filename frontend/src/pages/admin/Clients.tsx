@@ -10,6 +10,9 @@ import { clientValidators } from "../../utils/validators";
 
 const ITEMS_PER_PAGE = 5;
 
+// ✅ International phone regex (E.164 style, relaxed)
+const INTERNATIONAL_PHONE_REGEX = /^\+?[1-9]\d{7,14}$/;
+
 const Clients = () => {
   /* ================= STATE ================= */
   const [clients, setClients] = useState<Client[]>([]);
@@ -51,8 +54,9 @@ const Clients = () => {
       e.email = "Invalid email address";
     }
 
-    if (!clientValidators.phone.test(data.phone || "")) {
-      e.phone = "Phone must be 10 digits";
+    // ✅ International phone validation
+    if (!INTERNATIONAL_PHONE_REGEX.test(data.phone || "")) {
+      e.phone = "Enter a valid international phone number";
     }
 
     if (!data.company_name?.trim()) {
@@ -142,6 +146,8 @@ const Clients = () => {
           {Object.entries(form).map(([key, value]) => (
             <div className="col-md-4" key={key}>
               <input
+                type={key === "phone" ? "tel" : "text"}
+                maxLength={key === "phone" ? 16 : undefined}
                 className={`form-control ${errors[key] ? "is-invalid" : ""}`}
                 placeholder={key.replace("_", " ").toUpperCase()}
                 value={value ?? ""}
@@ -257,6 +263,8 @@ const Clients = () => {
                     key !== "created_at" && (
                       <div className="col-md-6" key={key}>
                         <input
+                          type={key === "phone" ? "tel" : "text"}
+                          maxLength={key === "phone" ? 16 : undefined}
                           className={`form-control ${
                             errors[key] ? "is-invalid" : ""
                           }`}
