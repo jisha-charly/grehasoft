@@ -10,7 +10,7 @@ import { clientValidators } from "../../utils/validators";
 
 const ITEMS_PER_PAGE = 5;
 
-// ✅ International phone regex (E.164 style, relaxed)
+// International phone regex (E.164 relaxed)
 const INTERNATIONAL_PHONE_REGEX = /^\+?[1-9]\d{7,14}$/;
 
 const Clients = () => {
@@ -54,7 +54,6 @@ const Clients = () => {
       e.email = "Invalid email address";
     }
 
-    // ✅ International phone validation
     if (!INTERNATIONAL_PHONE_REGEX.test(data.phone || "")) {
       e.phone = "Enter a valid international phone number";
     }
@@ -75,13 +74,28 @@ const Clients = () => {
     return Object.keys(e).length === 0;
   };
 
+  /* ================= PAYLOAD SANITIZER ================= */
+  const sanitizePayload = (data: Partial<Client>) => ({
+    ...data,
+    name: data.name?.trim(),
+    email: data.email?.trim(),
+    phone: data.phone?.trim(),
+    company_name: data.company_name?.trim(),
+    address: data.address?.trim(),
+    gst_no: data.gst_no?.trim() || null, // 🔑 CRITICAL FIX
+  });
+
   /* ================= CREATE ================= */
   const handleCreate = async () => {
     if (!validate(form)) return;
 
-    await createClient(form);
-    resetForm();
-    loadClients();
+    try {
+      await createClient(sanitizePayload(form));
+      resetForm();
+      loadClients();
+    } catch (err: any) {
+      console.error("Backend error:", err.response?.data);
+    }
   };
 
   /* ================= UPDATE ================= */
@@ -89,9 +103,13 @@ const Clients = () => {
     if (!editing) return;
     if (!validate(editing)) return;
 
-    await updateClient(editing.id, editing);
-    setEditing(null);
-    loadClients();
+    try {
+      await updateClient(editing.id, sanitizePayload(editing));
+      setEditing(null);
+      loadClients();
+    } catch (err: any) {
+      console.error("Backend error:", err.response?.data);
+    }
   };
 
   /* ================= DELETE ================= */
@@ -115,7 +133,7 @@ const Clients = () => {
     setErrors({});
   };
 
-  /* ================= UNIVERSAL SEARCH ================= */
+  /* ================= SEARCH ================= */
   const filtered = clients.filter((c) => {
     const q = search.toLowerCase();
     return (
@@ -170,7 +188,7 @@ const Clients = () => {
         </div>
       </div>
 
-      {/* UNIVERSAL SEARCH */}
+      {/* SEARCH */}
       <input
         className="form-control mb-3"
         placeholder="Search by name, email, phone, company, GST, address..."

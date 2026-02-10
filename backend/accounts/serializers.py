@@ -100,11 +100,13 @@ class ClientSerializer(serializers.ModelSerializer):
 
 
     def validate_gst_no(self, value):
-        if value and not re.match(
-            r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$', value
-        ):
-            raise serializers.ValidationError("Invalid GST number")
-        return value
+     if not value:
+        return None
+     if not re.match(
+        r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$', value
+    ):
+        raise serializers.ValidationError("Invalid GST number")
+     return value
 
     class Meta:
         model = Client
