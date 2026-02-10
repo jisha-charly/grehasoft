@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { Task } from "../../types/task";
 import type { ProjectMember } from "../../types/projectMember";
 import {
-  updateTaskStatus,
+  updateTask,
   assignTask,
 } from "../../api/services/task.service";
 import { getMembers } from "../../api/services/projectMember.service";
@@ -13,9 +13,9 @@ import {
 
 interface TaskProgress {
   id: number;
-  progress: number;
-  note: string;
-  created_at: string;
+  status: "todo" | "in_progress" | "done" | "blocked";
+  comment: string;
+  updated_at: string;
 }
 
 interface Props {
@@ -40,93 +40,88 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
      Task Progress
   =============================== */
   const [progressList, setProgressList] = useState<TaskProgress[]>([]);
-  const [progressValue, setProgressValue] = useState<number>(0);
+  const [progressValue, setProgressValue] = useState(0);
   const [progressNote, setProgressNote] = useState("");
 
   /* ===============================
-     Load project members
+     Load members
   =============================== */
   useEffect(() => {
     if (!task.project) return;
 
-    const loadMembers = async () => {
-      try {
-        const data = await getMembers(task.project);
-        setMembers(data);
-      } catch (err) {
-        console.error("Failed to load project members", err);
-      }
-    };
-
-    loadMembers();
+    getMembers(task.project)
+      .then(setMembers)
+      .catch(() => console.error("Failed to load members"));
   }, [task.project]);
 
   /* ===============================
-     Load task progress
+     Load progress
   =============================== */
   useEffect(() => {
-    const loadProgress = async () => {
-      try {
-        const data = await getTaskProgress(task.id);
-        setProgressList(data);
-      } catch (err) {
-        console.error("Failed to load task progress", err);
-      }
-    };
-
-    loadProgress();
+    getTaskProgress(task.id)
+      .then(setProgressList)
+      .catch(() => console.error("Failed to load progress"));
   }, [task.id]);
 
   /* ===============================
-     Save handler
+     SAVE TASK (FIXED)
   =============================== */
   const handleSave = async () => {
     try {
       setSaving(true);
 
-      // 1️⃣ Update status
-      if (form.status !== task.status) {
-        await updateTaskStatus(task.id, form.status);
-      }
+      // 1️⃣ Update task fields (THIS WAS MISSING BEFORE)
+      const updatedTask = await updateTask(task.id, {
+        title: form.title,
+        description: form.description || "",
+        status: form.status,
+        priority: form.priority,
+      });
 
-      // 2️⃣ Save assignment
-      const updatedTask = await assignTask(
-        task.id,
-        assignedEmployeeId === "" ? null : assignedEmployeeId
-      );
+      // 2️⃣ Assign user ONLY if changed
+      const originalAssigned =
+        task.assignment?.employee ?? "";
+
+      if (assignedEmployeeId !== originalAssigned) {
+        if (assignedEmployeeId !== "") {
+          await assignTask(task.id, assignedEmployeeId);
+        }
+      }
 
       onSave(updatedTask);
       onClose();
-    } catch (err) {
-      console.error("Failed to save task", err);
+    } catch (error) {
+      console.error("Failed to save task", error);
+      alert("Failed to save task");
     } finally {
       setSaving(false);
     }
   };
 
   /* ===============================
-     Add progress
+     ADD PROGRESS
   =============================== */
-  const handleAddProgress = async () => {
-    if (!progressNote.trim()) return;
+ const handleAddProgress = async () => {
+  if (!progressNote.trim()) return;
 
-    try {
-      const newProgress = await addTaskProgress(task.id, {
-        progress: progressValue,
-        note: progressNote,
-      });
+  try {
+    const newProgress = await addTaskProgress(task.id, {
+      status: form.status,       // ✅ matches backend model
+      comment: progressNote,     // ✅ matches backend model
+    });
 
-      setProgressList([newProgress, ...progressList]);
-      setProgressValue(0);
-      setProgressNote("");
-    } catch (err) {
-      console.error("Failed to add progress", err);
-    }
-  };
+    setProgressList([newProgress, ...progressList]);
+    setProgressValue(0);
+    setProgressNote("");
+  } catch (err) {
+    console.error("Failed to add progress", err);
+    alert("Failed to add progress");
+  }
+};
 
   return (
     <div className="modal show d-block bg-dark bg-opacity-50">
-      <div className="modal-dialog modal-dialog-centered modal-lg">
+      <div className="modal-dialog modal-lg modal-dialog-centered">
         <div className="modal-content rounded-4">
           {/* HEADER */}
           <div className="modal-header">
@@ -221,7 +216,7 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
                 value={assignedEmployeeId}
                 onChange={(e) =>
                   setAssignedEmployeeId(
-                    e.target.value === "" ? "" : Number(e.target.value)
+                    e.target.value ? Number(e.target.value) : ""
                   )
                 }
               >
@@ -271,15 +266,13 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
             )}
 
             {progressList.map((p) => (
-              <div
-                key={p.id}
-                className="border rounded p-2 mb-2 small"
-              >
-                <strong>{p.progress}%</strong> — {p.note}
-                <div className="text-muted">
-                  {new Date(p.created_at).toLocaleString()}
-                </div>
-              </div>
+              <div className="border rounded p-2 mb-2 small">
+  <strong>{p.status.replace("_", " ")}</strong>
+  {p.comment && <> — {p.comment}</>}
+  <div className="text-muted">
+    {new Date(p.updated_at).toLocaleString()}
+  </div>
+</div>
             ))}
           </div>
 

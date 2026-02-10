@@ -8,9 +8,16 @@ interface Props {
   status: Task["status"];
   tasks: Task[];
   onTaskClick?: (task: Task) => void;
+  onTaskDelete?: (taskId: number) => void; // ✅ ADD
 }
 
-const KanbanColumn = ({ title, status, tasks, onTaskClick }: Props) => {
+const KanbanColumn = ({
+  title,
+  status,
+  tasks,
+  onTaskClick,
+  onTaskDelete,
+}: Props) => {
   const filtered = tasks.filter((t) => t.status === status);
 
   return (
@@ -40,6 +47,7 @@ const KanbanColumn = ({ title, status, tasks, onTaskClick }: Props) => {
                   task={task}
                   index={index}
                   onClick={onTaskClick}
+                  onDelete={onTaskDelete} // ✅ PASS DELETE DOWN
                 />
               ))}
 

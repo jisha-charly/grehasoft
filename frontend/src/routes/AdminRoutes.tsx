@@ -11,6 +11,8 @@ import Projects from "../pages/admin/Projects";
 import ProjectDetails from "../pages/admin/ProjectDetails";
 import Settings from "../pages/admin/Settings";
 import NotFound from "../pages/NotFound";
+import ErrorBoundary from "../pages/ErrorBoundary";
+import UnderDevelopment from "../pages/UnderDevelopment";
 
 const AdminRoutes = () => {
   return (
@@ -32,7 +34,15 @@ const AdminRoutes = () => {
         <Route path="projects/:id" element={<ProjectDetails />} />
         <Route path="settings" element={<Settings />} />
        
-        <Route path="*" element={<NotFound />} />
+       
+        <Route
+  path="*"
+  element={
+    <ErrorBoundary>
+      <UnderDevelopment />
+    </ErrorBoundary>
+  }
+/>
       </Route>
     </Routes>
   );

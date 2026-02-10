@@ -67,31 +67,41 @@ const Milestones = ({ projectId }: { projectId: number }) => {
       <h5>Milestones</h5>
 
       {/* ADD FORM */}
-      <div className="row g-2 mb-3">
-        <div className="col-md-5">
-          <input
-            className="form-control"
-            placeholder="Milestone title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
+ <div className="row g-2 align-items-end">
+  {/* Milestone Title */}
+  <div className="col-md-5">
+    <label className="form-label">Milestone Title</label>
+    <input
+      type="text"
+      className="form-control"
+      placeholder="Enter milestone title"
+      value={title}
+      onChange={(e) => setTitle(e.target.value)}
+    />
+  </div>
 
-        <div className="col-md-4">
-          <input
-            type="date"
-            className="form-control"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        </div>
+  {/* Due Date */}
+  <div className="col-md-4">
+    <label className="form-label">Due Date</label>
+    <input
+      type="date"
+      className="form-control"
+      value={dueDate}
+      onChange={(e) => setDueDate(e.target.value)}
+    />
+  </div>
 
-        <div className="col-md-3">
-          <button className="btn btn-success w-100" onClick={create}>
-            Add
-          </button>
-        </div>
-      </div>
+  {/* Add Button */}
+  <div className="col-md-3 d-grid">
+    <button
+      className="btn btn-success"
+      onClick={create}
+    >
+      Add
+    </button>
+  </div>
+</div>
+
 
       {/* TABLE */}
       <table className="table table-bordered">

@@ -3,7 +3,10 @@ import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import KanbanColumn from "./KanbanColumn";
 import TaskDetailsModal from "./TaskDetailsModal";
 import type { Task } from "../../types/task";
-import { updateTaskStatus } from "../../api/services/task.service";
+import {
+  updateTaskStatus,
+  deleteTask,
+} from "../../api/services/task.service";
 import "../../css/kanban.css";
 
 interface Props {
@@ -27,13 +30,29 @@ const KanbanBoard = ({ tasks, reload }: Props) => {
 
   /* ---------------- Save from modal ---------------- */
   const handleTaskUpdate = (updatedTask: Task) => {
-    // Update UI immediately
     setLocalTasks((prev) =>
       prev.map((t) => (t.id === updatedTask.id ? updatedTask : t))
     );
-
-    // Keep modal in sync
     setSelectedTask(updatedTask);
+  };
+
+  /* ---------------- DELETE TASK ---------------- */
+  const handleDeleteTask = async (taskId: number) => {
+    try {
+      await deleteTask(taskId);
+
+      // Optimistic UI update
+      setLocalTasks((prev) => prev.filter((t) => t.id !== taskId));
+
+      // Close modal if same task
+      if (selectedTask?.id === taskId) {
+        setSelectedTask(null);
+      }
+    } catch (err) {
+      console.error("Failed to delete task", err);
+      alert("Failed to delete task");
+      reload(); // fallback sync
+    }
   };
 
   /* ---------------- Drag & drop ---------------- */
@@ -70,6 +89,7 @@ const KanbanBoard = ({ tasks, reload }: Props) => {
             status="todo"
             tasks={localTasks}
             onTaskClick={handleTaskClick}
+            onTaskDelete={handleDeleteTask}
           />
 
           <KanbanColumn
@@ -77,6 +97,7 @@ const KanbanBoard = ({ tasks, reload }: Props) => {
             status="in_progress"
             tasks={localTasks}
             onTaskClick={handleTaskClick}
+            onTaskDelete={handleDeleteTask}
           />
 
           <KanbanColumn
@@ -84,6 +105,7 @@ const KanbanBoard = ({ tasks, reload }: Props) => {
             status="done"
             tasks={localTasks}
             onTaskClick={handleTaskClick}
+            onTaskDelete={handleDeleteTask}
           />
 
           <KanbanColumn
@@ -91,6 +113,7 @@ const KanbanBoard = ({ tasks, reload }: Props) => {
             status="blocked"
             tasks={localTasks}
             onTaskClick={handleTaskClick}
+            onTaskDelete={handleDeleteTask}
           />
         </div>
       </DragDropContext>

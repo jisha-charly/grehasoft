@@ -97,12 +97,10 @@ def project_tasks(request, project_id):
 
         return Response(serializer.errors, status=400)
 
-@api_view(["PUT"])
+@api_view(["PUT", "PATCH"])
 @permission_classes([IsAuthenticated])
 def update_task(request, task_id):
-    task = get_object_or_404(
-        Task, id=task_id, deleted_at__isnull=True
-    )
+    task = get_object_or_404(Task, id=task_id, deleted_at__isnull=True)
     serializer = TaskCreateUpdateSerializer(
         task, data=request.data, partial=True
     )
@@ -112,13 +110,15 @@ def update_task(request, task_id):
     return Response(serializer.errors, status=400)
 
 
+
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
-def delete_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
-    task.deleted_at = now()
+def delete_task(request, id):
+    task = get_object_or_404(Task, id=id, deleted_at__isnull=True)
+    task.deleted_at = timezone.now()
     task.save()
-    return Response({"message": "Task deleted"})
+    return Response(status=204)
+
 
 
 
@@ -202,10 +202,7 @@ def update_task_status(request, pk):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def add_task_progress(request, pk):
-    try:
-        task = Task.objects.get(pk=pk)
-    except Task.DoesNotExist:
-        return Response({"detail": "Task not found"}, status=404)
+    task = get_object_or_404(Task, pk=pk, deleted_at__isnull=True)
 
     serializer = TaskProgressSerializer(data=request.data)
     if serializer.is_valid():
@@ -221,6 +218,6 @@ def add_task_progress(request, pk):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_task_progress(request, pk):
-    progress = TaskProgress.objects.filter(task_id=pk).order_by("-created_at")
-    serializer = TaskProgressSerializer(progress, many=True)
+    logs = TaskProgress.objects.filter(task_id=pk).order_by("-updated_at")
+    serializer = TaskProgressSerializer(logs, many=True)
     return Response(serializer.data)

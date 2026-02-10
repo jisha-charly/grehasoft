@@ -523,7 +523,9 @@ def complete_milestone(request, id):
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
 def delete_milestone(request, id):
-    milestone = get_object_or_404(ProjectMilestone, id=id)
+    milestone = get_object_or_404(
+        ProjectMilestone, id=id, deleted_at__isnull=True
+    )
     milestone.deleted_at = timezone.now()
     milestone.save()
     return Response(status=204)

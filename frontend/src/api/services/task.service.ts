@@ -29,6 +29,26 @@ export const createTask = (
   payload: CreateTaskPayload
 ) => api.post(`/projects/${projectId}/tasks/`, payload);
 
+
+
+
+
+export const deleteTask = async (taskId: number): Promise<void> => {
+  await api.delete(`/tasks/${taskId}/`);
+};
+
+export const updateTask = async (
+  taskId: number,
+  payload: {
+    title?: string;
+    description?: string;
+    status?: string;
+    priority?: string;
+  }
+) => {
+  const res = await api.put(`/tasks/${taskId}/update/`, payload);
+  return res.data;
+};
 /* ===============================
    REORDER TASKS (KANBAN)
 ================================ */

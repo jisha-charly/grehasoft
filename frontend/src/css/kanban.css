@@ -158,3 +158,21 @@
 }
 
 
+.kanban-task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kanban-delete-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.kanban-delete-btn:hover {
+  opacity: 1;
+  color: #dc3545;
+}
