@@ -10,7 +10,7 @@ import { clientValidators } from "../../utils/validators";
 
 const ITEMS_PER_PAGE = 5;
 
-// International phone regex (E.164 relaxed)
+// 🌍 International phone regex (E.164 relaxed)
 const INTERNATIONAL_PHONE_REGEX = /^\+?[1-9]\d{7,14}$/;
 
 const Clients = () => {
@@ -74,7 +74,7 @@ const Clients = () => {
     return Object.keys(e).length === 0;
   };
 
-  /* ================= PAYLOAD SANITIZER ================= */
+  /* ================= PAYLOAD CLEAN ================= */
   const sanitizePayload = (data: Partial<Client>) => ({
     ...data,
     name: data.name?.trim(),
@@ -82,20 +82,16 @@ const Clients = () => {
     phone: data.phone?.trim(),
     company_name: data.company_name?.trim(),
     address: data.address?.trim(),
-    gst_no: data.gst_no?.trim() || null, // 🔑 CRITICAL FIX
+    gst_no: data.gst_no?.trim() || null,
   });
 
   /* ================= CREATE ================= */
   const handleCreate = async () => {
     if (!validate(form)) return;
 
-    try {
-      await createClient(sanitizePayload(form));
-      resetForm();
-      loadClients();
-    } catch (err: any) {
-      console.error("Backend error:", err.response?.data);
-    }
+    await createClient(sanitizePayload(form));
+    resetForm();
+    loadClients();
   };
 
   /* ================= UPDATE ================= */
@@ -103,13 +99,9 @@ const Clients = () => {
     if (!editing) return;
     if (!validate(editing)) return;
 
-    try {
-      await updateClient(editing.id, sanitizePayload(editing));
-      setEditing(null);
-      loadClients();
-    } catch (err: any) {
-      console.error("Backend error:", err.response?.data);
-    }
+    await updateClient(editing.id, sanitizePayload(editing));
+    setEditing(null);
+    loadClients();
   };
 
   /* ================= DELETE ================= */
@@ -286,6 +278,7 @@ const Clients = () => {
                           className={`form-control ${
                             errors[key] ? "is-invalid" : ""
                           }`}
+                          placeholder={key.replace("_", " ").toUpperCase()}
                           value={value ?? ""}
                           onChange={(e) => {
                             setEditing({
