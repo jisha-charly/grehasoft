@@ -85,18 +85,17 @@ class ClientSerializer(serializers.ModelSerializer):
         return value.lower()
 
     def validate_phone(self, value):
-      """
-      Accept international phone numbers.
-      Examples:
-      +919876543210
-      919876543210
-      9876543210
-      """
-      if not re.match(r'^\+?[1-9]\d{7,14}$', value):
-          raise serializers.ValidationError(
-            "Enter a valid phone number with country code"
-         )
-      return value
+     value = value.strip()
+
+     # Accept:
+     # 9876543210
+     # 919876543210
+     # +919876543210
+     if not re.fullmatch(r'\+?[1-9]\d{7,14}', value):
+        raise serializers.ValidationError(
+            "Enter a valid international phone number with country code"
+        )
+     return value
 
 
     def validate_gst_no(self, value):
