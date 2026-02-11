@@ -56,12 +56,13 @@ const AddTaskForm = ({ projectId, onCreated }: Props) => {
 
     try {
       await createTask(projectId, {
-        title,
-        status,
-        task_type_id: taskTypeId,
-        priority: "medium",
-        board_order: 0,
-      });
+  title,
+  status,
+  task_type_id: taskTypeId,
+  milestone: milestoneId || null,   // ✅ THIS LINE IS MISSING
+  priority: "medium",
+  board_order: 0,
+});
 
       // reset
       setTitle("");

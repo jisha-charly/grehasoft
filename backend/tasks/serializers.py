@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Task, TaskType, TaskAssignment, TaskProgress,TaskComment
+from .models import Task, TaskType, TaskAssignment, TaskProgress,TaskComment,ProjectMilestone
 from accounts.models import Project
  # adjust import if needed
 
@@ -22,11 +22,19 @@ class TaskTypeSerializer(serializers.ModelSerializer):
 # TASK
 # =========================
 class TaskSerializer(serializers.ModelSerializer):
+
     # 🔹 Write-only for task type
     task_type_id = serializers.PrimaryKeyRelatedField(
         queryset=TaskType.objects.all(),
         source="task_type",
         write_only=True,
+        required=False,
+        allow_null=True,
+    )
+
+    # 🔥 ADD THIS FOR MILESTONE
+    milestone = serializers.PrimaryKeyRelatedField(
+        queryset=ProjectMilestone.objects.all(),
         required=False,
         allow_null=True,
     )
@@ -37,7 +45,7 @@ class TaskSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    # 🔥 ADD THIS
+    # 🔥 Existing assignment
     assignment = serializers.SerializerMethodField()
 
     class Meta:
@@ -52,6 +60,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "due_date",
 
             "task_type_id",
+            "milestone",   # ✅ ADD THIS HERE
 
             "project",
             "project_id",
@@ -59,7 +68,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "created_by",
             "created_at",
 
-            "assignment",   # 🔥 ADD THIS
+            "assignment",
         ]
 
         read_only_fields = [
@@ -68,10 +77,9 @@ class TaskSerializer(serializers.ModelSerializer):
             "task_type",
             "created_by",
             "created_at",
-            "assignment",   # 🔥 ADD THIS
+            "assignment",
         ]
 
-    # 🔥 ADD THIS METHOD
     def get_assignment(self, obj):
         active_assignment = obj.assignments.filter(
             unassigned_at__isnull=True

@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from accounts.models import Project
+from accounts.models import Project,ProjectMilestone
   # adjust if your project app name differs
 
 User = settings.AUTH_USER_MODEL
@@ -42,6 +42,14 @@ class Task(models.Model):
         on_delete=models.CASCADE,
         related_name="tasks",
     )
+    milestone = models.ForeignKey(
+    ProjectMilestone,
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True,
+    related_name="tasks"
+)
+
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
 
@@ -161,3 +169,10 @@ class TaskComment(models.Model):
 
     def __str__(self):
         return f"{self.user} → {self.task}"
+
+
+
+
+
+
+

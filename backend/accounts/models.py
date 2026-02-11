@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
 
 class Role(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -136,6 +137,8 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
+    
+
 class ProjectMilestone(models.Model):
 
     STATUS_CHOICES = [
@@ -162,8 +165,71 @@ class ProjectMilestone(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
+    # ✅ AUTO STATUS METHOD
+    def update_status(self):
+        total_tasks = self.tasks.filter(
+            deleted_at__isnull=True
+        ).count()
+
+        completed_tasks = self.tasks.filter(
+            status="done",
+            deleted_at__isnull=True
+        ).count()
+
+        if total_tasks > 0 and total_tasks == completed_tasks:
+            self.status = "completed"
+        else:
+            self.status = "pending"
+
+        self.save(update_fields=["status"])
+
     def __str__(self):
         return self.title
+
+
+    # ===============================
+    # CALCULATED STATUS (Enterprise Way)
+    # ===============================
+    @property
+    def status(self):
+        total_tasks = self.tasks.filter(
+            deleted_at__isnull=True
+        ).count()
+
+        if total_tasks == 0:
+            return "pending"
+
+        completed_tasks = self.tasks.filter(
+            status="done",
+            deleted_at__isnull=True
+        ).count()
+
+        if completed_tasks == total_tasks:
+            return "completed"
+
+        return "pending"
+
+    # ===============================
+    # OPTIONAL: PROGRESS PERCENT
+    # ===============================
+    @property
+    def progress_percentage(self):
+        total_tasks = self.tasks.filter(
+            deleted_at__isnull=True
+        ).count()
+
+        if total_tasks == 0:
+            return 0
+
+        completed_tasks = self.tasks.filter(
+            status="done",
+            deleted_at__isnull=True
+        ).count()
+
+        return int((completed_tasks / total_tasks) * 100)
+    
+
+
 class ProjectMember(models.Model):
 
     ROLE_CHOICES = [

@@ -39,14 +39,13 @@ const Milestones = ({ projectId }: { projectId: number }) => {
     loadMilestones();
   };
 
-  /* UPDATE */
+  /* UPDATE (status removed) */
   const saveEdit = async () => {
     if (!editing) return;
 
     await updateMilestone(editing.id, {
       title: editing.title,
       due_date: editing.due_date,
-      status: editing.status,
     });
 
     setEditing(null);
@@ -67,44 +66,37 @@ const Milestones = ({ projectId }: { projectId: number }) => {
       <h5>Milestones</h5>
 
       {/* ADD FORM */}
- <div className="row g-2 align-items-end">
-  {/* Milestone Title */}
-  <div className="col-md-5">
-    <label className="form-label">Milestone Title</label>
-    <input
-      type="text"
-      className="form-control"
-      placeholder="Enter milestone title"
-      value={title}
-      onChange={(e) => setTitle(e.target.value)}
-    />
-  </div>
+      <div className="row g-2 align-items-end">
+        <div className="col-md-5">
+          <label className="form-label">Milestone Title</label>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Enter milestone title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
 
-  {/* Due Date */}
-  <div className="col-md-4">
-    <label className="form-label">Due Date</label>
-    <input
-      type="date"
-      className="form-control"
-      value={dueDate}
-      onChange={(e) => setDueDate(e.target.value)}
-    />
-  </div>
+        <div className="col-md-4">
+          <label className="form-label">Due Date</label>
+          <input
+            type="date"
+            className="form-control"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+        </div>
 
-  {/* Add Button */}
-  <div className="col-md-3 d-grid">
-    <button
-      className="btn btn-success"
-      onClick={create}
-    >
-      Add
-    </button>
-  </div>
-</div>
-
+        <div className="col-md-3 d-grid">
+          <button className="btn btn-success" onClick={create}>
+            Add
+          </button>
+        </div>
+      </div>
 
       {/* TABLE */}
-      <table className="table table-bordered">
+      <table className="table table-bordered mt-3">
         <thead>
           <tr>
             <th>Title</th>
@@ -146,30 +138,17 @@ const Milestones = ({ projectId }: { projectId: number }) => {
                 )}
               </td>
 
+              {/* AUTO STATUS DISPLAY ONLY */}
               <td>
-                {editing?.id === m.id ? (
-                  <select
-                    className="form-select form-select-sm"
-                    value={editing.status}
-                    onChange={(e) =>
-                      setEditing({
-                        ...editing,
-                        status: e.target.value as Milestone["status"],
-                      })
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                ) : (
-                  <span
-                    className={`badge bg-${
-                      m.status === "completed" ? "success" : "secondary"
-                    }`}
-                  >
-                    {m.status}
-                  </span>
-                )}
+                <span
+                  className={`badge ${
+                    m.status === "completed"
+                      ? "bg-success"
+                      : "bg-secondary"
+                  }`}
+                >
+                  {m.status}
+                </span>
               </td>
 
               <td>

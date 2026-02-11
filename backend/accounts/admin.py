@@ -107,7 +107,7 @@ class ProjectAdmin(admin.ModelAdmin):
 @admin.register(ProjectMilestone)
 class ProjectMilestoneAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "project", "due_date", "status")
-    list_filter = ("status",)
+    list_filter = ()
     search_fields = ("title", "project__name")
 
 

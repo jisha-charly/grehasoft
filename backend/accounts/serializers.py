@@ -170,25 +170,29 @@ class ProjectSerializer(serializers.ModelSerializer):
     
     
 class ProjectMilestoneSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(read_only=True)
+    progress_percentage = serializers.IntegerField(read_only=True)
 
-     def validate_due_date(self, value):
-        if not value:
-            raise serializers.ValidationError("Due date is required")
-        return value
-
-     class Meta:
+    class Meta:
         model = ProjectMilestone
         fields = [
             "id",
             "project",
             "title",
             "due_date",
-            "status",
+            "status",               # computed property
+            "progress_percentage",  # computed property
             "created_at",
             "updated_at",
         ]
-   
-    
+        read_only_fields = [
+            "id",
+            "status",
+            "progress_percentage",
+            "created_at",
+            "updated_at",
+        ]
+
 class ProjectMemberSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         source="user.username",

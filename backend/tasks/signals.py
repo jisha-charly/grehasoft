@@ -10,3 +10,10 @@ def task_saved(sender, instance, **kwargs):
 @receiver(post_delete, sender=Task)
 def task_deleted(sender, instance, **kwargs):
     update_project_status(instance.project)
+
+
+
+@receiver(post_save, sender=Task)
+def update_milestone_status(sender, instance, **kwargs):
+    if instance.milestone:
+        instance.milestone.update_status()
