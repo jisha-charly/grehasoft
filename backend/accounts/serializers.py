@@ -7,7 +7,7 @@ from .models import Project, ProjectMilestone, ProjectMember
 from .models import Department
 from tasks.utils import derive_project_status
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
+from tasks.models import Task
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
@@ -121,7 +121,7 @@ class ClientSerializer(serializers.ModelSerializer):
         ]
 class ProjectSerializer(serializers.ModelSerializer):
     derived_status = serializers.SerializerMethodField()
-
+    progress_percentage = serializers.SerializerMethodField()  # ✅ change to dynamic
     class Meta:
         model = Project
         fields = [
@@ -146,6 +146,24 @@ class ProjectSerializer(serializers.ModelSerializer):
                 "End date cannot be before start date"
             )
         return data
+    # ✅ AUTO CALCULATE PROJECT PROGRESS
+    def get_progress_percentage(self, obj):
+        total_tasks = Task.objects.filter(
+            project=obj,
+            deleted_at__isnull=True
+        ).count()
+
+        if total_tasks == 0:
+            return 0
+
+        done_tasks = Task.objects.filter(
+            project=obj,
+            status="done",
+            deleted_at__isnull=True
+        ).count()
+
+        return int((done_tasks / total_tasks) * 100)
+
 
     def get_derived_status(self, obj):
         return derive_project_status(obj)

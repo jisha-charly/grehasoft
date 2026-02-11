@@ -2,6 +2,14 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+
+   # task types
+path("task-types/", views.list_task_types),
+path("task-types/create/", views.create_task_type),
+path("task-types/<int:pk>/update/", views.update_task_type),
+path("task-types/<int:pk>/delete/", views.delete_task_type),
+
+
     path("projects/<int:project_id>/tasks/", views.project_tasks),
 
     path("tasks/<int:pk>/assign/", views.assign_task, name="assign-task"),

@@ -36,6 +36,12 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
     task.assignment?.employee ?? ""
   );
 
+  /* Sync when task changes */
+  useEffect(() => {
+    setForm({ ...task });
+    setAssignedEmployeeId(task.assignment?.employee ?? "");
+  }, [task]);
+
   /* ===============================
      Task Progress
   =============================== */
@@ -43,9 +49,7 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
   const [progressValue, setProgressValue] = useState(0);
   const [progressNote, setProgressNote] = useState("");
 
-  /* ===============================
-     Load members
-  =============================== */
+  /* Load members */
   useEffect(() => {
     if (!task.project) return;
 
@@ -54,9 +58,7 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
       .catch(() => console.error("Failed to load members"));
   }, [task.project]);
 
-  /* ===============================
-     Load progress
-  =============================== */
+  /* Load progress */
   useEffect(() => {
     getTaskProgress(task.id)
       .then(setProgressList)
@@ -64,13 +66,13 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
   }, [task.id]);
 
   /* ===============================
-     SAVE TASK (FIXED)
+     SAVE TASK (Assignment Fixed)
   =============================== */
   const handleSave = async () => {
     try {
       setSaving(true);
 
-      // 1️⃣ Update task fields (THIS WAS MISSING BEFORE)
+      // 1️⃣ Update task basic fields
       const updatedTask = await updateTask(task.id, {
         title: form.title,
         description: form.description || "",
@@ -78,17 +80,28 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
         priority: form.priority,
       });
 
-      // 2️⃣ Assign user ONLY if changed
-      const originalAssigned =
-        task.assignment?.employee ?? "";
+      // 2️⃣ Handle assignment
+      const originalAssigned = task.assignment?.employee ?? "";
 
       if (assignedEmployeeId !== originalAssigned) {
-        if (assignedEmployeeId !== "") {
-          await assignTask(task.id, assignedEmployeeId);
-        }
+        await assignTask(
+          task.id,
+          assignedEmployeeId === "" ? null : assignedEmployeeId
+        );
       }
 
-      onSave(updatedTask);
+      // 3️⃣ Refresh full task from backend (important!)
+      const refreshedTask = {
+        ...updatedTask,
+        assignment:
+          assignedEmployeeId === ""
+            ? null
+            : {
+                employee: assignedEmployeeId,
+              },
+      };
+
+      onSave(refreshedTask);
       onClose();
     } catch (error) {
       console.error("Failed to save task", error);
@@ -101,35 +114,33 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
   /* ===============================
      ADD PROGRESS
   =============================== */
- const handleAddProgress = async () => {
-  if (!progressNote.trim()) return;
+  const handleAddProgress = async () => {
+    if (!progressNote.trim()) return;
 
-  try {
-    const newProgress = await addTaskProgress(task.id, {
-      status: form.status,       // ✅ matches backend model
-      comment: progressNote,     // ✅ matches backend model
-    });
+    try {
+      const newProgress = await addTaskProgress(task.id, {
+        status: form.status,
+        comment: progressNote,
+      });
 
-    setProgressList([newProgress, ...progressList]);
-    setProgressValue(0);
-    setProgressNote("");
-  } catch (err) {
-    console.error("Failed to add progress", err);
-    alert("Failed to add progress");
-  }
-};
+      setProgressList([newProgress, ...progressList]);
+      setProgressValue(0);
+      setProgressNote("");
+    } catch (err) {
+      console.error("Failed to add progress", err);
+      alert("Failed to add progress");
+    }
+  };
 
   return (
     <div className="modal show d-block bg-dark bg-opacity-50">
       <div className="modal-dialog modal-lg modal-dialog-centered">
         <div className="modal-content rounded-4">
-          {/* HEADER */}
           <div className="modal-header">
             <h5 className="modal-title">Task Details</h5>
             <button className="btn-close" onClick={onClose} />
           </div>
 
-          {/* BODY */}
           <div className="modal-body">
             {/* TITLE */}
             <div className="mb-3">
@@ -156,9 +167,9 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
               />
             </div>
 
+            {/* STATUS + PRIORITY */}
             <div className="row">
-              {/* STATUS */}
-              <div className="col-md-4">
+              <div className="col-md-6">
                 <label className="form-label fw-bold">Status</label>
                 <select
                   className="form-select"
@@ -177,8 +188,7 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
                 </select>
               </div>
 
-              {/* PRIORITY */}
-              <div className="col-md-4">
+              <div className="col-md-6">
                 <label className="form-label fw-bold">Priority</label>
                 <select
                   className="form-select"
@@ -195,16 +205,6 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
                 </select>
-              </div>
-
-              {/* TASK TYPE */}
-              <div className="col-md-4">
-                <label className="form-label fw-bold">Task Type</label>
-                <input
-                  className="form-control"
-                  value={form.task_type_name || "-"}
-                  disabled
-                />
               </div>
             </div>
 
@@ -229,20 +229,11 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
               </select>
             </div>
 
-            {/* TASK PROGRESS */}
+            {/* PROGRESS */}
             <hr />
             <h6 className="fw-bold">Task Progress</h6>
 
             <div className="row mb-2">
-              <div className="col-md-3">
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="%"
-                  value={progressValue}
-                  onChange={(e) => setProgressValue(Number(e.target.value))}
-                />
-              </div>
               <div className="col-md-7">
                 <input
                   className="form-control"
@@ -251,7 +242,7 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
                   onChange={(e) => setProgressNote(e.target.value)}
                 />
               </div>
-              <div className="col-md-2">
+              <div className="col-md-5">
                 <button
                   className="btn btn-outline-primary w-100"
                   onClick={handleAddProgress}
@@ -265,18 +256,32 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
               <p className="text-muted">No progress added yet.</p>
             )}
 
-            {progressList.map((p) => (
-              <div className="border rounded p-2 mb-2 small">
-  <strong>{p.status.replace("_", " ")}</strong>
-  {p.comment && <> — {p.comment}</>}
-  <div className="text-muted">
-    {new Date(p.updated_at).toLocaleString()}
-  </div>
+            <div
+  style={{
+    maxHeight: "300px",
+    overflowY: "auto",
+  }}
+>
+  {progressList.length === 0 && (
+    <p className="text-muted">No progress added yet.</p>
+  )}
+
+  {progressList.map((p) => (
+    <div
+      key={p.id}
+      className="border rounded p-2 mb-2 small"
+    >
+      <strong>{p.status.replace("_", " ")}</strong>
+      {p.comment && <> — {p.comment}</>}
+      <div className="text-muted">
+        {new Date(p.updated_at).toLocaleString()}
+      </div>
+    </div>
+  ))}
 </div>
-            ))}
+
           </div>
 
-          {/* FOOTER */}
           <div className="modal-footer">
             <button className="btn btn-secondary" onClick={onClose}>
               Cancel

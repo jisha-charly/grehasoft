@@ -99,22 +99,28 @@ def project_tasks(request, project_id):
 
 @api_view(["PUT", "PATCH"])
 @permission_classes([IsAuthenticated])
-def update_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id, deleted_at__isnull=True)
+def update_task(request, pk):
+    task = get_object_or_404(Task, id=pk, deleted_at__isnull=True)
+
     serializer = TaskCreateUpdateSerializer(
-        task, data=request.data, partial=True
+        task,
+        data=request.data,
+        partial=True
     )
+
     if serializer.is_valid():
         serializer.save()
         return Response(TaskSerializer(task).data)
+
     return Response(serializer.errors, status=400)
+
 
 
 
 @api_view(["DELETE"])
 @permission_classes([IsAuthenticated])
-def delete_task(request, id):
-    task = get_object_or_404(Task, id=id, deleted_at__isnull=True)
+def delete_task(request, pk):
+    task = get_object_or_404(Task, id=pk, deleted_at__isnull=True)
     task.deleted_at = timezone.now()
     task.save()
     return Response(status=204)
@@ -123,26 +129,21 @@ def delete_task(request, id):
 
 
 
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def assign_task(request, pk):
-    """
-    Assign / Unassign a task to an employee
-    payload: { employee: user_id | null }
-    """
 
-    # 1️⃣ Get task
-    try:
-        task = Task.objects.get(pk=pk)
-    except Task.DoesNotExist:
-        return Response(
-            {"detail": "Task not found"},
-            status=status.HTTP_404_NOT_FOUND,
-        )
-
+    task = get_object_or_404(Task, pk=pk)
     employee_id = request.data.get("employee")
 
-    # 2️⃣ UNASSIGN
+    # 🔥 Handle empty string or null
+    if employee_id in ["", None]:
+        employee_id = None
+
+    # =========================
+    # 🔹 UNASSIGN
+    # =========================
     if employee_id is None:
         TaskAssignment.objects.filter(
             task=task,
@@ -151,28 +152,48 @@ def assign_task(request, pk):
 
         data = TaskSerializer(task).data
         data["assignment"] = None
-
         return Response(data, status=status.HTTP_200_OK)
 
-    # 3️⃣ ASSIGN
-    # Close existing assignment
+    # Convert to int safely
+    try:
+        employee_id = int(employee_id)
+    except (ValueError, TypeError):
+        return Response(
+            {"error": "Invalid employee ID"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # =========================
+    # 🔹 CLOSE CURRENT ACTIVE ASSIGNMENT
+    # =========================
     TaskAssignment.objects.filter(
         task=task,
         unassigned_at__isnull=True,
     ).update(unassigned_at=timezone.now())
 
-    # Create new assignment
-    assignment = TaskAssignment.objects.create(
+    # =========================
+    # 🔹 CREATE OR REACTIVATE ASSIGNMENT
+    # =========================
+    assignment, created = TaskAssignment.objects.get_or_create(
         task=task,
         employee_id=employee_id,
-        assigned_by=request.user,
+        defaults={"assigned_by": request.user},
     )
 
-    # 4️⃣ Response
+    if not created:
+        # Reactivate previous assignment
+        assignment.unassigned_at = None
+        assignment.assigned_by = request.user
+        assignment.save()
+
+    # =========================
+    # 🔹 RESPONSE
+    # =========================
     data = TaskSerializer(task).data
     data["assignment"] = TaskAssignmentSerializer(assignment).data
 
     return Response(data, status=status.HTTP_200_OK)
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def update_task_order(request):

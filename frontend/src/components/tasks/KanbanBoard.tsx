@@ -37,23 +37,18 @@ const KanbanBoard = ({ tasks, reload }: Props) => {
   };
 
   /* ---------------- DELETE TASK ---------------- */
-  const handleDeleteTask = async (taskId: number) => {
-    try {
-      await deleteTask(taskId);
+ const handleDeleteTask = async (taskId: number) => {
+  try {
+    await deleteTask(taskId);
+    reload();
+  } catch (err) {
+    console.error("Failed to delete task", err);
+    alert("Failed to delete task");
+  }
+};
 
-      // Optimistic UI update
-      setLocalTasks((prev) => prev.filter((t) => t.id !== taskId));
 
-      // Close modal if same task
-      if (selectedTask?.id === taskId) {
-        setSelectedTask(null);
-      }
-    } catch (err) {
-      console.error("Failed to delete task", err);
-      alert("Failed to delete task");
-      reload(); // fallback sync
-    }
-  };
+
 
   /* ---------------- Drag & drop ---------------- */
   const onDragEnd = async (result: DropResult) => {

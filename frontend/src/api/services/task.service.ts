@@ -33,9 +33,10 @@ export const createTask = (
 
 
 
-export const deleteTask = async (taskId: number): Promise<void> => {
-  await api.delete(`/tasks/${taskId}/`);
+export const deleteTask = async (taskId: number) => {
+  await api.delete(`/tasks/${taskId}/delete/`);
 };
+
 
 export const updateTask = async (
   taskId: number,

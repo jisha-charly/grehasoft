@@ -22,7 +22,7 @@ class TaskTypeSerializer(serializers.ModelSerializer):
 # TASK
 # =========================
 class TaskSerializer(serializers.ModelSerializer):
-    # 🔹 For creating/updating task type
+    # 🔹 Write-only for task type
     task_type_id = serializers.PrimaryKeyRelatedField(
         queryset=TaskType.objects.all(),
         source="task_type",
@@ -31,11 +31,14 @@ class TaskSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
 
-    # ✅ ADD THIS (frontend needs it)
+    # 🔹 Read-only project id
     project_id = serializers.IntegerField(
         source="project.id",
         read_only=True
     )
+
+    # 🔥 ADD THIS
+    assignment = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
@@ -48,15 +51,15 @@ class TaskSerializer(serializers.ModelSerializer):
             "board_order",
             "due_date",
 
-            # write-only
             "task_type_id",
 
-            # read-only
             "project",
-            "project_id",   # ✅ IMPORTANT
+            "project_id",
             "task_type",
             "created_by",
             "created_at",
+
+            "assignment",   # 🔥 ADD THIS
         ]
 
         read_only_fields = [
@@ -65,9 +68,22 @@ class TaskSerializer(serializers.ModelSerializer):
             "task_type",
             "created_by",
             "created_at",
+            "assignment",   # 🔥 ADD THIS
         ]
 
+    # 🔥 ADD THIS METHOD
+    def get_assignment(self, obj):
+        active_assignment = obj.assignments.filter(
+            unassigned_at__isnull=True
+        ).first()
 
+        if active_assignment:
+            return {
+                "employee_id": active_assignment.employee.id,
+                "employee_name": active_assignment.employee.username,
+            }
+
+        return None
 
 
 class TaskCreateUpdateSerializer(serializers.ModelSerializer):
@@ -90,11 +106,7 @@ class TaskCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 
-class TaskAssignSerializer(serializers.Serializer):
-    employee = serializers.IntegerField(
-        required=False,
-        allow_null=True
-    )
+
 
 class TaskAssignmentSerializer(serializers.ModelSerializer):
     employee_name = serializers.CharField(

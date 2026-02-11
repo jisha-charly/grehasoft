@@ -23,16 +23,25 @@ const ProjectDetails = () => {
     "milestones" | "members" | "tasks"
   >("tasks");
 
-  const loadTasks = async () => {
-    const data = await getTasksByProject(projectId);
-    setTasks(data);
+  /* ✅ FETCH TASKS (MOVED INSIDE COMPONENT) */
+  const fetchTasks = async () => {
+    try {
+      const data = await getTasksByProject(projectId);
+      setTasks(data);
+    } catch (error) {
+      console.error("Failed to load tasks", error);
+    }
   };
 
+  /* Load project + tasks */
   useEffect(() => {
     if (!projectId) return;
 
-    getProjectById(projectId).then(p => setProjectName(p.name));
-    loadTasks();
+    getProjectById(projectId).then((p) =>
+      setProjectName(p.name)
+    );
+
+    fetchTasks();
   }, [projectId]);
 
   return (
@@ -53,11 +62,15 @@ const ProjectDetails = () => {
 
       {/* Tabs */}
       <ul className="nav nav-tabs mb-3">
-        {["milestones", "members", "tasks"].map(tab => (
+        {["milestones", "members", "tasks"].map((tab) => (
           <li className="nav-item" key={tab}>
             <button
-              className={`nav-link ${activeTab === tab ? "active" : ""}`}
-              onClick={() => setActiveTab(tab as any)}
+              className={`nav-link ${
+                activeTab === tab ? "active" : ""
+              }`}
+              onClick={() =>
+                setActiveTab(tab as "milestones" | "members" | "tasks")
+              }
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
@@ -76,14 +89,17 @@ const ProjectDetails = () => {
 
       {activeTab === "tasks" && (
         <>
-          {/* ✅ TASK FORM */}
+          {/* Task Form */}
           <AddTaskForm
             projectId={projectId}
-            onCreated={loadTasks}
+            onCreated={fetchTasks}
           />
 
-          {/* ✅ KANBAN */}
-          <KanbanBoard tasks={tasks} />
+          {/* Kanban Board */}
+          <KanbanBoard
+            tasks={tasks}
+            reload={fetchTasks}
+          />
         </>
       )}
     </div>
