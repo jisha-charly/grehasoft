@@ -4,16 +4,16 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 from django.utils import timezone
-from .models import Task, TaskType,TaskAssignment,TaskProgress
+from .models import Task, TaskType,TaskAssignment,TaskProgress,TaskComment
 from .serializers import (
     TaskSerializer,
     TaskTypeSerializer,
-    TaskCreateUpdateSerializer,TaskAssignmentSerializer,TaskProgressSerializer
+    TaskCreateUpdateSerializer,TaskAssignmentSerializer,TaskProgressSerializer,TaskCommentSerializer
 )
 from accounts.models import  Project
 from rest_framework import status
 
-
+from rest_framework import generics, permissions
 # =================================================
 # TASK TYPES
 # =================================================
@@ -242,3 +242,29 @@ def get_task_progress(request, pk):
     logs = TaskProgress.objects.filter(task_id=pk).order_by("-updated_at")
     serializer = TaskProgressSerializer(logs, many=True)
     return Response(serializer.data)
+
+
+# =================================================
+# GET TASK COMMENTS
+# =================================================
+
+
+class TaskCommentListCreateView(generics.ListCreateAPIView):
+    serializer_class = TaskCommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        task_id = self.kwargs["task_id"]
+        return TaskComment.objects.filter(
+            task_id=task_id,
+            deleted_at__isnull=True
+        ).order_by("-created_at")
+
+    def perform_create(self, serializer):
+        task_id = self.kwargs["task_id"]
+        task = Task.objects.get(id=task_id)
+
+        serializer.save(
+            task=task,
+            user=self.request.user
+        )

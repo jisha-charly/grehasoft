@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import KanbanColumn from "./KanbanColumn";
-import TaskDetailsModal from "./TaskDetailsModal";
+// import TaskDetailsModal from "./TaskDetailsModal";
+import TaskDetailsModal1 from "./TaskDetailsModal1";
 import type { Task } from "../../types/task";
 import {
   updateTaskStatus,
@@ -115,7 +116,7 @@ const KanbanBoard = ({ tasks, reload }: Props) => {
 
       {/* ---------------- Task Details Modal ---------------- */}
       {selectedTask && (
-        <TaskDetailsModal
+        <TaskDetailsModal1
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
           onSave={handleTaskUpdate}

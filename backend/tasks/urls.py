@@ -25,4 +25,12 @@ path("task-types/<int:pk>/delete/", views.delete_task_type),
 
     path("tasks/update-order/", views.update_task_order),
     path("tasks/<int:pk>/status/", views.update_task_status),
+
+
+   
+path(
+        "tasks/<int:task_id>/comments/",
+        views.TaskCommentListCreateView.as_view(),
+        name="task-comments",
+    ),
 ]
