@@ -120,8 +120,9 @@ class ClientSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 class ProjectSerializer(serializers.ModelSerializer):
-    derived_status = serializers.SerializerMethodField()
-    progress_percentage = serializers.SerializerMethodField()  # ✅ change to dynamic
+    derived_status = serializers.ReadOnlyField()
+    progress_percentage = serializers.ReadOnlyField()
+
     class Meta:
         model = Project
         fields = [
@@ -132,42 +133,10 @@ class ProjectSerializer(serializers.ModelSerializer):
             "project_manager",
             "start_date",
             "end_date",
-            "status",              # optional (can remove later)
             "progress_percentage",
-            "derived_status",      # 👈 THIS was missing
+            "derived_status",
         ]
-        read_only_fields = ["id"]
 
-    def validate(self, data):
-        start = data.get("start_date")
-        end = data.get("end_date")
-        if start and end and end < start:
-            raise serializers.ValidationError(
-                "End date cannot be before start date"
-            )
-        return data
-    # ✅ AUTO CALCULATE PROJECT PROGRESS
-    def get_progress_percentage(self, obj):
-        total_tasks = Task.objects.filter(
-            project=obj,
-            deleted_at__isnull=True
-        ).count()
-
-        if total_tasks == 0:
-            return 0
-
-        done_tasks = Task.objects.filter(
-            project=obj,
-            status="done",
-            deleted_at__isnull=True
-        ).count()
-
-        return int((done_tasks / total_tasks) * 100)
-
-
-    def get_derived_status(self, obj):
-        return derive_project_status(obj)
-    
     
 class ProjectMilestoneSerializer(serializers.ModelSerializer):
 

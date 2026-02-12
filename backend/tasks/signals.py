@@ -1,6 +1,6 @@
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-from .models import Task, TaskActivity, TaskAssignment
+from .models import Task, TaskActivity, TaskAssignment,ProjectMilestone
 
 
 
@@ -121,3 +121,9 @@ def update_milestone_on_task_save(sender, instance, **kwargs):
 def update_milestone_on_task_delete(sender, instance, **kwargs):
     if instance.milestone:
         instance.milestone.update_status()
+  # ==============================================
+# UPDATE Mproject STATUS WHEN TASK CHANGES
+# ==============================================      
+@receiver(post_save, sender=ProjectMilestone)
+def update_project_on_milestone_save(sender, instance, **kwargs):
+    instance.project.update_status()

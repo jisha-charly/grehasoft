@@ -93,13 +93,17 @@ class ProjectAdmin(admin.ModelAdmin):
         "client",
         "department",
         "project_manager",
-        "status",
+        "derived_status",   # ✅ use property
         "progress_percentage",
+        "created_at",
     )
-    list_filter = ("status", "department")
-    search_fields = ("name", "client__name")
-    ordering = ("-created_at",)
 
+    list_filter = (
+        "department",
+        "client",
+    )
+
+    search_fields = ("name",)
 
 # ---------------------------
 # PROJECT MILESTONE

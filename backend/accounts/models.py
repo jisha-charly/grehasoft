@@ -88,48 +88,34 @@ class Client(models.Model):
 
 class Project(models.Model):
 
-    STATUS_CHOICES = [
-        ("not_started", "Not Started"),
-        ("in_progress", "In Progress"),
-        ("on_hold", "On Hold"),
-        ("completed", "Completed"),
-    ]
-
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=255)
 
     client = models.ForeignKey(
-        "Client",
-        on_delete=models.PROTECT,
+        "accounts.Client",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="projects"
     )
 
     department = models.ForeignKey(
-        "Department",
-        on_delete=models.PROTECT
+        "accounts.Department",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="projects"
     )
 
     project_manager = models.ForeignKey(
-        User,
-        on_delete=models.PROTECT,
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="managed_projects"
     )
 
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.PROTECT,
-        related_name="created_projects"
-    )
-
-    start_date = models.DateField()
+    start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
-
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default="not_started"
-    )
-
-    progress_percentage = models.PositiveIntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -137,6 +123,46 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
+
+    # =====================================================
+    # 🔥 DERIVED STATUS (Dynamic - Enterprise Safe)
+    # =====================================================
+    @property
+    def derived_status(self):
+        tasks = self.tasks.filter(deleted_at__isnull=True)
+
+        total = tasks.count()
+
+        if total == 0:
+            return "pending"
+
+        done_count = tasks.filter(status="done").count()
+        in_progress_count = tasks.filter(status="in_progress").count()
+
+        if done_count == total:
+            return "completed"
+
+        if in_progress_count > 0 or done_count > 0:
+            return "in_progress"
+
+        return "pending"
+
+    # =====================================================
+    # 📊 DYNAMIC PROGRESS %
+    # =====================================================
+    @property
+    def progress_percentage(self):
+        tasks = self.tasks.filter(deleted_at__isnull=True)
+
+        total = tasks.count()
+
+        if total == 0:
+            return 0
+
+        done_count = tasks.filter(status="done").count()
+
+        return int((done_count / total) * 100)
+
     
 
 class ProjectMilestone(models.Model):
