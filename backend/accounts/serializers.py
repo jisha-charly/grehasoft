@@ -170,8 +170,6 @@ class ProjectSerializer(serializers.ModelSerializer):
     
     
 class ProjectMilestoneSerializer(serializers.ModelSerializer):
-    status = serializers.CharField(read_only=True)
-    progress_percentage = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = ProjectMilestone
@@ -180,8 +178,8 @@ class ProjectMilestoneSerializer(serializers.ModelSerializer):
             "project",
             "title",
             "due_date",
-            "status",               # computed property
-            "progress_percentage",  # computed property
+            "status",
+            "progress_percentage",
             "created_at",
             "updated_at",
         ]
@@ -192,6 +190,7 @@ class ProjectMilestoneSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
 
 class ProjectMemberSerializer(serializers.ModelSerializer):
     username = serializers.CharField(

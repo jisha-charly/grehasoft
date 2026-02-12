@@ -4,11 +4,11 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 from django.utils import timezone
-from .models import Task, TaskType,TaskAssignment,TaskProgress,TaskComment
+from .models import Task, TaskType,TaskAssignment,TaskProgress,TaskComment,TaskActivity
 from .serializers import (
     TaskSerializer,
     TaskTypeSerializer,
-    TaskCreateUpdateSerializer,TaskAssignmentSerializer,TaskProgressSerializer,TaskCommentSerializer
+    TaskCreateUpdateSerializer,TaskAssignmentSerializer,TaskProgressSerializer,TaskCommentSerializer,TaskActivitySerializer
 )
 from accounts.models import  Project
 from rest_framework import status
@@ -268,3 +268,16 @@ class TaskCommentListCreateView(generics.ListCreateAPIView):
             task=task,
             user=self.request.user
         )
+
+        # =================================================
+# task activity
+# =================================================
+
+@api_view(["GET"])
+def get_task_activity(request, task_id):
+    activities = TaskActivity.objects.filter(
+        task_id=task_id
+    ).order_by("-created_at")
+
+    serializer = TaskActivitySerializer(activities, many=True)
+    return Response(serializer.data)

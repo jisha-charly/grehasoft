@@ -170,9 +170,41 @@ class TaskComment(models.Model):
     def __str__(self):
         return f"{self.user} → {self.task}"
 
+# =================================================
+# TASK activity
+# =================================================
 
+class TaskActivity(models.Model):
 
+    ACTION_CHOICES = [
+        ("created", "Created"),
+        ("status_changed", "Status Changed"),
+        ("updated", "Updated"),
+        ("assigned", "Assigned"),
+        ("unassigned", "Unassigned"),
+    ]
 
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name="activities"
+    )
 
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
 
+    action = models.CharField(
+        max_length=30,
+        choices=ACTION_CHOICES
+    )
 
+    description = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.task.title} - {self.action}"

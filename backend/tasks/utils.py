@@ -13,3 +13,4 @@ def derive_project_status(project):
         return "completed"
 
     return "not_started"
+

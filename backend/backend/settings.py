@@ -41,7 +41,8 @@ INSTALLED_APPS = [
 
     # Local apps
     "accounts",
-    "tasks",
+    "tasks.apps.TasksConfig",
+    
 ]
 
 

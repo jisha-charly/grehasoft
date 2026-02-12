@@ -143,6 +143,7 @@ class ProjectMilestone(models.Model):
 
     STATUS_CHOICES = [
         ("pending", "Pending"),
+        ("in_progress", "In Progress"),
         ("completed", "Completed"),
     ]
 
@@ -153,7 +154,7 @@ class ProjectMilestone(models.Model):
     )
 
     title = models.CharField(max_length=200)
-    due_date = models.DateField()
+    due_date = models.DateField(null=True, blank=True)
 
     status = models.CharField(
         max_length=20,
@@ -165,49 +166,33 @@ class ProjectMilestone(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
-    # ✅ AUTO STATUS METHOD
     def update_status(self):
-        total_tasks = self.tasks.filter(
-            deleted_at__isnull=True
-        ).count()
+     tasks = self.tasks.filter(deleted_at__isnull=True)
 
-        completed_tasks = self.tasks.filter(
-            status="done",
-            deleted_at__isnull=True
-        ).count()
-
-        if total_tasks > 0 and total_tasks == completed_tasks:
-            self.status = "completed"
-        else:
-            self.status = "pending"
-
+     if not tasks.exists():
+        self.status = "pending"
         self.save(update_fields=["status"])
+        return
+
+     total = tasks.count()
+     done_count = tasks.filter(status="done").count()
+     in_progress_count = tasks.filter(status="in_progress").count()
+
+     if done_count == total:
+        self.status = "completed"
+
+     elif in_progress_count > 0 or done_count > 0:
+        self.status = "in_progress"
+
+     else:
+        self.status = "pending"
+
+     self.save(update_fields=["status"])
+
 
     def __str__(self):
         return self.title
 
-
-    # ===============================
-    # CALCULATED STATUS (Enterprise Way)
-    # ===============================
-    @property
-    def status(self):
-        total_tasks = self.tasks.filter(
-            deleted_at__isnull=True
-        ).count()
-
-        if total_tasks == 0:
-            return "pending"
-
-        completed_tasks = self.tasks.filter(
-            status="done",
-            deleted_at__isnull=True
-        ).count()
-
-        if completed_tasks == total_tasks:
-            return "completed"
-
-        return "pending"
 
     # ===============================
     # OPTIONAL: PROGRESS PERCENT

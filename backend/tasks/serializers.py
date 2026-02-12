@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Task, TaskType, TaskAssignment, TaskProgress,TaskComment,ProjectMilestone
+from .models import Task, TaskType, TaskAssignment, TaskProgress,TaskComment,ProjectMilestone,TaskActivity
 from accounts.models import Project
  # adjust import if needed
 
@@ -172,5 +172,21 @@ class TaskCommentSerializer(serializers.ModelSerializer):
             "task",          # ✅ ADD THIS
             "user",
             "username",
+            "created_at",
+        ]
+class TaskActivitySerializer(serializers.ModelSerializer):
+
+    user_name = serializers.CharField(
+        source="user.username",
+        read_only=True
+    )
+
+    class Meta:
+        model = TaskActivity
+        fields = [
+            "id",
+            "action",
+            "description",
+            "user_name",
             "created_at",
         ]
