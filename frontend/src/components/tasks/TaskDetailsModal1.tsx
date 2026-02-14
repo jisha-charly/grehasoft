@@ -20,6 +20,14 @@ import {
   getTaskActivity,
 } from "../../api/services/activity.service";
 
+import {
+  getTaskFiles,
+  uploadTaskFile,
+  reviewTaskFile,
+  TaskFile,
+  deleteTaskFile,
+} from "../../api/services/taskFile.service";
+
 interface TaskProgress {
   id: number;
   status: "todo" | "in_progress" | "done" | "blocked";
@@ -54,9 +62,14 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
 
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
 
-  /* ===============================
-     LOADERS
-  =============================== */
+  /* FILE STATES */
+  const [files, setFiles] = useState<TaskFile[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewStatus, setReviewStatus] = useState<"approved" | "rework">(
+    "approved"
+  );
 
   useEffect(() => {
     setForm({ ...task });
@@ -82,83 +95,96 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
     }
   }, [activeTab, task.id]);
 
-  const loadActivity = async () => {
-    try {
-      const data = await getTaskActivity(task.id);
-      setActivityLogs(data);
-    } catch (err) {
-      console.error("Failed to load activity logs", err);
+  useEffect(() => {
+    if (activeTab === "files") {
+      loadFiles();
     }
+  }, [activeTab, task.id]);
+
+  const loadActivity = async () => {
+    const data = await getTaskActivity(task.id);
+    setActivityLogs(data);
   };
 
-  /* ===============================
-     ACTIONS
-  =============================== */
+  const loadFiles = async () => {
+    const data = await getTaskFiles(task.id);
+    setFiles(data);
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+    await uploadTaskFile(task.id, selectedFile);
+    setSelectedFile(null);
+    loadFiles();
+  };
+
+  const handleReview = async (fileId: number) => {
+  if (!reviewComment.trim()) return;
+
+  try {
+    await reviewTaskFile(fileId, {
+      comments: reviewComment,
+      status: reviewStatus,
+    });
+
+    setReviewComment("");
+    loadFiles();
+  } catch (error: any) {
+    alert(
+      error.response?.data?.detail ||
+      error.response?.data?.non_field_errors?.[0] ||
+      "Review failed."
+    );
+  }
+};
+
+
+  const handleDelete = async (fileId: number) => {
+    await deleteTaskFile(fileId);
+    loadFiles();
+  };
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
-
     const created = await addTaskComment(task.id, {
       comment: newComment,
     });
-
     setComments([created, ...comments]);
     setNewComment("");
   };
 
   const handleAddProgress = async () => {
     if (!progressNote.trim()) return;
-
     const newProgress = await addTaskProgress(task.id, {
       status: form.status,
       comment: progressNote,
     });
-
     setProgressList([newProgress, ...progressList]);
     setProgressNote("");
   };
 
   const handleSave = async () => {
-    try {
-      setSaving(true);
+    setSaving(true);
+    const updatedTask = await updateTask(task.id, {
+      title: form.title,
+      description: form.description || "",
+      status: form.status,
+      priority: form.priority,
+    });
 
-      const updatedTask = await updateTask(task.id, {
-        title: form.title,
-        description: form.description || "",
-        status: form.status,
-        priority: form.priority,
-      });
+    const originalAssigned = task.assignment?.employee ?? "";
 
-      const originalAssigned = task.assignment?.employee ?? "";
-
-      if (assignedEmployeeId !== originalAssigned) {
-        await assignTask(
-          task.id,
-          assignedEmployeeId === "" ? null : assignedEmployeeId
-        );
-      }
-
-      const refreshedTask = {
-        ...updatedTask,
-        assignment:
-          assignedEmployeeId === ""
-            ? null
-            : { employee: assignedEmployeeId },
-      };
-
-      onSave(refreshedTask);
-      onClose();
-    } catch {
-      alert("Failed to save task");
-    } finally {
-      setSaving(false);
+    if (assignedEmployeeId !== originalAssigned) {
+      await assignTask(
+        task.id,
+        assignedEmployeeId === "" ? null : assignedEmployeeId
+      );
     }
+
+    onSave(updatedTask);
+    onClose();
+    setSaving(false);
   };
-
-  /* ===============================
-     UI
-  =============================== */
-
   return (
     <div className="modal show d-block bg-dark bg-opacity-50">
       <div className="modal-dialog modal-lg modal-dialog-centered">
@@ -169,7 +195,6 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
           </div>
 
           <div className="modal-body">
-            {/* TAB NAV */}
             <ul className="nav nav-tabs mb-3">
               {[
                 { key: "details", label: "Details" },
@@ -354,9 +379,175 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
 
               {/* FILES TAB */}
               {activeTab === "files" && (
-                <div className="text-muted">
-                  File uploads coming soon...
-                </div>
+                <>
+                  <div className="row mb-3">
+                    <div className="col-md-8">
+                      <input
+                        type="file"
+                        className="form-control"
+                        onChange={(e) =>
+                          setSelectedFile(e.target.files?.[0] || null)
+                        }
+                      />
+                    </div>
+                    <div className="col-md-4">
+                      <button
+                        className="btn btn-primary w-100"
+                        onClick={handleUpload}
+                        disabled={!selectedFile}
+                      >
+                        Upload
+                      </button>
+                    </div>
+                  </div>
+
+                  {files.length === 0 && (
+                    <div className="text-muted">No files uploaded yet.</div>
+                  )}
+
+                  {files.map((file) => {
+                    const latestReview =
+                      file.reviews?.[file.reviews.length - 1];
+
+                    const status = latestReview
+                      ? latestReview.status
+                      : "pending";
+
+                    return (
+                      <div
+                        key={file.id}
+                        className="border rounded p-3 mb-3"
+                      >
+                        <div className="d-flex justify-content-between">
+                          <div>
+                            <strong>Revision {file.revision_no}</strong>
+                            <div className="small text-muted">
+                              Uploaded by {file.uploaded_by_name}
+                            </div>
+                          </div>
+
+                          <span
+                            className={`badge ${
+                              status === "approved"
+                                ? "bg-success"
+                                : status === "rework"
+                                ? "bg-danger"
+                                : "bg-secondary"
+                            }`}
+                          >
+                            {status}
+                          </span>
+                        </div>
+
+                        <div className="mt-2">
+                          <a
+  href={`http://localhost:8000${file.file}`}
+  target="_blank"
+  rel="noreferrer"
+>
+  View File
+</a>
+
+                        </div>
+                        {/* 🔥 REVIEW HISTORY */}
+                        {file.reviews && file.reviews.length > 0 && (
+                          <div className="mt-3">
+                            <strong>Review History</strong>
+
+                            {file.reviews.map((review) => (
+                              <div
+                                key={review.id}
+                                className="border rounded p-2 mt-2 bg-light small"
+                              >
+                                <div className="fw-bold">
+                                  {review.reviewer_name} (
+                                  {review.reviewed_by_role})
+                                </div>
+
+                                <div
+                                  className={`fw-semibold ${
+                                    review.status === "approved"
+                                      ? "text-success"
+                                      : "text-danger"
+                                  }`}
+                                >
+                                  {review.status.toUpperCase()}
+                                </div>
+
+                                <div>{review.comments}</div>
+
+                                <div className="text-muted">
+                                  {new Date(
+                                    review.reviewed_at
+                                  ).toLocaleString()}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        
+                        <div className="mt-3">
+                          <textarea
+                            className="form-control mb-2"
+                            placeholder="Review comment..."
+                            value={reviewComment}
+                            onChange={(e) =>
+                              setReviewComment(e.target.value)
+                            }
+                          />
+
+                          <select
+                            className="form-select mb-2"
+                            value={reviewStatus}
+                            onChange={(e) =>
+                              setReviewStatus(
+                                e.target.value as "approved" | "rework"
+                              )
+                            }
+                          >
+                            <option value="approved">Approve</option>
+                            <option value="rework">Rework</option>
+                           
+
+                          </select>
+                         
+ 
+  <div className="d-flex justify-content gap-2 mt-2">
+
+  <button
+    className="btn btn-danger btn-sm"
+    onClick={() => handleDelete(file.id)}
+  >
+    Delete
+  </button>
+
+  <button
+    className={`btn btn-primary ${
+      status === "approved"
+        ? "opacity-50 cursor-not-allowed"
+        : ""
+    }`}
+    disabled={status === "approved"}
+    onClick={() => handleReview(file.id)}
+  >
+    Submit Review
+  </button>
+
+  {status === "approved" && (
+    <div className="text-success small justify-content mt-2">
+      ✅ This file has already been approved and is locked.
+    </div>
+  )}
+
+</div>
+
+
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
               )}
 
               {/* ACTIVITY TAB */}
@@ -378,6 +569,7 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
                   ))}
                 </>
               )}
+
             </div>
           </div>
 

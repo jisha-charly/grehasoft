@@ -208,3 +208,75 @@ class TaskActivity(models.Model):
 
     def __str__(self):
         return f"{self.task.title} - {self.action}"
+    
+class TaskFile(models.Model):
+
+    STATUS_CHOICES = (
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rework", "Rework"),
+    )
+
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name="files"
+    )
+
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+
+    file = models.FileField(upload_to="task_files/")
+    file_type = models.CharField(max_length=50, blank=True)
+    revision_no = models.IntegerField(default=1)
+
+    # ✅ NEW FIELD
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending"
+    )
+
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if self.file:
+            self.file_type = self.file.name.split('.')[-1]
+        super().save(*args, **kwargs)
+
+class TaskReview(models.Model):
+
+    ROLE_CHOICES = (
+        ("PM", "PM"),
+        ("ADMIN", "ADMIN"),
+    )
+
+    STATUS_CHOICES = (
+        ("approved", "Approved"),
+        ("rework", "Rework"),
+    )
+
+    task_file = models.ForeignKey(
+       "TaskFile",   # 👈 use string
+        on_delete=models.CASCADE,
+        related_name="reviews"
+    )
+
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+
+    reviewed_by_role = models.CharField(
+        max_length=10,
+        choices=ROLE_CHOICES
+    )
+
+    review_version = models.IntegerField(default=1)
+    comments = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+
+    reviewed_at = models.DateTimeField(auto_now_add=True)

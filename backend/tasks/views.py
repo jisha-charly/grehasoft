@@ -4,11 +4,11 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils.timezone import now
 from django.utils import timezone
-from .models import Task, TaskType,TaskAssignment,TaskProgress,TaskComment,TaskActivity
+from .models import Task, TaskType,TaskAssignment,TaskProgress,TaskComment,TaskActivity,TaskFile
 from .serializers import (
     TaskSerializer,
     TaskTypeSerializer,
-    TaskCreateUpdateSerializer,TaskAssignmentSerializer,TaskProgressSerializer,TaskCommentSerializer,TaskActivitySerializer
+    TaskCreateUpdateSerializer,TaskAssignmentSerializer,TaskProgressSerializer,TaskCommentSerializer,TaskActivitySerializer,TaskFileUploadSerializer,TaskReviewSerializer,TaskFileSerializer
 )
 from accounts.models import  Project
 from rest_framework import status
@@ -281,3 +281,84 @@ def get_task_activity(request, task_id):
 
     serializer = TaskActivitySerializer(activities, many=True)
     return Response(serializer.data)
+ # =================================================
+# file uploads
+# =================================================
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_task_files(request, task_id):
+    """
+    Return all file revisions of a task
+    Ordered by latest revision first
+    """
+
+    # Make sure task exists
+    task = get_object_or_404(Task, id=task_id)
+
+    # Get all files of this task
+    files = (
+        TaskFile.objects
+        .filter(task=task, deleted_at__isnull=True)
+        .order_by("-revision_no")
+    )
+
+    serializer = TaskFileSerializer(files, many=True)
+
+    return Response(serializer.data)
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def upload_task_file(request, task_id):
+
+    task = get_object_or_404(Task, id=task_id)
+
+    serializer = TaskFileUploadSerializer(
+        data=request.data,
+        context={"request": request, "task": task}
+    )
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=201)
+
+    return Response(serializer.errors, status=400)
+
+@api_view(["POST"])
+def review_task_file(request, file_id):
+    task_file = get_object_or_404(TaskFile, id=file_id)
+
+    serializer = TaskReviewSerializer(
+        data=request.data,
+        context={
+            "request": request,
+            "task_file": task_file
+        }
+    )
+    if task_file.status == "approved":
+     return Response(
+        {"error": "File already approved. No more reviews allowed."},
+        status=400
+    )
+
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=201)
+
+    return Response(serializer.errors, status=400)
+
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_task_file(request, pk):   # 👈 MUST be pk
+    try:
+        file = TaskFile.objects.get(pk=pk, deleted_at__isnull=True)
+    except TaskFile.DoesNotExist:
+        return Response({"error": "File not found"}, status=404)
+
+    file.deleted_at = now()
+    file.save()
+
+    return Response(status=204)

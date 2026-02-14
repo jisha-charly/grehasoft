@@ -35,4 +35,10 @@ path(
     ),
     path("tasks/<int:task_id>/activity/", views.get_task_activity),
 
+
+     path("tasks/<int:task_id>/files/", views.get_task_files),
+    path("tasks/<int:task_id>/upload-file/", views.upload_task_file),
+    path("task-files/<int:file_id>/review/", views.review_task_file),
+path("task-files/<int:pk>/", views.delete_task_file),
+
 ]
