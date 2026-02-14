@@ -70,6 +70,13 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
   const [reviewStatus, setReviewStatus] = useState<"approved" | "rework">(
     "approved"
   );
+  const [dueDate, setDueDate] = useState<string | null | undefined>(
+  task.due_date
+);
+
+   useEffect(() => {
+  setDueDate(task.due_date);
+}, [task]);
 
   useEffect(() => {
     setForm({ ...task });
@@ -170,6 +177,7 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
       description: form.description || "",
       status: form.status,
       priority: form.priority,
+       due_date: dueDate || null,
     });
 
     const originalAssigned = task.assignment?.employee ?? "";
@@ -305,6 +313,16 @@ const TaskDetailsModal = ({ task, onClose, onSave }: Props) => {
                       ))}
                     </select>
                   </div>
+                  <div className="mb-3">
+  <label className="form-label fw-semibold">Due Date</label>
+  <input
+    type="date"
+    className="form-control"
+    value={dueDate || ""}
+    onChange={(e) => setDueDate(e.target.value)}
+  />
+</div>
+
                 </>
               )}
 

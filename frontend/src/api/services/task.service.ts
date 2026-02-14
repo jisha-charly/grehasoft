@@ -22,6 +22,8 @@ export interface CreateTaskPayload {
   milestone?: number | null;   // ✅ ADDED (important)
   priority?: "low" | "medium" | "high";
   board_order?: number;
+  due_date?: string | null;
+
 }
 
 export const createTask = (
@@ -47,6 +49,7 @@ export const updateTask = async (
     status?: string;
     priority?: string;
     milestone?: number | null;  // ✅ ADDED here also (safe update)
+    due_date?: string | null; 
   }
 ) => {
   const res = await api.put(`/tasks/${taskId}/update/`, payload);

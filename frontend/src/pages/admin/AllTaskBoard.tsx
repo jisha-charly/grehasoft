@@ -10,27 +10,51 @@ const AllTaskBoard = () => {
     "all" | "todo" | "in_progress" | "done"
   >("all");
 
+  // 🔍 Search state
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // 📄 Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 6;
+
   const navigate = useNavigate();
 
   useEffect(() => {
-  loadTasks();
-}, []);
+    loadTasks();
+  }, []);
 
-const loadTasks = async () => {
-  try {
-    const data = await getAllTasks();
-    setTasks(data);
-  } catch (error) {
-    console.error(error);
-  }
-};
+  const loadTasks = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllTasks();
+      setTasks(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-
-  // 🔹 Filter Logic
-  const filteredTasks =
+  // 🔹 Filter Logic (status)
+  const statusFiltered =
     activeFilter === "all"
       ? tasks
       : tasks.filter((task) => task.status === activeFilter);
+
+  // 🔍 Search Filter
+  const filteredTasks = statusFiltered.filter((task) =>
+    task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    task.project_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (task.assignment?.employee_name || "")
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+
+  // 📄 Pagination Logic
+  const indexOfLast = currentPage * tasksPerPage;
+  const indexOfFirst = indexOfLast - tasksPerPage;
+  const currentTasks = filteredTasks.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
 
   return (
     <div className="container-fluid p-4">
@@ -41,13 +65,28 @@ const loadTasks = async () => {
           <small className="text-muted">Manage all project tasks</small>
         </div>
 
-        {/* New Task Button */}
         <button
           className="btn btn-dark"
           onClick={() => navigate("/admin/projects/1")}
         >
           + New Task
         </button>
+      </div>
+
+      {/* ================= SEARCH ================= */}
+      <div className="row mb-3">
+        <div className="col-md-4">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search by title, project, or assigned user..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // reset page when searching
+            }}
+          />
+        </div>
       </div>
 
       {/* ================= FILTER TABS ================= */}
@@ -57,7 +96,10 @@ const loadTasks = async () => {
             className={`btn btn-outline-secondary ${
               activeFilter === "all" ? "active" : ""
             }`}
-            onClick={() => setActiveFilter("all")}
+            onClick={() => {
+              setActiveFilter("all");
+              setCurrentPage(1);
+            }}
           >
             All
           </button>
@@ -66,7 +108,10 @@ const loadTasks = async () => {
             className={`btn btn-outline-secondary ${
               activeFilter === "todo" ? "active" : ""
             }`}
-            onClick={() => setActiveFilter("todo")}
+            onClick={() => {
+              setActiveFilter("todo");
+              setCurrentPage(1);
+            }}
           >
             To Do
           </button>
@@ -75,7 +120,10 @@ const loadTasks = async () => {
             className={`btn btn-outline-secondary ${
               activeFilter === "in_progress" ? "active" : ""
             }`}
-            onClick={() => setActiveFilter("in_progress")}
+            onClick={() => {
+              setActiveFilter("in_progress");
+              setCurrentPage(1);
+            }}
           >
             In Progress
           </button>
@@ -84,7 +132,10 @@ const loadTasks = async () => {
             className={`btn btn-outline-secondary ${
               activeFilter === "done" ? "active" : ""
             }`}
-            onClick={() => setActiveFilter("done")}
+            onClick={() => {
+              setActiveFilter("done");
+              setCurrentPage(1);
+            }}
           >
             Completed
           </button>
@@ -100,61 +151,128 @@ const loadTasks = async () => {
 
       {/* ================= TASK CARDS ================= */}
       <div className="row g-4">
-        {filteredTasks.map((task) => (
+        {currentTasks.map((task) => (
           <div className="col-lg-4 col-md-6 col-sm-12" key={task.id}>
-           <div className="card shadow-sm h-100">
-  <div className="card-body d-flex flex-column">
+            <div className="card task-card h-100 border-0">
+              <div className="card-body d-flex flex-column">
 
-    {/* Project Name */}
-    <small className="text-muted mb-1">
-      {task.project_name}
-    </small>
+                <small className="text-muted fw-semibold mb-1">
+                  {task.project_name}
+                </small>
 
-    {/* Title */}
-    <h6 className="fw-bold mb-2">{task.title}</h6>
+                <h6 className="fw-bold mb-2">{task.title}</h6>
 
-    {/* Description */}
-    <p className="text-muted small flex-grow-1">
-      {task.description || "No description available"}
-    </p>
+                <p className="text-muted small flex-grow-1">
+                  {task.description || "No description available"}
+                </p>
 
-    {/* Status + Priority */}
-    <div className="d-flex justify-content-between align-items-center mt-3">
+                <div className="small text-muted mb-2">
+                  {task.due_date && (
+                    <div>
+                      <i className="bi bi-calendar-event me-1"></i>
+                      Due: {task.due_date}
+                    </div>
+                  )}
 
-      <span
-        className={`badge ${
-          task.status === "todo"
-            ? "bg-secondary"
-            : task.status === "in_progress"
-            ? "bg-primary"
-            : task.status === "done"
-            ? "bg-success"
-            : "bg-danger"
-        }`}
-      >
-        {task.status.replace("_", " ")}
-      </span>
+                  {task.assignment && (
+                    <div>
+                      <i className="bi bi-person me-1"></i>
+                      {task.assignment.employee_name}
+                    </div>
+                  )}
+                </div>
 
-      <span
-        className={`badge ${
-          task.priority === "high"
-            ? "bg-danger"
-            : task.priority === "medium"
-            ? "bg-warning text-dark"
-            : "bg-light text-dark"
-        }`}
-      >
-        {task.priority}
-      </span>
+                <div className="d-flex justify-content-between align-items-center mt-auto mb-3">
+                  <span
+                    className={`badge ${
+                      task.status === "todo"
+                        ? "bg-secondary"
+                        : task.status === "in_progress"
+                        ? "bg-primary"
+                        : task.status === "done"
+                        ? "bg-success"
+                        : "bg-danger"
+                    }`}
+                  >
+                    {task.status.replace("_", " ")}
+                  </span>
 
-    </div>
+                  <span
+                    className={`badge ${
+                      task.priority === "high"
+                        ? "bg-danger"
+                        : task.priority === "medium"
+                        ? "bg-warning text-dark"
+                        : "bg-light text-dark"
+                    }`}
+                  >
+                    {task.priority}
+                  </span>
+                </div>
 
-  </div>
-</div>
+                <div className="d-flex gap-2">
+                  <button className="btn btn-sm btn-outline-secondary w-50">
+                    Edit
+                  </button>
+                  <button className="btn btn-sm btn-dark w-50">
+                    View Details
+                  </button>
+                </div>
 
+              </div>
+            </div>
           </div>
         ))}
       </div>
+
+      {/* ================= PAGINATION ================= */}
+      {totalPages > 1 && (
+        <div className="d-flex justify-content-center mt-4">
+          <nav>
+            <ul className="pagination">
+
+              <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                >
+                  Previous
+                </button>
+              </li>
+
+              {Array.from({ length: totalPages }, (_, i) => (
+                <li
+                  key={i}
+                  className={`page-item ${
+                    currentPage === i + 1 ? "active" : ""
+                  }`}
+                >
+                  <button
+                    className="page-link"
+                    onClick={() => setCurrentPage(i + 1)}
+                  >
+                    {i + 1}
+                  </button>
+                </li>
+              ))}
+
+              <li
+                className={`page-item ${
+                  currentPage === totalPages ? "disabled" : ""
+                }`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                >
+                  Next
+                </button>
+              </li>
+
+            </ul>
+          </nav>
+        </div>
+      )}
     </div>
   );
 };

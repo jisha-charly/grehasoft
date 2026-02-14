@@ -28,6 +28,9 @@ const AddTaskForm = ({ projectId, onCreated }: Props) => {
 
   const [loading, setLoading] = useState(false);
 
+  const [dueDate, setDueDate] = useState<string>("");
+
+
   /* ================= LOAD MASTER DATA ================= */
   useEffect(() => {
     const loadData = async () => {
@@ -62,6 +65,7 @@ const AddTaskForm = ({ projectId, onCreated }: Props) => {
   milestone: milestoneId || null,   // ✅ THIS LINE IS MISSING
   priority: "medium",
   board_order: 0,
+  due_date: dueDate || null,
 });
 
       // reset
@@ -69,6 +73,8 @@ const AddTaskForm = ({ projectId, onCreated }: Props) => {
       setStatus("todo");
       setTaskTypeId("");
       setMilestoneId("");
+      setDueDate("");
+
 
       // 🔑 send milestone to parent (UI only)
       onCreated(milestoneId || undefined);
@@ -152,6 +158,17 @@ const AddTaskForm = ({ projectId, onCreated }: Props) => {
               <option value="blocked">Blocked</option>
             </select>
           </div>
+           
+           {/* Due Date */}
+<div className="col-md-2">
+  <input
+    
+    type="date"
+    className="form-control"
+    value={dueDate}
+    onChange={(e) => setDueDate(e.target.value)}
+  />
+</div>
 
           {/* Add */}
           <div className="col-md-2 d-grid">

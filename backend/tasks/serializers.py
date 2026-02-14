@@ -68,7 +68,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "task_type",
             "created_by",
             "created_at",
-
+             
             "assignment",
             
         ]

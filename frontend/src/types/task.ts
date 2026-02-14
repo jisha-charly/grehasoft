@@ -25,4 +25,6 @@ export interface Task {
   assignment?: TaskAssignment | null;
   created_at: string;
   updated_at: string;
+  due_date?: string | null
+
 }
