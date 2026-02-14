@@ -21,7 +21,7 @@ export interface Task {
   task_type_name?: string;
 
   project: number; // ✅ FIXED
-
+  project_name: string;   // ✅ ADD THIS
   assignment?: TaskAssignment | null;
   created_at: string;
   updated_at: string;

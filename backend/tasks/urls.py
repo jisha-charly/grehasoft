@@ -40,5 +40,7 @@ path(
     path("tasks/<int:task_id>/upload-file/", views.upload_task_file),
     path("task-files/<int:file_id>/review/", views.review_task_file),
 path("task-files/<int:pk>/", views.delete_task_file),
+path("tasks/", views.all_tasks),
+
 
 ]

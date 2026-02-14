@@ -13,7 +13,7 @@ import Settings from "../pages/admin/Settings";
 import NotFound from "../pages/NotFound";
 import ErrorBoundary from "../pages/ErrorBoundary";
 import UnderDevelopment from "../pages/UnderDevelopment";
-
+import AllTaskBoard from "../pages/admin/AllTaskBoard";
 const AdminRoutes = () => {
   return (
     <Routes>
@@ -34,7 +34,8 @@ const AdminRoutes = () => {
         <Route path="projects/:id" element={<ProjectDetails />} />
         <Route path="settings" element={<Settings />} />
        
-       
+       <Route path="all-task-board" element={<AllTaskBoard />} />
+
         <Route
   path="*"
   element={

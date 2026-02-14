@@ -88,6 +88,12 @@ class Client(models.Model):
 
 class Project(models.Model):
 
+    STATUS_CHOICES = (
+        ("pending", "Pending"),
+        ("in_progress", "In Progress"),
+        ("completed", "Completed"),
+    )
+
     name = models.CharField(max_length=255)
 
     client = models.ForeignKey(
@@ -114,12 +120,35 @@ class Project(models.Model):
         related_name="managed_projects"
     )
 
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending"
+    )
+
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
+
+    def update_status(self):
+        milestones = self.milestones.all()
+
+        if not milestones.exists():
+            self.status = "pending"
+
+        elif all(m.status == "completed" for m in milestones):
+            self.status = "completed"
+
+        elif any(m.status == "in_progress" for m in milestones):
+            self.status = "in_progress"
+
+        else:
+            self.status = "pending"
+
+        self.save(update_fields=["status"])
 
     def __str__(self):
         return self.name

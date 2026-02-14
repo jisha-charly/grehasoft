@@ -52,7 +52,7 @@ const Sidebar = () => {
       { label: "Projects", path: "/admin/projects", icon: <MdWork /> },
       { label: "Clients", path: "/admin/clients", icon: <MdBusiness /> },
       { label: "Task Types", path: "/admin/task-types", icon: <MdTask /> },
-      { label: "All Task Board", path: "/admin/kanban", icon: <MdViewKanban /> },
+      { label: "All Task Board", path: "/admin/all-task-board", icon: <MdViewKanban /> },
       { label: "Reports", path: "/admin/reports", icon: <MdAssessment /> },
       { label: "Users", path: "/admin/users", icon: <MdGroups /> },
       { label: "Roles", path: "/admin/roles", icon: <MdPeople /> },

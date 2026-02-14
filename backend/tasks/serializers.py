@@ -22,9 +22,9 @@ class TaskTypeSerializer(serializers.ModelSerializer):
 # TASK
 # =========================
 class TaskSerializer(serializers.ModelSerializer):
-
+     project_name = serializers.SerializerMethodField()
     # 🔹 Write-only for task type
-    task_type_id = serializers.PrimaryKeyRelatedField(
+     task_type_id = serializers.PrimaryKeyRelatedField(
         queryset=TaskType.objects.all(),
         source="task_type",
         write_only=True,
@@ -33,22 +33,22 @@ class TaskSerializer(serializers.ModelSerializer):
     )
 
     # 🔥 ADD THIS FOR MILESTONE
-    milestone = serializers.PrimaryKeyRelatedField(
-        queryset=ProjectMilestone.objects.all(),
+     milestone = serializers.PrimaryKeyRelatedField(
+         queryset=ProjectMilestone.objects.all(),
         required=False,
         allow_null=True,
     )
 
     # 🔹 Read-only project id
-    project_id = serializers.IntegerField(
+     project_id = serializers.IntegerField(
         source="project.id",
         read_only=True
     )
 
     # 🔥 Existing assignment
-    assignment = serializers.SerializerMethodField()
+     assignment = serializers.SerializerMethodField()
 
-    class Meta:
+     class Meta:
         model = Task
         fields = [
             "id",
@@ -64,23 +64,34 @@ class TaskSerializer(serializers.ModelSerializer):
 
             "project",
             "project_id",
+            "project_name",
             "task_type",
             "created_by",
             "created_at",
 
             "assignment",
+            
         ]
 
         read_only_fields = [
             "project",
             "project_id",
+            "project_name",
             "task_type",
             "created_by",
             "created_at",
             "assignment",
+             
         ]
 
-    def get_assignment(self, obj):
+     # 🔥 Project Name Method
+     def get_project_name(self, obj):
+        if obj.project:
+            return obj.project.name
+        return None
+    
+
+     def get_assignment(self, obj):
         active_assignment = obj.assignments.filter(
             unassigned_at__isnull=True
         ).first()

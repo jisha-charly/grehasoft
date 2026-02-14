@@ -78,3 +78,9 @@ export const assignTask = async (
   });
   return res.data;
 };
+
+
+export const getAllTasks = async () => {
+  const response = await api.get("/tasks/");
+  return response.data;
+};

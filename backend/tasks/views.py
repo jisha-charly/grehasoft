@@ -362,3 +362,11 @@ def delete_task_file(request, pk):   # 👈 MUST be pk
     file.save()
 
     return Response(status=204)
+  
+@api_view(["GET"])
+def all_tasks(request):
+    tasks = Task.objects.filter(deleted_at__isnull=True)
+    serializer = TaskSerializer(tasks, many=True)
+    return Response(serializer.data)
+
+  

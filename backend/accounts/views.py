@@ -435,11 +435,7 @@ def get_project(request, id):
 def create_project(request):
     serializer = ProjectSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save(
-            created_by=request.user,
-            status="not_started",
-            progress_percentage=0,
-        )
+        serializer.save() 
         return Response(serializer.data, status=201)
     return Response(serializer.errors, status=400)
 
